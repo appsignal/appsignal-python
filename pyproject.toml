@@ -1,0 +1,96 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "appsignal"
+description = 'The AppSignal integration for the Python programming language'
+readme = "README.md"
+requires-python = ">=3.7"
+keywords = []
+authors = [
+  { name = "Tom de Bruijn", email = "tom@appsignal.com" },
+  { name = "Noemi Lapresta", email = "noemi@appsignal.com" },
+]
+classifiers = [
+  # Python versions
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3.7",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: Implementation :: CPython",
+  "Programming Language :: Python :: Implementation :: PyPy",
+  # Application version
+  "Development Status :: 3 - Alpha",
+  # Remove this to allow publishing
+  "Private :: Do Not Upload"
+]
+dependencies = []
+dynamic = ["version"]
+
+[project.urls]
+Documentation = "https://github.com/appsignal/appsignal-python#readme"
+Issues = "https://github.com/appsignal/appsignal-python/issues"
+Source = "https://github.com/appsignal/appsignal-python"
+
+[project.scripts]
+appsignal = "appsignal.cli:run"
+
+[tool.hatch.version]
+path = "src/appsignal/__about__.py"
+
+[tool.hatch.build]
+sources = ["src"]
+
+[tool.hatch.envs.default]
+dependencies = [
+  "pytest",
+  "pytest-cov",
+]
+[tool.hatch.envs.default.scripts]
+cov = "pytest --cov-report=term-missing --cov-config=pyproject.toml --cov=src --cov=tests {args}"
+no-cov = "cov --no-cov {args}"
+
+[[tool.hatch.envs.test.matrix]]
+python = ["37", "38", "39", "310", "311"]
+
+[tool.hatch.envs.lint]
+detached = true
+dependencies = [
+  "black>=23.1.0",
+  "mypy>=1.0.0",
+  "ruff>=0.0.243",
+]
+
+[tool.hatch.envs.lint.scripts]
+typing = "mypy --install-types --non-interactive --check-untyped-defs {args:src tests}"
+style = [
+  "ruff {args:.}",
+  "black --check --diff {args:.}",
+]
+fmt = [
+  "black {args:.}",
+  "ruff --fix {args:.}",
+  "style",
+]
+all = [
+  "fmt",
+  "style",
+  "typing",
+]
+
+[tool.coverage.run]
+branch = true
+parallel = true
+omit = [
+  "src/appsignal/__about__.py",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+  "no cov",
+  "if __name__ == .__main__.:",
+  "if TYPE_CHECKING:",
+]
