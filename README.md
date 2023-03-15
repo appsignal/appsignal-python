@@ -46,3 +46,9 @@ hatch run test:pytest
 hatch shell
 appsignal
 ```
+
+### Building wheels for all platforms
+
+```sh
+hatch run build:all
+```

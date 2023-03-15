@@ -43,6 +43,8 @@ path = "src/appsignal/__about__.py"
 
 [tool.hatch.build]
 sources = ["src"]
+exclude = ["src/scripts"]
+artifacts = ["src/appsignal/appsignal-agent"]
 
 [tool.hatch.envs.default]
 dependencies = [
@@ -62,6 +64,7 @@ dependencies = [
   "black>=23.1.0",
   "mypy>=1.0.0",
   "ruff>=0.0.243",
+  "hatchling" # needed for type checking
 ]
 
 [tool.hatch.envs.lint.scripts]
@@ -73,7 +76,6 @@ style = [
 fmt = [
   "black {args:.}",
   "ruff --fix {args:.}",
-  "style",
 ]
 all = [
   "fmt",
@@ -81,11 +83,23 @@ all = [
   "typing",
 ]
 
+[tool.ruff]
+extend-exclude = ["src/scripts/agent.py"]
+
+[tool.hatch.envs.build.scripts]
+all = "python src/scripts/build_all.py"
+
+[tool.hatch.build.targets.wheel.hooks.custom]
+path = "src/scripts/build_hook.py"
+dependencies = ["requests"]
+
+
 [tool.coverage.run]
 branch = true
 parallel = true
 omit = [
   "src/appsignal/__about__.py",
+  "src/scripts",
 ]
 
 [tool.coverage.report]
