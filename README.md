@@ -47,8 +47,16 @@ hatch shell
 appsignal
 ```
 
-### Building wheels for all platforms
+### Building wheels
 
 ```sh
-hatch run build:all
+hatch run build:all # for all platform
+hatch run build:me # for your current platform
+hatch run build:one <TRIPLE> # for a specific agent triple
+```
+
+### Clean up build artifacts
+```sh
+hatch clean # clean dist folder
+rm -r tmp # clean agent build cache
 ```

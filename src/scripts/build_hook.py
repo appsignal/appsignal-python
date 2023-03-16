@@ -15,11 +15,10 @@ def run_relative(filename):
 
 
 APPSIGNAL_AGENT_CONFIG = run_relative("agent.py")["APPSIGNAL_AGENT_CONFIG"]
-PLATFORM_TAG_TRIPLE = run_relative("platform.py")["PLATFORM_TAG_TRIPLE"]
 
-
-def platform_triple(platform: str):
-    return PLATFORM_TAG_TRIPLE[platform]
+_platform_py = run_relative("platform.py")
+PLATFORM_TAG_TRIPLE = _platform_py["PLATFORM_TAG_TRIPLE"]
+TRIPLE_PLATFORM_TAG = _platform_py["TRIPLE_PLATFORM_TAG"]
 
 
 def triple_filename(triple: str):
@@ -45,17 +44,32 @@ def rm(path: str):
         pass
 
 
+def should_download(agent_path: str, version_path: str) -> bool:
+    if not os.path.exists(agent_path):
+        return True
+
+    if not os.path.exists(version_path):
+        return True
+
+    with open(version_path, "r") as version:
+        return version.read() != APPSIGNAL_AGENT_CONFIG["version"]
+
+
 class DownloadError(Exception):
     pass
 
 
 class CustomBuildHook(BuildHookInterface):
-    def initialize(self, version: str, build_data: dict[str, Any]) -> None:
+    def initialize(self, _version: str, build_data: dict[str, Any]) -> None:
         """
         This occurs immediately before each build.
 
         Any modifications to the build data will be seen by the build target.
         """
+
+        if "_APPSIGNAL_BUILD_TRIPLE" in os.environ:
+            triple = os.environ["_APPSIGNAL_BUILD_TRIPLE"]
+            os.environ["_APPSIGNAL_BUILD_PLATFORM"] = TRIPLE_PLATFORM_TAG[triple]
 
         if "_APPSIGNAL_BUILD_PLATFORM" not in os.environ:
             print("_APPSIGNAL_BUILD_PLATFORM is not set; exiting...")
@@ -67,7 +81,7 @@ class CustomBuildHook(BuildHookInterface):
         build_data["tag"] = f"py3-none-{platform_tag}"
         build_data["pure_python"] = False
 
-        triple = platform_triple(platform_tag)
+        triple = PLATFORM_TAG_TRIPLE[platform_tag]
 
         agent_path = os.path.join(self.root, "src", "appsignal", "appsignal-agent")
         rm(agent_path)
@@ -76,9 +90,14 @@ class CustomBuildHook(BuildHookInterface):
         os.makedirs(tempdir_path, exist_ok=True)
 
         tempagent_path = os.path.join(tempdir_path, "appsignal_agent")
+        tempversion_path = os.path.join(tempdir_path, "version")
 
-        if not os.path.exists(tempagent_path):
+        if should_download(tempagent_path, tempversion_path):
             temptar_path = os.path.join(tempdir_path, triple_filename(triple))
+
+            rm(tempagent_path)
+            rm(tempversion_path)
+            rm(temptar_path)
 
             with open(temptar_path, "wb") as temptar:
                 for url in triple_urls(triple):
@@ -108,6 +127,9 @@ class CustomBuildHook(BuildHookInterface):
                     tar_agent = tar.extractfile("appsignal-agent")
                     if tar_agent is not None:
                         agent.write(tar_agent.read())
+
+            with open(tempversion_path, "w") as version:
+                version.write(APPSIGNAL_AGENT_CONFIG["version"])
 
             print(f"Extracted agent binary to {tempagent_path}")
             rm(temptar_path)

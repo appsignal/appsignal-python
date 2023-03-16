@@ -1,9 +1,9 @@
 PLATFORM_TAG_TRIPLE = {
     # MacOS builds
     # Intel (and Intel w/ PowerPC emulation)
-    "macosx_10_9_x86_64.macosx_10_9_universal2": "x86_64-darwin",
+    "macosx_10_9_x86_64": "x86_64-darwin",
     # Apple Silicon (and Apple Silicon w/ Intel emulation)
-    "macosx_12_3_arm64": "arm64-darwin",
+    "macosx_10_9_universal2.macosx_12_3_arm64": "arm64-darwin",
     # Glibc Linux builds
     # manylinux2014 is a legacy tag defined as glibc >= 2.17,
     # we actually support glibc >= 2.15
@@ -18,3 +18,5 @@ PLATFORM_TAG_TRIPLE = {
     "musllinux_1_1_aarch64": "aarch64-linux-musl",
     "musllinux_1_1_x86_64": "x86_64-linux-musl",
 }
+
+TRIPLE_PLATFORM_TAG = {v: k for k, v in PLATFORM_TAG_TRIPLE.items()}
