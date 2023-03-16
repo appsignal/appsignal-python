@@ -1,10 +1,10 @@
-from tempfile import TemporaryDirectory
 from typing import Any
 from runpy import run_path
 import os
 import stat
 import hashlib
 import tarfile
+import shutil
 
 import requests
 from hatchling.builders.hooks.plugin.interface import BuildHookInterface
@@ -38,6 +38,13 @@ def triple_urls(triple: str):
     return [f"{mirror}/{version}/{filename}" for mirror in mirrors]
 
 
+def rm(path: str):
+    try:
+        os.remove(path)
+    except FileNotFoundError:
+        pass
+
+
 class DownloadError(Exception):
     pass
 
@@ -62,11 +69,17 @@ class CustomBuildHook(BuildHookInterface):
         triple = platform_triple(platform_tag)
 
         agent_path = os.path.join(self.root, "src", "appsignal", "appsignal-agent")
+        rm(agent_path)
 
-        with TemporaryDirectory() as tempdir:
-            tempfile_path = os.path.join(tempdir, triple_filename(triple))
+        tempdir_path = os.path.join(self.root, "tmp", triple)
+        os.makedirs(tempdir_path, exist_ok=True)
 
-            with open(tempfile_path, "wb") as tempfile:
+        tempagent_path = os.path.join(tempdir_path, "appsignal_agent")
+
+        if not os.path.exists(tempagent_path):
+            temptar_path = os.path.join(tempdir_path, triple_filename(triple))
+
+            with open(temptar_path, "wb") as temptar:
                 for url in triple_urls(triple):
                     try:
                         r = requests.get(url, allow_redirects=True)
@@ -78,7 +91,7 @@ class CustomBuildHook(BuildHookInterface):
                         ):
                             raise DownloadError("Checksum does not match")
 
-                        tempfile.write(r.content)
+                        temptar.write(r.content)
                     except DownloadError as e:
                         print(f"Something went wrong downloading from `{url}`: {e}")
                     else:
@@ -89,17 +102,18 @@ class CustomBuildHook(BuildHookInterface):
 
             print(f"Downloaded agent tarball for {triple}")
 
-            try:
-                os.remove(agent_path)
-            except FileNotFoundError:
-                pass
-
-            with tarfile.open(tempfile_path, "r:*") as tar:
-                with open(agent_path, "wb") as agent:
+            with tarfile.open(temptar_path, "r:*") as tar:
+                with open(tempagent_path, "wb") as agent:
                     tar_agent = tar.extractfile("appsignal-agent")
                     if tar_agent is not None:
                         agent.write(tar_agent.read())
 
-            os.chmod(agent_path, stat.S_IEXEC | stat.S_IREAD | stat.S_IWRITE)
+            print(f"Extracted agent binary to {tempagent_path}")
+            rm(temptar_path)
+        else:
+            print(f"Using cached agent binary at {tempagent_path}")
 
-            print(f"Extracted agent binary to {agent_path}")
+        shutil.copy(tempagent_path, agent_path)
+        os.chmod(agent_path, stat.S_IEXEC | stat.S_IREAD | stat.S_IWRITE)
+
+        print(f"Copied agent binary to {agent_path}")
