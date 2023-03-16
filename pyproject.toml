@@ -93,6 +93,8 @@ all = "python src/scripts/build_all.py"
 path = "src/scripts/build_hook.py"
 dependencies = ["requests"]
 
+[tool.hatch.build.targets.sdist.hooks.custom]
+path = "src/scripts/sdist_hook.py"
 
 [tool.coverage.run]
 branch = true
