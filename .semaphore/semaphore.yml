@@ -1,0 +1,42 @@
+version: v1.0
+name: AppSignal for Python
+agent:
+  machine:
+    type: e1-standard-2
+    os_image: ubuntu2004
+global_job_config:
+  prologue:
+    commands:
+    - checkout
+    - "sem-version python 3.11"
+    - "sudo pip install hatch"
+blocks:
+- name: Linters
+  dependencies: []
+  task:
+    jobs:
+    - name: Style
+      commands:
+      - "hatch run lint:style"
+    - name: Typing
+      commands:
+      - "hatch run lint:typing"
+- name: Tests
+  dependencies: []
+  task:
+    prologue:
+      commands:
+      - "hatch run build:me"
+    jobs:
+    - name: Python 3.9
+      commands:
+      - "sem-version python 3.9"
+      - "hatch run test.py39:pytest"
+    - name: Python 3.10
+      commands:
+      - "sem-version python 3.10"
+      - "hatch run test.py310:pytest"
+    - name: Python 3.11
+      commands:
+      - "sem-version python 3.11"
+      - "hatch run test.py311:pytest"

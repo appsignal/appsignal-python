@@ -74,7 +74,7 @@ class CustomBuildHook(BuildHookInterface):
         if "_APPSIGNAL_BUILD_PLATFORM" not in os.environ:
             print("_APPSIGNAL_BUILD_PLATFORM is not set; exiting...")
             print("Hint: you may wish to run `hatch run build:all` instead?")
-            exit(1)
+            return
 
         platform_tag = os.environ["_APPSIGNAL_BUILD_PLATFORM"]
 
