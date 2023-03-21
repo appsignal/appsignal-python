@@ -24,9 +24,6 @@ blocks:
 - name: Tests
   dependencies: []
   task:
-    prologue:
-      commands:
-      - "hatch run build:me"
     jobs:
     - name: Python 3.9
       commands:

@@ -88,8 +88,8 @@ extend-exclude = ["src/scripts/agent.py"]
 
 [tool.hatch.envs.build.scripts]
 all = "python src/scripts/build_all.py"
-me = "python src/scripts/build_me.py"
-one = "_APPSIGNAL_BUILD_TRIPLE={args} hatch build -t wheel"
+me = "hatch build -t wheel"
+for = "_APPSIGNAL_BUILD_TRIPLE={args} hatch build -t wheel"
 
 [tool.hatch.build.targets.wheel.hooks.custom]
 path = "src/scripts/build_hook.py"

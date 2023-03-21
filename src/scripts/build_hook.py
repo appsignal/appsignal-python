@@ -5,6 +5,8 @@ import stat
 import hashlib
 import tarfile
 import shutil
+import sysconfig
+import subprocess
 
 import requests
 from hatchling.builders.hooks.plugin.interface import BuildHookInterface
@@ -55,6 +57,24 @@ def should_download(agent_path: str, version_path: str) -> bool:
         return version.read() != APPSIGNAL_AGENT_CONFIG["version"]
 
 
+def this_triple():
+    platform = sysconfig.get_platform()
+    [os, *_, arch] = platform.split("-")
+
+    if os == "macosx":
+        os = "darwin"
+
+    if arch == "universal2":
+        arch = "arm64"
+
+    if os == "linux":
+        ldd_run = subprocess.run(["ldd", "--version"], capture_output=True)
+        if b"musl" in ldd_run.stderr:
+            os = "linux-musl"
+
+    return f"{arch}-{os}"
+
+
 class DownloadError(Exception):
     pass
 
@@ -67,21 +87,25 @@ class CustomBuildHook(BuildHookInterface):
         Any modifications to the build data will be seen by the build target.
         """
 
+        platform_tag = None
+        triple = None
+
         if "_APPSIGNAL_BUILD_TRIPLE" in os.environ:
             triple = os.environ["_APPSIGNAL_BUILD_TRIPLE"]
-            os.environ["_APPSIGNAL_BUILD_PLATFORM"] = TRIPLE_PLATFORM_TAG[triple]
+        elif "_APPSIGNAL_BUILD_PLATFORM" in os.environ:
+            platform_tag = os.environ["_APPSIGNAL_BUILD_PLATFORM"]
+        else:
+            print("_APPSIGNAL_BUILD_PLATFORM and _APPSIGNAL_BUILD_TRIPLE not set")
+            triple = this_triple()
+            print(f"Building for local triple {triple}")
 
-        if "_APPSIGNAL_BUILD_PLATFORM" not in os.environ:
-            print("_APPSIGNAL_BUILD_PLATFORM is not set; exiting...")
-            print("Hint: you may wish to run `hatch run build:all` instead?")
-            return
-
-        platform_tag = os.environ["_APPSIGNAL_BUILD_PLATFORM"]
+        if platform_tag is None:
+            platform_tag = TRIPLE_PLATFORM_TAG[triple]
+        if triple is None:
+            triple = PLATFORM_TAG_TRIPLE[platform_tag]
 
         build_data["tag"] = f"py3-none-{platform_tag}"
         build_data["pure_python"] = False
-
-        triple = PLATFORM_TAG_TRIPLE[platform_tag]
 
         agent_path = os.path.join(self.root, "src", "appsignal", "appsignal-agent")
         rm(agent_path)
