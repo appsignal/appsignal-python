@@ -17,10 +17,7 @@ def run_relative(filename):
 
 
 APPSIGNAL_AGENT_CONFIG = run_relative("agent.py")["APPSIGNAL_AGENT_CONFIG"]
-
-_platform_py = run_relative("platform.py")
-PLATFORM_TAG_TRIPLE = _platform_py["PLATFORM_TAG_TRIPLE"]
-TRIPLE_PLATFORM_TAG = _platform_py["TRIPLE_PLATFORM_TAG"]
+TRIPLE_PLATFORM_TAG = run_relative("platform.py")["TRIPLE_PLATFORM_TAG"]
 
 
 def triple_filename(triple: str):
@@ -57,7 +54,7 @@ def should_download(agent_path: str, version_path: str) -> bool:
         return version.read() != APPSIGNAL_AGENT_CONFIG["version"]
 
 
-def this_triple():
+def this_triple() -> str:
     platform = sysconfig.get_platform()
     [os, *_, arch] = platform.split("-")
 
@@ -87,22 +84,17 @@ class CustomBuildHook(BuildHookInterface):
         Any modifications to the build data will be seen by the build target.
         """
 
-        platform_tag = None
         triple = None
 
         if "_APPSIGNAL_BUILD_TRIPLE" in os.environ:
             triple = os.environ["_APPSIGNAL_BUILD_TRIPLE"]
-        elif "_APPSIGNAL_BUILD_PLATFORM" in os.environ:
-            platform_tag = os.environ["_APPSIGNAL_BUILD_PLATFORM"]
         else:
-            print("_APPSIGNAL_BUILD_PLATFORM and _APPSIGNAL_BUILD_TRIPLE not set")
             triple = this_triple()
-            print(f"Building for local triple {triple}")
+            print(
+                f"_APPSIGNAL_BUILD_TRIPLE not set; building for local triple ({triple})"
+            )
 
-        if platform_tag is None:
-            platform_tag = TRIPLE_PLATFORM_TAG[triple]
-        if triple is None:
-            triple = PLATFORM_TAG_TRIPLE[platform_tag]
+        platform_tag = TRIPLE_PLATFORM_TAG[triple]
 
         build_data["tag"] = f"py3-none-{platform_tag}"
         build_data["pure_python"] = False
