@@ -18,6 +18,10 @@ DEFAULT_INSTRUMENTATIONS = cast(
 
 CONSTANT_PRIVATE_ENVIRON = {"_APPSIGNAL_ENABLE_OPENTELEMETRY_HTTP": "true"}
 
+CONSTANT_RESOURCE_ATTRIBUTES = {
+    "appsignal.config.language_integration": "python",
+}
+
 
 def parse_disable_default_instrumentations(
     value: Optional[str],
@@ -85,3 +89,13 @@ def set_private_environ(config: Options):
     for var, value in private_environ.items():
         if value is not None:
             os.environ[var] = str(value)
+
+
+def opentelemetry_resource_attributes(config: Options):
+    attributes = {
+        k: v
+        for k, v in {"appsignal.config.revision": config.get("revision")}.items()
+        if v is not None
+    }
+
+    return attributes | CONSTANT_RESOURCE_ATTRIBUTES
