@@ -50,9 +50,9 @@ appsignal
 ### Building wheels
 
 ```sh
-hatch run build:all # for all platform
+hatch run build:all # for all platforms
 hatch run build:me # for your current platform
-hatch run build:one <TRIPLE> # for a specific agent triple
+hatch run build:for <triple> # for a specific agent triple
 ```
 
 ### Clean up build artifacts

@@ -13,5 +13,5 @@ class CustomBuildHook(BuildHookInterface):
             "It is not possible to build a source distribution package for "
             "this project, as it requires a platform-dependent binary."
         )
-        print("Hint: you may wish to run `hatch run build:all` instead?")
+        print("Hint: you may wish to run `hatch run build:me` instead?")
         exit(1)
