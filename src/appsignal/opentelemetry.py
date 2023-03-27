@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from .config import Options, opentelemetry_resource_attributes, DEFAULT_INSTRUMENTATION
+from .config import Options, opentelemetry_resource_attributes, DefaultInstrumentation
 
 from typing import Callable
 
@@ -54,7 +54,10 @@ def add_requests_instrumentation():
     RequestsInstrumentor().instrument()
 
 
-DEFAULT_INSTRUMENTATION_ADDERS: dict[DEFAULT_INSTRUMENTATION, Callable[[], None]] = {
+DefaultInstrumentationAdder = Callable[[], None]
+DefaultInstrumentationAdders = dict[DefaultInstrumentation, DefaultInstrumentationAdder]
+
+DEFAULT_INSTRUMENTATION_ADDERS: DefaultInstrumentationAdders = {
     "opentelemetry.instrumentation.celery": add_celery_instrumentation,
     "opentelemetry.instrumentation.django": add_django_instrumentation,
     "opentelemetry.instrumentation.jinja2": add_jinja2_instrumentation,
@@ -76,13 +79,15 @@ def start_opentelemetry(config: Options):
     add_instrumentations(config)
 
 
-def add_instrumentations(config: Options):
+def add_instrumentations(
+    config: Options, default_instrumentation_adders=DEFAULT_INSTRUMENTATION_ADDERS
+):
     disable_list = config.get("disable_default_instrumentations") or []
 
     if disable_list is True:
         return
 
-    for name, adder in DEFAULT_INSTRUMENTATION_ADDERS.items():
+    for name, adder in default_instrumentation_adders.items():
         if name not in disable_list:
             try:
                 adder()

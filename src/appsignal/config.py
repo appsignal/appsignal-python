@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 from typing import cast, get_args, TypedDict, Union, Optional, Literal
 
-DEFAULT_INSTRUMENTATION = Literal[
+DefaultInstrumentation = Literal[
     "opentelemetry.instrumentation.celery",
     "opentelemetry.instrumentation.django",
     "opentelemetry.instrumentation.jinja2",
@@ -13,7 +13,7 @@ DEFAULT_INSTRUMENTATION = Literal[
 ]
 
 DEFAULT_INSTRUMENTATIONS = cast(
-    list[DEFAULT_INSTRUMENTATION], list(get_args(DEFAULT_INSTRUMENTATION))
+    list[DefaultInstrumentation], list(get_args(DefaultInstrumentation))
 )
 
 CONSTANT_PRIVATE_ENVIRON = {"_APPSIGNAL_ENABLE_OPENTELEMETRY_HTTP": "true"}
@@ -25,17 +25,17 @@ CONSTANT_RESOURCE_ATTRIBUTES = {
 
 def parse_disable_default_instrumentations(
     value: Optional[str],
-) -> Optional[Union[list[DEFAULT_INSTRUMENTATION], bool]]:
+) -> Optional[Union[list[DefaultInstrumentation], bool]]:
     if value is None:
         return None
 
-    if value == "true":
+    if value.lower() == "true":
         return True
-    if value == "false":
+    if value.lower() == "false":
         return False
 
     return cast(
-        list[DEFAULT_INSTRUMENTATION],
+        list[DefaultInstrumentation],
         [x for x in value.split(",") if x in DEFAULT_INSTRUMENTATIONS],
     )
 
@@ -46,7 +46,7 @@ class Options(TypedDict, total=False):
     push_api_key: str
     log_level: str
     revision: str
-    disable_default_instrumentations: Union[list[DEFAULT_INSTRUMENTATION], bool]
+    disable_default_instrumentations: Union[list[DefaultInstrumentation], bool]
 
 
 def from_public_environ() -> Options:
