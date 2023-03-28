@@ -41,12 +41,17 @@ def parse_disable_default_instrumentations(
 
 
 class Options(TypedDict, total=False):
-    name: str
-    environment: str
-    push_api_key: str
-    log_level: str
-    revision: str
+    app_path: str
     disable_default_instrumentations: Union[list[DefaultInstrumentation], bool]
+    environment: str
+    log_level: str
+    name: str
+    push_api_key: str
+    revision: str
+
+
+def from_system() -> Options:
+    return Options(app_path=os.getcwd())
 
 
 def from_public_environ() -> Options:
@@ -94,7 +99,10 @@ def set_private_environ(config: Options):
 def opentelemetry_resource_attributes(config: Options):
     attributes = {
         k: v
-        for k, v in {"appsignal.config.revision": config.get("revision")}.items()
+        for k, v in {
+            "appsignal.config.revision": config.get("revision"),
+            "appsignal.config.app_path": config.get("app_path"),
+        }.items()
         if v is not None
     }
 

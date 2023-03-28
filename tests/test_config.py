@@ -2,10 +2,17 @@ import os
 
 from appsignal.config import (
     Options,
+    from_system,
     from_public_environ,
     set_private_environ,
     opentelemetry_resource_attributes,
 )
+
+
+def test_from_system():
+    config = from_system()
+
+    assert list(config.keys()) == ["app_path"]
 
 
 def test_from_public_environ():
@@ -67,19 +74,15 @@ def test_set_private_environ():
 
 
 def test_opentelemetry_resource_attributes():
-    config = Options(revision="abc123")
+    config = Options(
+        app_path="/path/to/app",
+        revision="abc123",
+    )
 
     attributes = opentelemetry_resource_attributes(config)
 
     assert attributes == {
+        "appsignal.config.app_path": "/path/to/app",
         "appsignal.config.revision": "abc123",
         "appsignal.config.language_integration": "python",
     }
-
-
-def test_opentelemetry_resource_attributes_no_revision():
-    config = Options()
-
-    attributes = opentelemetry_resource_attributes(config)
-
-    assert attributes == {"appsignal.config.language_integration": "python"}
