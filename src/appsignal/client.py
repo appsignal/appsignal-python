@@ -13,7 +13,7 @@ class Client:
     _options: Options
 
     def __init__(self, **options: Unpack[Options]):
-        self._options = from_system() | from_public_environ() | options
+        self._options = from_system() | options | from_public_environ()
 
     def start(self):
         start_agent(self._options)
