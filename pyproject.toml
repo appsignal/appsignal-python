@@ -27,7 +27,11 @@ classifiers = [
   # Remove this to allow publishing
   "Private :: Do Not Upload"
 ]
-dependencies = []
+dependencies = [
+  "opentelemetry-api",
+  "opentelemetry-sdk",
+  "opentelemetry-exporter-otlp-proto-http",
+]
 dynamic = ["version"]
 
 [project.urls]
@@ -64,7 +68,10 @@ dependencies = [
   "black>=23.1.0",
   "mypy>=1.0.0",
   "ruff>=0.0.243",
-  "hatchling" # needed for type checking
+  "hatchling", # needed for type checking
+  "opentelemetry-api",
+  "opentelemetry-sdk",
+  "opentelemetry-exporter-otlp-proto-http",
 ]
 
 [tool.hatch.envs.lint.scripts]
@@ -112,3 +119,7 @@ exclude_lines = [
   "if __name__ == .__main__.:",
   "if TYPE_CHECKING:",
 ]
+
+[[tool.mypy.overrides]]
+module = "opentelemetry.instrumentation.*"
+ignore_missing_imports = true
