@@ -21,6 +21,9 @@ blocks:
     - name: Typing
       commands:
       - "hatch run lint:typing"
+    - name: Git Lint (Lintje)
+      commands:
+      - script/lint_git
 - name: Tests
   dependencies: []
   task:
