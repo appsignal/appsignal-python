@@ -9,7 +9,7 @@ readme = "README.md"
 requires-python = ">=3.7"
 keywords = []
 authors = [
-  { name = "Tom de Bruijn", email = "tom@appsignal.com" },
+  { name = "Tom de Bruijn", email = "tom@tomdebruijn.com" },
   { name = "Noemi Lapresta", email = "noemi@appsignal.com" },
 ]
 classifiers = [
