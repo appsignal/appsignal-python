@@ -1,0 +1,15 @@
+---
+language: custom
+repo: "https://github.com/appsignal/appsignal-python"
+bootstrap:
+  command: ""
+clean:
+  command: "hatch clean"
+build:
+  command: "hatch run build:all"
+publish:
+  command: "hatch publish"
+test:
+  command: "hatch run test:pytest"
+read_version: "hatch version"
+write_version: "hatch version"
