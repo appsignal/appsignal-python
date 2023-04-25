@@ -29,6 +29,7 @@ dependencies = [
   "opentelemetry-api",
   "opentelemetry-sdk",
   "opentelemetry-exporter-otlp-proto-http",
+  "docopt",
 ]
 dynamic = ["version"]
 
@@ -52,6 +53,7 @@ artifacts = ["src/appsignal/appsignal-agent"]
 dependencies = [
   "pytest",
   "pytest-cov",
+  "pytest-mock",
 ]
 [tool.hatch.envs.default.scripts]
 cov = "pytest --cov-report=term-missing --cov-config=pyproject.toml --cov=src --cov=tests {args}"
@@ -70,6 +72,7 @@ dependencies = [
   "opentelemetry-api",
   "opentelemetry-sdk",
   "opentelemetry-exporter-otlp-proto-http",
+  "docopt",
 ]
 
 [tool.hatch.envs.lint.scripts]
