@@ -66,10 +66,10 @@ def from_public_environ() -> Options:
     # value, then remove the ones whose values are empty strings.
 
     config = Options(
-        name=os.environ.get("APPSIGNAL_APP_NAME", ""),
         environment=os.environ.get("APPSIGNAL_APP_ENV", ""),
-        push_api_key=os.environ.get("APPSIGNAL_PUSH_API_KEY", ""),
         log_level=os.environ.get("APPSIGNAL_LOG_LEVEL", ""),
+        name=os.environ.get("APPSIGNAL_APP_NAME", ""),
+        push_api_key=os.environ.get("APPSIGNAL_PUSH_API_KEY", ""),
         revision=os.environ.get("APP_REVISION", ""),
     )
 
@@ -87,8 +87,8 @@ def set_private_environ(config: Options):
     private_environ = {
         "_APPSIGNAL_APP_ENV": config.get("environment"),
         "_APPSIGNAL_APP_NAME": config.get("name"),
-        "_APPSIGNAL_PUSH_API_KEY": config.get("push_api_key"),
         "_APPSIGNAL_LOG_LEVEL": config.get("log_level"),
+        "_APPSIGNAL_PUSH_API_KEY": config.get("push_api_key"),
     } | CONSTANT_PRIVATE_ENVIRON
 
     for var, value in private_environ.items():
@@ -100,8 +100,8 @@ def opentelemetry_resource_attributes(config: Options):
     attributes = {
         k: v
         for k, v in {
-            "appsignal.config.revision": config.get("revision"),
             "appsignal.config.app_path": config.get("app_path"),
+            "appsignal.config.revision": config.get("revision"),
         }.items()
         if v is not None
     }
