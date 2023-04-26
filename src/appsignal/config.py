@@ -41,14 +41,17 @@ def parse_disable_default_instrumentations(
 
 
 class Options(TypedDict, total=False):
-    app_path: str
-    disable_default_instrumentations: Union[list[DefaultInstrumentation], bool]
-    environment: str
-    hostname: str
-    log_level: str
-    name: str
-    push_api_key: str
-    revision: str
+    app_path: Optional[str]
+    disable_default_instrumentations: Optional[
+        Union[list[DefaultInstrumentation], bool]
+    ]
+    enable_host_metrics: Optional[bool]
+    environment: Optional[str]
+    hostname: Optional[str]
+    log_level: Optional[str]
+    name: Optional[str]
+    push_api_key: Optional[str]
+    revision: Optional[str]
 
 
 def from_system() -> Options:
@@ -56,30 +59,20 @@ def from_system() -> Options:
 
 
 def from_public_environ() -> Options:
-    disable_default_instrumentations = parse_disable_default_instrumentations(
-        os.environ.get("APPSIGNAL_DISABLE_DEFAULT_INSTRUMENTATIONS")
-    )
-
-    # We want the type system to ensure that the keys used here are the
-    # ones defined in the Options typed dict, but we can't directly use
-    # `os.environ.get("APPSIGNAL_WHATEVER")` as their value, as that's an
-    # `Optional[str]`, not an `str`. So we use empty strings as the default
-    # value, then remove the ones whose values are empty strings.
-
     config = Options(
-        environment=os.environ.get("APPSIGNAL_APP_ENV", ""),
-        hostname=os.environ.get("APPSIGNAL_HOSTNAME", ""),
-        log_level=os.environ.get("APPSIGNAL_LOG_LEVEL", ""),
-        name=os.environ.get("APPSIGNAL_APP_NAME", ""),
-        push_api_key=os.environ.get("APPSIGNAL_PUSH_API_KEY", ""),
-        revision=os.environ.get("APP_REVISION", ""),
+        disable_default_instrumentations=parse_disable_default_instrumentations(
+            os.environ.get("APPSIGNAL_DISABLE_DEFAULT_INSTRUMENTATIONS")
+        ),
+        environment=os.environ.get("APPSIGNAL_APP_ENV"),
+        hostname=os.environ.get("APPSIGNAL_HOSTNAME"),
+        log_level=os.environ.get("APPSIGNAL_LOG_LEVEL"),
+        name=os.environ.get("APPSIGNAL_APP_NAME"),
+        push_api_key=os.environ.get("APPSIGNAL_PUSH_API_KEY"),
+        revision=os.environ.get("APP_REVISION"),
     )
-
-    if disable_default_instrumentations is not None:
-        config["disable_default_instrumentations"] = disable_default_instrumentations
 
     for key, value in list(config.items()):
-        if isinstance(value, str) and value == "":
+        if value is None:
             del cast(dict, config)[key]
 
     return config
