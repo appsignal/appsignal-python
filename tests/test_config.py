@@ -67,9 +67,9 @@ def test_set_private_environ():
 
     set_private_environ(config)
 
+    assert os.environ["_APPSIGNAL_APP_ENV"] == "development"
     assert os.environ["_APPSIGNAL_APP_NAME"] == "MyApp"
     assert os.environ["_APPSIGNAL_PUSH_API_KEY"] == "some-api-key"
-    assert os.environ["_APPSIGNAL_ENVIRONMENT"] == "development"
     assert os.environ["_APPSIGNAL_LOG_LEVEL"] == "trace"
 
 
