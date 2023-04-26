@@ -18,6 +18,7 @@ def test_from_system():
 def test_from_public_environ():
     os.environ["APPSIGNAL_APP_ENV"] = "development"
     os.environ["APPSIGNAL_APP_NAME"] = "MyApp"
+    os.environ["APPSIGNAL_HOSTNAME"] = "Test hostname"
     os.environ["APPSIGNAL_LOG_LEVEL"] = "trace"
     os.environ["APPSIGNAL_PUSH_API_KEY"] = "some-api-key"
     os.environ["APP_REVISION"] = "abc123"
@@ -26,6 +27,7 @@ def test_from_public_environ():
 
     assert config == Options(
         environment="development",
+        hostname="Test hostname",
         log_level="trace",
         name="MyApp",
         push_api_key="some-api-key",
@@ -60,6 +62,7 @@ def test_from_public_environ_disable_default_instrumentations_bool():
 def test_set_private_environ():
     config = Options(
         environment="development",
+        hostname="Test hostname",
         log_level="trace",
         name="MyApp",
         push_api_key="some-api-key",
@@ -69,6 +72,7 @@ def test_set_private_environ():
 
     assert os.environ["_APPSIGNAL_APP_ENV"] == "development"
     assert os.environ["_APPSIGNAL_APP_NAME"] == "MyApp"
+    assert os.environ["_APPSIGNAL_HOSTNAME"] == "Test hostname"
     assert os.environ["_APPSIGNAL_LOG_LEVEL"] == "trace"
     assert os.environ["_APPSIGNAL_PUSH_API_KEY"] == "some-api-key"
 

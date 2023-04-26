@@ -44,6 +44,7 @@ class Options(TypedDict, total=False):
     app_path: str
     disable_default_instrumentations: Union[list[DefaultInstrumentation], bool]
     environment: str
+    hostname: str
     log_level: str
     name: str
     push_api_key: str
@@ -67,6 +68,7 @@ def from_public_environ() -> Options:
 
     config = Options(
         environment=os.environ.get("APPSIGNAL_APP_ENV", ""),
+        hostname=os.environ.get("APPSIGNAL_HOSTNAME", ""),
         log_level=os.environ.get("APPSIGNAL_LOG_LEVEL", ""),
         name=os.environ.get("APPSIGNAL_APP_NAME", ""),
         push_api_key=os.environ.get("APPSIGNAL_PUSH_API_KEY", ""),
@@ -87,6 +89,7 @@ def set_private_environ(config: Options):
     private_environ = {
         "_APPSIGNAL_APP_ENV": config.get("environment"),
         "_APPSIGNAL_APP_NAME": config.get("name"),
+        "_APPSIGNAL_HOSTNAME": config.get("hostname"),
         "_APPSIGNAL_LOG_LEVEL": config.get("log_level"),
         "_APPSIGNAL_PUSH_API_KEY": config.get("push_api_key"),
     } | CONSTANT_PRIVATE_ENVIRON
