@@ -85,9 +85,9 @@ def from_public_environ() -> Options:
 
 def set_private_environ(config: Options):
     private_environ = {
+        "_APPSIGNAL_APP_ENV": config.get("environment"),
         "_APPSIGNAL_APP_NAME": config.get("name"),
         "_APPSIGNAL_PUSH_API_KEY": config.get("push_api_key"),
-        "_APPSIGNAL_ENVIRONMENT": config.get("environment"),
         "_APPSIGNAL_LOG_LEVEL": config.get("log_level"),
     } | CONSTANT_PRIVATE_ENVIRON
 

@@ -11,4 +11,4 @@ AGENT_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "appsignal
 def start_agent(config: Options):
     set_private_environ(config)
 
-    subprocess.Popen([AGENT_PATH])
+    subprocess.Popen([AGENT_PATH, "start", "--private"])
