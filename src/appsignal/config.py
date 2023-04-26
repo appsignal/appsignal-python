@@ -1,4 +1,5 @@
 from __future__ import annotations
+from .__about__ import __version__
 
 import os
 from typing import cast, get_args, TypedDict, Union, Optional, Literal
@@ -16,10 +17,9 @@ DEFAULT_INSTRUMENTATIONS = cast(
     list[DefaultInstrumentation], list(get_args(DefaultInstrumentation))
 )
 
-CONSTANT_PRIVATE_ENVIRON = {"_APPSIGNAL_ENABLE_OPENTELEMETRY_HTTP": "true"}
-
-CONSTANT_RESOURCE_ATTRIBUTES = {
-    "appsignal.config.language_integration": "python",
+CONSTANT_PRIVATE_ENVIRON = {
+    "_APPSIGNAL_LANGUAGE_INTEGRATION_VERSION": f"python-{__version__}",
+    "_APPSIGNAL_ENABLE_OPENTELEMETRY_HTTP": "true",
 }
 
 
@@ -109,4 +109,4 @@ def opentelemetry_resource_attributes(config: Options):
         if v is not None
     }
 
-    return attributes | CONSTANT_RESOURCE_ATTRIBUTES
+    return attributes

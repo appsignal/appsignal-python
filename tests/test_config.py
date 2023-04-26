@@ -1,4 +1,5 @@
 import os
+from appsignal.__about__ import __version__
 
 from appsignal.config import (
     Options,
@@ -75,6 +76,9 @@ def test_set_private_environ():
     assert os.environ["_APPSIGNAL_HOSTNAME"] == "Test hostname"
     assert os.environ["_APPSIGNAL_LOG_LEVEL"] == "trace"
     assert os.environ["_APPSIGNAL_PUSH_API_KEY"] == "some-api-key"
+    assert (
+        os.environ["_APPSIGNAL_LANGUAGE_INTEGRATION_VERSION"] == f"python-{__version__}"
+    )
 
 
 def test_opentelemetry_resource_attributes():
@@ -87,6 +91,5 @@ def test_opentelemetry_resource_attributes():
 
     assert attributes == {
         "appsignal.config.app_path": "/path/to/app",
-        "appsignal.config.language_integration": "python",
         "appsignal.config.revision": "abc123",
     }
