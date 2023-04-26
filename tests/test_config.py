@@ -6,7 +6,6 @@ from appsignal.config import (
     from_system,
     from_public_environ,
     set_private_environ,
-    opentelemetry_resource_attributes,
 )
 
 
@@ -62,34 +61,24 @@ def test_from_public_environ_disable_default_instrumentations_bool():
 
 def test_set_private_environ():
     config = Options(
+        app_path="/path/to/app",
         environment="development",
         hostname="Test hostname",
         log_level="trace",
         name="MyApp",
         push_api_key="some-api-key",
+        revision="abc123",
     )
 
     set_private_environ(config)
 
     assert os.environ["_APPSIGNAL_APP_ENV"] == "development"
     assert os.environ["_APPSIGNAL_APP_NAME"] == "MyApp"
+    assert os.environ["_APPSIGNAL_APP_PATH"] == "/path/to/app"
     assert os.environ["_APPSIGNAL_HOSTNAME"] == "Test hostname"
     assert os.environ["_APPSIGNAL_LOG_LEVEL"] == "trace"
     assert os.environ["_APPSIGNAL_PUSH_API_KEY"] == "some-api-key"
     assert (
         os.environ["_APPSIGNAL_LANGUAGE_INTEGRATION_VERSION"] == f"python-{__version__}"
     )
-
-
-def test_opentelemetry_resource_attributes():
-    config = Options(
-        app_path="/path/to/app",
-        revision="abc123",
-    )
-
-    attributes = opentelemetry_resource_attributes(config)
-
-    assert attributes == {
-        "appsignal.config.app_path": "/path/to/app",
-        "appsignal.config.revision": "abc123",
-    }
+    assert os.environ["_APP_REVISION"] == "abc123"

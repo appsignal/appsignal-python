@@ -1,12 +1,11 @@
 from __future__ import annotations
 
-from .config import Options, opentelemetry_resource_attributes, DefaultInstrumentation
+from .config import Options, DefaultInstrumentation
 
 from typing import Callable
 
 from opentelemetry import trace
 from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
-from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
 
@@ -68,8 +67,7 @@ DEFAULT_INSTRUMENTATION_ADDERS: DefaultInstrumentationAdders = {
 
 
 def start_opentelemetry(config: Options):
-    resource = Resource(attributes=opentelemetry_resource_attributes(config))
-    provider = TracerProvider(resource=resource)
+    provider = TracerProvider()
 
     otlp_exporter = OTLPSpanExporter(endpoint="http://localhost:8099")
     exporter_processor = BatchSpanProcessor(otlp_exporter)
