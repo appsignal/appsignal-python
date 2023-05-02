@@ -82,24 +82,13 @@ def set_private_environ(config: Options):
     private_environ = {
         "_APPSIGNAL_APP_ENV": config.get("environment"),
         "_APPSIGNAL_APP_NAME": config.get("name"),
+        "_APPSIGNAL_APP_PATH": config.get("app_path"),
         "_APPSIGNAL_HOSTNAME": config.get("hostname"),
         "_APPSIGNAL_LOG_LEVEL": config.get("log_level"),
         "_APPSIGNAL_PUSH_API_KEY": config.get("push_api_key"),
+        "_APP_REVISION": config.get("revision"),
     } | CONSTANT_PRIVATE_ENVIRON
 
     for var, value in private_environ.items():
         if value is not None:
             os.environ[var] = str(value)
-
-
-def opentelemetry_resource_attributes(config: Options):
-    attributes = {
-        k: v
-        for k, v in {
-            "appsignal.config.app_path": config.get("app_path"),
-            "appsignal.config.revision": config.get("revision"),
-        }.items()
-        if v is not None
-    }
-
-    return attributes
