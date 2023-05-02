@@ -16,5 +16,6 @@ class Client:
         self._options = DEFAULT_CONFIG | from_system() | options | from_public_environ()
 
     def start(self):
-        start_agent(self._options)
-        start_opentelemetry(self._options)
+        if self._options.get("active"):
+            start_agent(self._options)
+            start_opentelemetry(self._options)

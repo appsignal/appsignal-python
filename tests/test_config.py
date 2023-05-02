@@ -149,4 +149,4 @@ def test_set_private_environ_bool_is_none():
 
     set_private_environ(config)
 
-    assert os.environ["_APPSIGNAL_ACTIVE"] == ""
+    assert os.environ.get("_APPSIGNAL_ACTIVE") is None

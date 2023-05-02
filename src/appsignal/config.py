@@ -129,7 +129,7 @@ def from_public_environ() -> Options:
 
 def bool_to_env_str(value: Optional[bool]):
     if value is None:
-        return ""
+        return None
 
     return str(value).lower()
 
