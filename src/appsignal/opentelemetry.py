@@ -1,6 +1,7 @@
 from __future__ import annotations
+import os
 
-from .config import Options, DefaultInstrumentation
+from .config import Options, DefaultInstrumentation, list_to_env_str
 
 from typing import Callable
 
@@ -67,6 +68,13 @@ DEFAULT_INSTRUMENTATION_ADDERS: DefaultInstrumentationAdders = {
 
 
 def start_opentelemetry(config: Options):
+    # Configure OpenTelemetry request headers config
+    request_headers = list_to_env_str(config.get("request_headers"))
+    if request_headers:
+        os.environ[
+            "OTEL_INSTRUMENTATION_HTTP_CAPTURE_HEADERS_SERVER_REQUEST"
+        ] = request_headers
+
     provider = TracerProvider()
 
     otlp_exporter = OTLPSpanExporter(endpoint="http://localhost:8099")
