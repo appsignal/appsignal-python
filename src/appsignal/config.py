@@ -109,15 +109,19 @@ DEFAULT_CONFIG = Options(
 
 
 def log_file_path(config: Options) -> Optional[str]:
-    filename = "appsignal.log"
     path = config.get("log_path")
 
-    if path and not os.access(path, os.W_OK):
-        path = None
-        print(
-            f"appsignal: Unable to write to configured '{path}'. Please check the "
-            "permissions of the 'log_path' directory."
-        )
+    if path:
+        _, ext = os.path.splitext(path)
+        if ext:
+            path = os.path.dirname(path)
+
+        if not os.access(path, os.W_OK):
+            path = None
+            print(
+                f"appsignal: Unable to write to configured '{path}'. Please check the "
+                "permissions of the 'log_path' directory."
+            )
 
     if not path:
         path = "/tmp" if platform.system() == "Darwin" else tempfile.gettempdir()
@@ -128,8 +132,7 @@ def log_file_path(config: Options) -> Optional[str]:
             "permissions of the 'log_path' directory."
         )
         return None
-
-    return "/".join([path, filename])
+    return os.path.join(path, "appsignal.log")
 
 
 def from_system() -> Options:

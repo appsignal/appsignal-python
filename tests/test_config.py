@@ -195,6 +195,15 @@ def test_set_private_environ_valid_log_path():
     assert os.environ["_APPSIGNAL_LOG_FILE_PATH"] == f"{cwdir}/appsignal.log"
 
 
+def test_set_private_environ_remove_filename_from_log_path():
+    cwdir = os.getcwd()
+    log_path = os.path.join(cwdir, "test.log")
+    config = Options(log_path=log_path)
+    set_private_environ(config)
+
+    assert os.environ["_APPSIGNAL_LOG_FILE_PATH"] == f"{cwdir}/appsignal.log"
+
+
 def test_set_private_environ_invalid_log_path():
     config = Options(log_path="/i_dont_exist")
     set_private_environ(config)
