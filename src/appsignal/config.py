@@ -92,7 +92,12 @@ class Options(TypedDict, total=False):
     working_directory_path: Optional[str]
 
 
+CA_FILE_PATH = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "resources", "cacert.pem"
+)
+
 DEFAULT_CONFIG = Options(
+    ca_file_path=CA_FILE_PATH,
     enable_host_metrics=True,
     enable_nginx_metrics=False,
     enable_statsd=False,
