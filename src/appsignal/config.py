@@ -70,11 +70,13 @@ class Options(TypedDict, total=False):
     enable_host_metrics: Optional[bool]
     enable_nginx_metrics: Optional[bool]
     enable_statsd: Optional[bool]
+    endpoint: Optional[str]
     environment: Optional[str]
     files_world_accessible: Optional[bool]
     filter_parameters: Optional[list[str]]
     filter_session_data: Optional[list[str]]
     hostname: Optional[str]
+    http_proxy: Optional[str]
     ignore_actions: Optional[list[str]]
     ignore_errors: Optional[list[str]]
     ignore_namespaces: Optional[list[str]]
@@ -86,12 +88,14 @@ class Options(TypedDict, total=False):
     send_environment_metadata: Optional[bool]
     send_params: Optional[bool]
     send_session_data: Optional[bool]
+    working_directory_path: Optional[str]
 
 
 DEFAULT_CONFIG = Options(
     enable_host_metrics=True,
     enable_nginx_metrics=False,
     enable_statsd=False,
+    endpoint="https://push.appsignal.com",
     files_world_accessible=True,
     send_environment_metadata=True,
     send_params=True,
@@ -115,6 +119,7 @@ def from_public_environ() -> Options:
             os.environ.get("APPSIGNAL_ENABLE_NGINX_METRICS")
         ),
         enable_statsd=parse_bool(os.environ.get("APPSIGNAL_ENABLE_STATSD")),
+        endpoint=os.environ.get("APPSIGNAL_PUSH_API_ENDPOINT"),
         environment=os.environ.get("APPSIGNAL_APP_ENV"),
         files_world_accessible=parse_bool(
             os.environ.get("APPSIGNAL_FILES_WORLD_ACCESSIBLE")
@@ -122,6 +127,7 @@ def from_public_environ() -> Options:
         filter_parameters=parse_list(os.environ.get("APPSIGNAL_FILTER_PARAMETERS")),
         filter_session_data=parse_list(os.environ.get("APPSIGNAL_FILTER_SESSION_DATA")),
         hostname=os.environ.get("APPSIGNAL_HOSTNAME"),
+        http_proxy=os.environ.get("APPSIGNAL_HTTP_PROXY"),
         ignore_actions=parse_list(os.environ.get("APPSIGNAL_IGNORE_ACTIONS")),
         ignore_errors=parse_list(os.environ.get("APPSIGNAL_IGNORE_ERRORS")),
         ignore_namespaces=parse_list(os.environ.get("APPSIGNAL_IGNORE_NAMESPACES")),
@@ -137,6 +143,7 @@ def from_public_environ() -> Options:
         ),
         send_params=parse_bool(os.environ.get("APPSIGNAL_SEND_PARAMS")),
         send_session_data=parse_bool(os.environ.get("APPSIGNAL_SEND_SESSION_DATA")),
+        working_directory_path=os.environ.get("APPSIGNAL_WORKING_DIRECTORY_PATH"),
     )
 
     for key, value in list(config.items()):
@@ -184,6 +191,7 @@ def set_private_environ(config: Options):
             config.get("filter_session_data")
         ),
         "_APPSIGNAL_HOSTNAME": config.get("hostname"),
+        "_APPSIGNAL_HTTP_PROXY": config.get("http_proxy"),
         "_APPSIGNAL_IGNORE_ACTIONS": list_to_env_str(config.get("ignore_actions")),
         "_APPSIGNAL_IGNORE_ERRORS": list_to_env_str(config.get("ignore_errors")),
         "_APPSIGNAL_IGNORE_NAMESPACES": list_to_env_str(
@@ -191,6 +199,7 @@ def set_private_environ(config: Options):
         ),
         "_APPSIGNAL_LOG_LEVEL": config.get("log_level"),
         "_APPSIGNAL_PUSH_API_KEY": config.get("push_api_key"),
+        "_APPSIGNAL_PUSH_API_ENDPOINT": config.get("endpoint"),
         "_APPSIGNAL_RUNNING_IN_CONTAINER": bool_to_env_str(
             config.get("running_in_container")
         ),
@@ -201,6 +210,7 @@ def set_private_environ(config: Options):
         "_APPSIGNAL_SEND_SESSION_DATA": bool_to_env_str(
             config.get("send_session_data")
         ),
+        "_APPSIGNAL_WORKING_DIRECTORY_PATH": config.get("working_directory_path"),
         "_APP_REVISION": config.get("revision"),
     } | CONSTANT_PRIVATE_ENVIRON
 
