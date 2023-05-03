@@ -8,7 +8,7 @@ clean:
 build:
   command: "hatch run build:all"
 publish:
-  command: "hatch publish"
+  command: "hatch publish --repo test"
 test:
   command: "hatch run test:pytest"
 read_version: "hatch version"
