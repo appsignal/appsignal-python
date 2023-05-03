@@ -23,9 +23,7 @@ classifiers = [
   "Programming Language :: Python :: Implementation :: CPython",
   "Programming Language :: Python :: Implementation :: PyPy",
   # Application version
-  "Development Status :: 3 - Alpha",
-  # Remove this to allow publishing
-  "Private :: Do Not Upload"
+  "Development Status :: 3 - Alpha"
 ]
 dependencies = [
   "opentelemetry-api",
