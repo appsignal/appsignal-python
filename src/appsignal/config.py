@@ -63,6 +63,7 @@ def parse_disable_default_instrumentations(
 class Options(TypedDict, total=False):
     active: Optional[bool]
     app_path: Optional[str]
+    ca_file_path: Optional[str]
     disable_default_instrumentations: Optional[
         Union[list[DefaultInstrumentation], bool]
     ]
@@ -110,6 +111,7 @@ def from_system() -> Options:
 def from_public_environ() -> Options:
     config = Options(
         active=parse_bool(os.environ.get("APPSIGNAL_ACTIVE")),
+        ca_file_path=os.environ.get("APPSIGNAL_CA_FILE_PATH"),
         disable_default_instrumentations=parse_disable_default_instrumentations(
             os.environ.get("APPSIGNAL_DISABLE_DEFAULT_INSTRUMENTATIONS")
         ),
@@ -173,6 +175,7 @@ def set_private_environ(config: Options):
         "_APPSIGNAL_APP_ENV": config.get("environment"),
         "_APPSIGNAL_APP_NAME": config.get("name"),
         "_APPSIGNAL_APP_PATH": config.get("app_path"),
+        "_APPSIGNAL_CA_FILE_PATH": config.get("ca_file_path"),
         "_APPSIGNAL_DNS_SERVERS": list_to_env_str(config.get("dns_servers")),
         "_APPSIGNAL_ENABLE_HOST_METRICS": bool_to_env_str(
             config.get("enable_host_metrics")
