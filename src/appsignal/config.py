@@ -89,6 +89,7 @@ class Options(TypedDict, total=False):
     name: Optional[str]
     push_api_key: Optional[str]
     revision: Optional[str]
+    request_headers: Optional[list[str]]
     running_in_container: Optional[bool]
     send_environment_metadata: Optional[bool]
     send_params: Optional[bool]
@@ -102,6 +103,16 @@ DEFAULT_CONFIG = Options(
     enable_statsd=False,
     endpoint="https://push.appsignal.com",
     files_world_accessible=True,
+    request_headers=[
+        "accept",
+        "accept-charset",
+        "accept-encoding",
+        "accept-language",
+        "cache-control",
+        "connection",
+        "content-length",
+        "range",
+    ],
     send_environment_metadata=True,
     send_params=True,
     send_session_data=True,
@@ -169,6 +180,7 @@ def from_public_environ() -> Options:
         name=os.environ.get("APPSIGNAL_APP_NAME"),
         push_api_key=os.environ.get("APPSIGNAL_PUSH_API_KEY"),
         revision=os.environ.get("APP_REVISION"),
+        request_headers=parse_list(os.environ.get("APPSIGNAL_REQUEST_HEADERS")),
         running_in_container=parse_bool(
             os.environ.get("APPSIGNAL_RUNNING_IN_CONTAINER")
         ),
