@@ -2,6 +2,8 @@ from __future__ import annotations
 from .__about__ import __version__
 
 import os
+import platform
+import tempfile
 from typing import cast, get_args, TypedDict, Union, Optional, Literal
 
 DefaultInstrumentation = Literal[
@@ -110,7 +112,6 @@ def log_file_path(config: Options) -> Optional[str]:
     filename = "appsignal.log"
     path = config.get("log_path")
 
-    print(f"!!!path {path}")
     if path and not os.access(path, os.W_OK):
         path = None
         print(
@@ -119,7 +120,7 @@ def log_file_path(config: Options) -> Optional[str]:
         )
 
     if not path:
-        path = "/tmp"
+        path = "/tmp" if platform.system() == "Darwin" else tempfile.gettempdir()
 
     if not os.access(path, os.W_OK):
         print(
