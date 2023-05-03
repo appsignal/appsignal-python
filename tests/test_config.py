@@ -33,6 +33,7 @@ def test_from_public_environ():
     os.environ["APPSIGNAL_IGNORE_ERRORS"] = "error1,error2"
     os.environ["APPSIGNAL_IGNORE_NAMESPACES"] = "namespace1,namespace2"
     os.environ["APPSIGNAL_LOG_LEVEL"] = "trace"
+    os.environ["APPSIGNAL_LOG_PATH"] = "/path/to/log_dir"
     os.environ["APPSIGNAL_PUSH_API_KEY"] = "some-api-key"
     os.environ["APPSIGNAL_PUSH_API_ENDPOINT"] = "https://push.appsignal.com"
     os.environ["APPSIGNAL_RUNNING_IN_CONTAINER"] = "true"
@@ -62,6 +63,7 @@ def test_from_public_environ():
         ignore_errors=["error1", "error2"],
         ignore_namespaces=["namespace1", "namespace2"],
         log_level="trace",
+        log_path="/path/to/log_dir",
         name="MyApp",
         push_api_key="some-api-key",
         revision="abc123",
@@ -120,6 +122,7 @@ def test_from_public_environ_disable_default_instrumentations_bool():
 
 
 def test_set_private_environ():
+    cwdir = os.getcwd()
     config = Options(
         active=True,
         app_path="/path/to/app",
@@ -139,6 +142,7 @@ def test_set_private_environ():
         ignore_errors=["error1", "error2"],
         ignore_namespaces=["namespace1", "namespace2"],
         log_level="trace",
+        log_path=cwdir,
         name="MyApp",
         push_api_key="some-api-key",
         revision="abc123",
@@ -169,6 +173,7 @@ def test_set_private_environ():
     assert os.environ["_APPSIGNAL_IGNORE_ERRORS"] == "error1,error2"
     assert os.environ["_APPSIGNAL_IGNORE_NAMESPACES"] == "namespace1,namespace2"
     assert os.environ["_APPSIGNAL_LOG_LEVEL"] == "trace"
+    assert os.environ["_APPSIGNAL_LOG_FILE_PATH"] == f"{cwdir}/appsignal.log"
     assert os.environ["_APPSIGNAL_PUSH_API_KEY"] == "some-api-key"
     assert os.environ["_APPSIGNAL_PUSH_API_ENDPOINT"] == "https://push.appsignal.com"
     assert (
@@ -180,6 +185,21 @@ def test_set_private_environ():
     assert os.environ["_APPSIGNAL_SEND_SESSION_DATA"] == "true"
     assert os.environ["_APPSIGNAL_WORKING_DIRECTORY_PATH"] == "/path/to/working/dir"
     assert os.environ["_APP_REVISION"] == "abc123"
+
+
+def test_set_private_environ_valid_log_path():
+    cwdir = os.getcwd()
+    config = Options(log_path=cwdir)
+    set_private_environ(config)
+
+    assert os.environ["_APPSIGNAL_LOG_FILE_PATH"] == f"{cwdir}/appsignal.log"
+
+
+def test_set_private_environ_invalid_log_path():
+    config = Options(log_path="/i_dont_exist")
+    set_private_environ(config)
+
+    assert os.environ["_APPSIGNAL_LOG_FILE_PATH"] == "/tmp/appsignal.log"
 
 
 def test_set_private_environ_bool_is_none():

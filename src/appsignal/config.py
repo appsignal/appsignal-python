@@ -82,6 +82,8 @@ class Options(TypedDict, total=False):
     ignore_errors: Optional[list[str]]
     ignore_namespaces: Optional[list[str]]
     log_level: Optional[str]
+    log_path: Optional[str]
+    log_file_path: Optional[str]
     name: Optional[str]
     push_api_key: Optional[str]
     revision: Optional[str]
@@ -102,6 +104,31 @@ DEFAULT_CONFIG = Options(
     send_params=True,
     send_session_data=True,
 )
+
+
+def log_file_path(config: Options) -> Optional[str]:
+    filename = "appsignal.log"
+    path = config.get("log_path")
+
+    print(f"!!!path {path}")
+    if path and not os.access(path, os.W_OK):
+        path = None
+        print(
+            f"appsignal: Unable to write to configured '{path}'. Please check the "
+            "permissions of the 'log_path' directory."
+        )
+
+    if not path:
+        path = "/tmp"
+
+    if not os.access(path, os.W_OK):
+        print(
+            f"appsignal: Unable to write to '{path}'. Please check the "
+            "permissions of the 'log_path' directory."
+        )
+        return None
+
+    return "/".join([path, filename])
 
 
 def from_system() -> Options:
@@ -134,6 +161,7 @@ def from_public_environ() -> Options:
         ignore_errors=parse_list(os.environ.get("APPSIGNAL_IGNORE_ERRORS")),
         ignore_namespaces=parse_list(os.environ.get("APPSIGNAL_IGNORE_NAMESPACES")),
         log_level=os.environ.get("APPSIGNAL_LOG_LEVEL"),
+        log_path=os.environ.get("APPSIGNAL_LOG_PATH"),
         name=os.environ.get("APPSIGNAL_APP_NAME"),
         push_api_key=os.environ.get("APPSIGNAL_PUSH_API_KEY"),
         revision=os.environ.get("APP_REVISION"),
@@ -201,6 +229,7 @@ def set_private_environ(config: Options):
             config.get("ignore_namespaces")
         ),
         "_APPSIGNAL_LOG_LEVEL": config.get("log_level"),
+        "_APPSIGNAL_LOG_FILE_PATH": log_file_path(config),
         "_APPSIGNAL_PUSH_API_KEY": config.get("push_api_key"),
         "_APPSIGNAL_PUSH_API_ENDPOINT": config.get("endpoint"),
         "_APPSIGNAL_RUNNING_IN_CONTAINER": bool_to_env_str(
