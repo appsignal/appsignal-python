@@ -21,11 +21,14 @@ Options:
 
 
 def run():
-    version = f"AppSignal for Python v{__version__}"
+    try:
+        version = f"AppSignal for Python v{__version__}"
 
-    arguments = docopt(DOC, version=version)
+        arguments = docopt(DOC, version=version)
 
-    return command_for(arguments).run()
+        return command_for(arguments).run()
+    except KeyboardInterrupt:
+        return 0
 
 
 class CLICommand(ABC):
