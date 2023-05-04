@@ -33,7 +33,7 @@ dependencies = [
 dynamic = ["version"]
 
 [project.urls]
-Documentation = "https://github.com/appsignal/appsignal-python#readme"
+Documentation = "https://docs.appsignal.com/python"
 Issues = "https://github.com/appsignal/appsignal-python/issues"
 Source = "https://github.com/appsignal/appsignal-python"
 
