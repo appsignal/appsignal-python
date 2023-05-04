@@ -65,15 +65,33 @@ class InstallCommand(CLICommand):
         self._name = None
 
     def run(self) -> int:
-        print("Welcome to the AppSignal for Python installer!")
+        print("👋 Welcome to the AppSignal for Python installer!")
+        print()
+        print("Reach us at support@appsignal.com for support")
+        print("Documentation available at https://docs.appsignal.com/python")
+        print()
+
         self._input_name()
 
         if self._push_api_key is None:
             self._input_push_api_key()
 
+        print()
+
         if self._should_write_file():
             print(f"Writing the {INSTALL_FILE_NAME} configuration file...")
             self._write_file()
+            print()
+            print("✅ Done! AppSignal for Python has now been installed.")
+            print()
+            print(
+                "To start AppSignal in your application, add the following code to your"
+            )
+            print("application's entrypoint:")
+            print()
+            print("    from __appsignal__ import appsignal")
+            print("    appsignal.start()")
+            print()
         else:
             print("Nothing to do. Exiting...")
 
