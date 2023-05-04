@@ -29,13 +29,12 @@ def mock_input(mocker, pairs):
 
 def mock_file_operations(mocker, file_exists=False):
     mocker.patch("os.path.exists", return_value=file_exists)
-    mocker.patch("os.getcwd", return_value="/app")
     mocker.patch("builtins.open")
 
 
 def assert_wrote_file_contents(mocker):
     builtins_open = cast(MagicMock, builtins.open)
-    assert mocker.call("/app/appsignal_config.py", "w") in builtins_open.mock_calls
+    assert mocker.call("__appsignal__.py", "w") in builtins_open.mock_calls
     assert (
         mocker.call().__enter__().write(EXPECTED_FILE_CONTENTS)
         in builtins_open.mock_calls
@@ -103,7 +102,7 @@ def test_install_command_when_file_exists_overwrite(mocker):
             ("Please enter the name of your application: ", "My app name"),
             ("Please enter your Push API key: ", "My push API key"),
             (
-                "The appsignal_config.py file already exists."
+                "The __appsignal__.py file already exists."
                 " Should it be overwritten? (y/N): ",
                 "y",
             ),
@@ -125,7 +124,7 @@ def test_install_command_when_file_exists_no_overwrite(mocker):
             ("Please enter the name of your application: ", "My app name"),
             ("Please enter your Push API key: ", "My push API key"),
             (
-                "The appsignal_config.py file already exists."
+                "The __appsignal__.py file already exists."
                 " Should it be overwritten? (y/N): ",
                 "n",
             ),

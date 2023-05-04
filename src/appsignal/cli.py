@@ -51,8 +51,7 @@ appsignal = Appsignal(
 )
 """
 
-INSTALL_FILE_NAME = "appsignal_config.py"
-INSTALL_FILE_PATH = f"{os.getcwd()}/{INSTALL_FILE_NAME}"
+INSTALL_FILE_NAME = "__appsignal__.py"
 
 
 class InstallCommand(CLICommand):
@@ -79,7 +78,7 @@ class InstallCommand(CLICommand):
         return 0
 
     def _should_write_file(self):
-        if os.path.exists(INSTALL_FILE_PATH):
+        if os.path.exists(INSTALL_FILE_NAME):
             return self._input_should_overwrite_file()
         else:
             return True
@@ -109,7 +108,7 @@ class InstallCommand(CLICommand):
             self._input_name()
 
     def _write_file(self):
-        with open(INSTALL_FILE_PATH, "w") as f:
+        with open(INSTALL_FILE_NAME, "w") as f:
             file_contents = INSTALL_FILE_TEMPLATE.format(
                 name=self._name,
                 push_api_key=self._push_api_key,
