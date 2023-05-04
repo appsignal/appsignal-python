@@ -106,6 +106,7 @@ DEFAULT_CONFIG = Options(
     enable_nginx_metrics=False,
     enable_statsd=False,
     endpoint="https://push.appsignal.com",
+    environment="development",
     files_world_accessible=True,
     send_environment_metadata=True,
     send_params=True,
