@@ -47,7 +47,6 @@ appsignal = Appsignal(
     active=True,
     name="{name}",
     push_api_key="{push_api_key}",
-    environment="development",
 )
 """
 
