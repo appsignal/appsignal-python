@@ -44,7 +44,16 @@ class Options(TypedDict, total=False):
     working_directory_path: Optional[str]
 
 
+class Sources(TypedDict):
+    default: Options
+    system: Options
+    initial: Options
+    environment: Options
+
+
 class Config:
+    sources: Sources
+
     CA_FILE_PATH = os.path.join(
         os.path.dirname(os.path.abspath(__file__)), "resources", "cacert.pem"
     )
@@ -74,7 +83,7 @@ class Config:
     )
 
     def __init__(self, options: Optional[Options] = None):
-        self.sources = dict(
+        self.sources = Sources(
             default=self.DEFAULT_CONFIG,
             system=Config.load_from_system(),
             initial=options or Options(),
