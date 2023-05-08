@@ -1,21 +1,17 @@
 import os
 from appsignal.__about__ import __version__
 
-from appsignal.config import (
-    Options,
-    from_system,
-    from_public_environ,
-    set_private_environ,
-)
+from appsignal.config import Config, Options
 
 
-def test_from_system():
-    config = from_system()
+def test_system_source():
+    config = Config(None)
 
-    assert list(config.keys()) == ["app_path"]
+    assert list(config.system_source.keys()) == ["app_path"]
+    assert "app_path" in list(config.options.keys())
 
 
-def test_from_public_environ():
+def test_environ_source():
     os.environ["APPSIGNAL_ACTIVE"] = "true"
     os.environ["APPSIGNAL_APP_ENV"] = "development"
     os.environ["APPSIGNAL_APP_NAME"] = "MyApp"
@@ -43,9 +39,9 @@ def test_from_public_environ():
     os.environ["APPSIGNAL_WORKING_DIRECTORY_PATH"] = "/path/to/working/dir"
     os.environ["APP_REVISION"] = "abc123"
 
-    config = from_public_environ()
+    config = Config(None)
 
-    assert config == Options(
+    env_options = Options(
         active=True,
         ca_file_path="/path/to/cacert.pem",
         dns_servers=["8.8.8.8", "8.8.4.4"],
@@ -73,43 +69,53 @@ def test_from_public_environ():
         send_session_data=True,
         working_directory_path="/path/to/working/dir",
     )
+    assert config.environment_source == env_options
+    assert config.options == (
+        Config.DEFAULT_CONFIG | config.system_source | env_options
+    )
 
 
-def test_from_public_environ_bool_is_unset():
-    config = from_public_environ()
+def test_environ_source_bool_is_unset():
+    config = Config(None)
 
-    assert config.get("active") is None
+    assert config.environment_source.get("active") is None
+    assert config.options.get("active") is None
 
 
-def test_from_public_environ_bool_is_empty_string():
+def test_environ_source_bool_is_empty_string():
     os.environ["APPSIGNAL_ACTIVE"] = ""
 
-    config = from_public_environ()
+    config = Config(None)
 
-    assert config.get("active") is None
+    assert config.environment_source.get("active") is None
+    assert config.options.get("active") is None
 
 
-def test_from_public_environ_bool_is_invalid():
+def test_environ_source_bool_is_invalid():
     os.environ["APPSIGNAL_ACTIVE"] = "invalid"
 
-    config = from_public_environ()
+    config = Config(None)
 
-    assert config.get("active") is None
+    assert config.environment_source.get("active") is None
+    assert config.options.get("active") is None
 
 
-def test_from_public_environ_disable_default_instrumentations_list():
+def test_environ_source_disable_default_instrumentations_list():
     os.environ["APPSIGNAL_DISABLE_DEFAULT_INSTRUMENTATIONS"] = ",".join(
         ["opentelemetry.instrumentation.celery", "something.else"]
     )
 
-    config = from_public_environ()
+    config = Config(None)
 
-    assert config["disable_default_instrumentations"] == [
+    assert config.environment_source["disable_default_instrumentations"] == [
+        "opentelemetry.instrumentation.celery"
+    ]
+    assert config.options["disable_default_instrumentations"] == [
         "opentelemetry.instrumentation.celery"
     ]
 
 
-def test_from_public_environ_disable_default_instrumentations_bool():
+def test_environ_source_disable_default_instrumentations_bool():
     for value, expected in [
         ("True", True),
         ("true", True),
@@ -117,43 +123,45 @@ def test_from_public_environ_disable_default_instrumentations_bool():
         ("false", False),
     ]:
         os.environ["APPSIGNAL_DISABLE_DEFAULT_INSTRUMENTATIONS"] = value
-        config = from_public_environ()
-        assert config["disable_default_instrumentations"] is expected
+        config = Config(None)
+        assert config.options["disable_default_instrumentations"] is expected
 
 
 def test_set_private_environ():
     cwdir = os.getcwd()
-    config = Options(
-        active=True,
-        app_path="/path/to/app",
-        ca_file_path="/path/to/cacert.pem",
-        dns_servers=["8.8.8.8", "8.8.4.4"],
-        enable_host_metrics=True,
-        enable_nginx_metrics=False,
-        enable_statsd=False,
-        endpoint="https://push.appsignal.com",
-        environment="development",
-        files_world_accessible=True,
-        filter_parameters=["password", "secret"],
-        filter_session_data=["key1", "key2"],
-        hostname="Test hostname",
-        http_proxy="http://proxy.local:9999",
-        ignore_actions=["action1", "action2"],
-        ignore_errors=["error1", "error2"],
-        ignore_namespaces=["namespace1", "namespace2"],
-        log_level="trace",
-        log_path=cwdir,
-        name="MyApp",
-        push_api_key="some-api-key",
-        revision="abc123",
-        running_in_container=True,
-        send_environment_metadata=True,
-        send_params=True,
-        send_session_data=True,
-        working_directory_path="/path/to/working/dir",
+    config = Config(
+        Options(
+            active=True,
+            app_path="/path/to/app",
+            ca_file_path="/path/to/cacert.pem",
+            dns_servers=["8.8.8.8", "8.8.4.4"],
+            enable_host_metrics=True,
+            enable_nginx_metrics=False,
+            enable_statsd=False,
+            endpoint="https://push.appsignal.com",
+            environment="development",
+            files_world_accessible=True,
+            filter_parameters=["password", "secret"],
+            filter_session_data=["key1", "key2"],
+            hostname="Test hostname",
+            http_proxy="http://proxy.local:9999",
+            ignore_actions=["action1", "action2"],
+            ignore_errors=["error1", "error2"],
+            ignore_namespaces=["namespace1", "namespace2"],
+            log_level="trace",
+            log_path=cwdir,
+            name="MyApp",
+            push_api_key="some-api-key",
+            revision="abc123",
+            running_in_container=True,
+            send_environment_metadata=True,
+            send_params=True,
+            send_session_data=True,
+            working_directory_path="/path/to/working/dir",
+        )
     )
 
-    set_private_environ(config)
+    config.set_private_environ()
 
     assert os.environ["_APPSIGNAL_ACTIVE"] == "true"
     assert os.environ["_APPSIGNAL_APP_ENV"] == "development"
@@ -189,8 +197,8 @@ def test_set_private_environ():
 
 def test_set_private_environ_valid_log_path():
     cwdir = os.getcwd()
-    config = Options(log_path=cwdir)
-    set_private_environ(config)
+    config = Config(Options(log_path=cwdir))
+    config.set_private_environ()
 
     assert os.environ["_APPSIGNAL_LOG_FILE_PATH"] == f"{cwdir}/appsignal.log"
 
@@ -198,34 +206,30 @@ def test_set_private_environ_valid_log_path():
 def test_set_private_environ_remove_filename_from_log_path():
     cwdir = os.getcwd()
     log_path = os.path.join(cwdir, "test.log")
-    config = Options(log_path=log_path)
-    set_private_environ(config)
+    config = Config(Options(log_path=log_path))
+    config.set_private_environ()
 
     assert os.environ["_APPSIGNAL_LOG_FILE_PATH"] == f"{cwdir}/appsignal.log"
 
 
 def test_set_private_environ_invalid_log_path():
-    config = Options(log_path="/i_dont_exist")
-    set_private_environ(config)
+    config = Config(Options(log_path="/i_dont_exist"))
+    config.set_private_environ()
 
     assert os.environ["_APPSIGNAL_LOG_FILE_PATH"] == "/tmp/appsignal.log"
 
 
 def test_set_private_environ_bool_is_none():
-    config = Options(
-        active=None,
-    )
+    config = Config(Options(active=None))
 
-    set_private_environ(config)
+    config.set_private_environ()
 
     assert os.environ.get("_APPSIGNAL_ACTIVE") is None
 
 
 def test_set_private_environ_list_is_none():
-    config = Options(
-        dns_servers=None,
-    )
+    config = Config(Options(dns_servers=None))
 
-    set_private_environ(config)
+    config.set_private_environ()
 
     assert os.environ.get("_APPSIGNAL_DNS_SERVERS") is None

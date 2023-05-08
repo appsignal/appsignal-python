@@ -1,14 +1,14 @@
 from unittest.mock import Mock
 
-from appsignal.config import Options
-from appsignal.opentelemetry import add_instrumentations, DefaultInstrumentation
+from appsignal.config import Config, Options
+from appsignal.opentelemetry import add_instrumentations
 
 
 def raise_module_not_found_error():
     raise ModuleNotFoundError()
 
 
-def mock_adders() -> dict[DefaultInstrumentation, Mock]:
+def mock_adders() -> dict[Config.DefaultInstrumentation, Mock]:
     return {
         "opentelemetry.instrumentation.celery": Mock(),
         "opentelemetry.instrumentation.jinja2": Mock(
@@ -19,7 +19,7 @@ def mock_adders() -> dict[DefaultInstrumentation, Mock]:
 
 def test_add_instrumentations():
     adders = mock_adders()
-    config = Options()
+    config = Config(None)
 
     add_instrumentations(config, default_instrumentation_adders=adders)
 
@@ -29,8 +29,10 @@ def test_add_instrumentations():
 
 def test_add_instrumentations_disable_some_default_instrumentations():
     adders = mock_adders()
-    config = Options(
-        disable_default_instrumentations=["opentelemetry.instrumentation.celery"]
+    config = Config(
+        Options(
+            disable_default_instrumentations=["opentelemetry.instrumentation.celery"]
+        )
     )
 
     add_instrumentations(config, default_instrumentation_adders=adders)
@@ -41,7 +43,7 @@ def test_add_instrumentations_disable_some_default_instrumentations():
 
 def test_add_instrumentations_disable_all_default_instrumentations():
     adders = mock_adders()
-    config = Options(disable_default_instrumentations=True)
+    config = Config(Options(disable_default_instrumentations=True))
 
     add_instrumentations(config, default_instrumentation_adders=adders)
 

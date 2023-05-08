@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from .config import Options, DefaultInstrumentation
+from .config import Config
 
 from typing import Callable
 
@@ -54,7 +54,9 @@ def add_requests_instrumentation():
 
 
 DefaultInstrumentationAdder = Callable[[], None]
-DefaultInstrumentationAdders = dict[DefaultInstrumentation, DefaultInstrumentationAdder]
+DefaultInstrumentationAdders = dict[
+    Config.DefaultInstrumentation, DefaultInstrumentationAdder
+]
 
 DEFAULT_INSTRUMENTATION_ADDERS: DefaultInstrumentationAdders = {
     "opentelemetry.instrumentation.celery": add_celery_instrumentation,
@@ -66,7 +68,7 @@ DEFAULT_INSTRUMENTATION_ADDERS: DefaultInstrumentationAdders = {
 }
 
 
-def start_opentelemetry(config: Options):
+def start_opentelemetry(config: Config):
     provider = TracerProvider()
 
     otlp_exporter = OTLPSpanExporter(endpoint="http://localhost:8099")
@@ -78,9 +80,9 @@ def start_opentelemetry(config: Options):
 
 
 def add_instrumentations(
-    config: Options, default_instrumentation_adders=DEFAULT_INSTRUMENTATION_ADDERS
+    config: Config, default_instrumentation_adders=DEFAULT_INSTRUMENTATION_ADDERS
 ):
-    disable_list = config.get("disable_default_instrumentations") or []
+    disable_list = config.options.get("disable_default_instrumentations") or []
 
     if disable_list is True:
         return
