@@ -4,6 +4,14 @@ from appsignal.__about__ import __version__
 from appsignal.config import Config, Options
 
 
+def test_option():
+    config = Config(Options(active=False, enable_host_metrics=True))
+
+    assert config.option("active") is False
+    assert config.option("enable_host_metrics") is True
+    assert config.option("nonsense") is None
+
+
 def test_system_source():
     config = Config()
 
@@ -79,7 +87,7 @@ def test_environ_source_bool_is_unset():
     config = Config()
 
     assert config.sources["environment"].get("active") is None
-    assert config.options.get("active") is None
+    assert config.option("active") is None
 
 
 def test_environ_source_bool_is_empty_string():
@@ -88,7 +96,7 @@ def test_environ_source_bool_is_empty_string():
     config = Config()
 
     assert config.sources["environment"].get("active") is None
-    assert config.options.get("active") is None
+    assert config.option("active") is None
 
 
 def test_environ_source_bool_is_invalid():
@@ -97,7 +105,7 @@ def test_environ_source_bool_is_invalid():
     config = Config()
 
     assert config.sources["environment"].get("active") is None
-    assert config.options.get("active") is None
+    assert config.option("active") is None
 
 
 def test_environ_source_disable_default_instrumentations_list():

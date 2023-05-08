@@ -87,6 +87,9 @@ class Config:
             | self.sources["environment"]
         )
 
+    def option(self, option: str):
+        return self.options.get(option)
+
     @classmethod
     def load_from_system(_cls) -> Options:
         return Options(app_path=os.getcwd())
