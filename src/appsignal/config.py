@@ -75,8 +75,8 @@ class Config:
 
     def __init__(self, options: Optional[Options] = None):
         self.initial_source = options or Options()
-        self.system_source = self.load_from_system()
-        self.environment_source = self.load_from_environment()
+        self.system_source = Config.load_from_system()
+        self.environment_source = Config.load_from_environment()
         self.options = (
             self.DEFAULT_CONFIG
             | self.system_source
@@ -84,10 +84,12 @@ class Config:
             | self.environment_source
         )
 
-    def load_from_system(self) -> Options:
+    @classmethod
+    def load_from_system(_cls) -> Options:
         return Options(app_path=os.getcwd())
 
-    def load_from_environment(self) -> Options:
+    @classmethod
+    def load_from_environment(_cls) -> Options:
         options = Options(
             active=parse_bool(os.environ.get("APPSIGNAL_ACTIVE")),
             ca_file_path=os.environ.get("APPSIGNAL_CA_FILE_PATH"),
