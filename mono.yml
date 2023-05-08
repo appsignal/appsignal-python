@@ -13,3 +13,4 @@ test:
   command: "hatch run test:pytest"
 read_version: "hatch version"
 write_version: "hatch version"
+version_scheme: "python"
