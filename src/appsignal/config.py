@@ -74,14 +74,17 @@ class Config:
     )
 
     def __init__(self, options: Optional[Options] = None):
-        self.initial_source = options or Options()
-        self.system_source = Config.load_from_system()
-        self.environment_source = Config.load_from_environment()
+        self.sources = dict(
+            default=self.DEFAULT_CONFIG,
+            system=Config.load_from_system(),
+            initial=options or Options(),
+            environment=Config.load_from_environment(),
+        )
         self.options = (
-            self.DEFAULT_CONFIG
-            | self.system_source
-            | self.initial_source
-            | self.environment_source
+            self.sources["default"]
+            | self.sources["system"]
+            | self.sources["initial"]
+            | self.sources["environment"]
         )
 
     @classmethod

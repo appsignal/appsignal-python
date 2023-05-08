@@ -7,7 +7,7 @@ from appsignal.config import Config, Options
 def test_system_source():
     config = Config()
 
-    assert list(config.system_source.keys()) == ["app_path"]
+    assert list(config.sources["system"].keys()) == ["app_path"]
     assert "app_path" in list(config.options.keys())
 
 
@@ -69,16 +69,16 @@ def test_environ_source():
         send_session_data=True,
         working_directory_path="/path/to/working/dir",
     )
-    assert config.environment_source == env_options
+    assert config.sources["environment"] == env_options
     assert config.options == (
-        Config.DEFAULT_CONFIG | config.system_source | env_options
+        config.sources["default"] | config.sources["system"] | env_options
     )
 
 
 def test_environ_source_bool_is_unset():
     config = Config()
 
-    assert config.environment_source.get("active") is None
+    assert config.sources["environment"].get("active") is None
     assert config.options.get("active") is None
 
 
@@ -87,7 +87,7 @@ def test_environ_source_bool_is_empty_string():
 
     config = Config()
 
-    assert config.environment_source.get("active") is None
+    assert config.sources["environment"].get("active") is None
     assert config.options.get("active") is None
 
 
@@ -96,7 +96,7 @@ def test_environ_source_bool_is_invalid():
 
     config = Config()
 
-    assert config.environment_source.get("active") is None
+    assert config.sources["environment"].get("active") is None
     assert config.options.get("active") is None
 
 
@@ -107,7 +107,7 @@ def test_environ_source_disable_default_instrumentations_list():
 
     config = Config()
 
-    assert config.environment_source["disable_default_instrumentations"] == [
+    assert config.sources["environment"]["disable_default_instrumentations"] == [
         "opentelemetry.instrumentation.celery"
     ]
     assert config.options["disable_default_instrumentations"] == [
