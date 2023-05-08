@@ -19,7 +19,7 @@ def mock_adders() -> dict[Config.DefaultInstrumentation, Mock]:
 
 def test_add_instrumentations():
     adders = mock_adders()
-    config = Config(None)
+    config = Config()
 
     add_instrumentations(config, default_instrumentation_adders=adders)
 

@@ -5,9 +5,9 @@ from appsignal.config import Config, Options
 
 
 def test_system_source():
-    config = Config(None)
+    config = Config()
 
-    assert list(config.system_source.keys()) == ["app_path"]
+    assert list(config.sources["system"].keys()) == ["app_path"]
     assert "app_path" in list(config.options.keys())
 
 
@@ -39,7 +39,7 @@ def test_environ_source():
     os.environ["APPSIGNAL_WORKING_DIRECTORY_PATH"] = "/path/to/working/dir"
     os.environ["APP_REVISION"] = "abc123"
 
-    config = Config(None)
+    config = Config()
 
     env_options = Options(
         active=True,
@@ -69,34 +69,34 @@ def test_environ_source():
         send_session_data=True,
         working_directory_path="/path/to/working/dir",
     )
-    assert config.environment_source == env_options
+    assert config.sources["environment"] == env_options
     assert config.options == (
-        Config.DEFAULT_CONFIG | config.system_source | env_options
+        config.sources["default"] | config.sources["system"] | env_options
     )
 
 
 def test_environ_source_bool_is_unset():
-    config = Config(None)
+    config = Config()
 
-    assert config.environment_source.get("active") is None
+    assert config.sources["environment"].get("active") is None
     assert config.options.get("active") is None
 
 
 def test_environ_source_bool_is_empty_string():
     os.environ["APPSIGNAL_ACTIVE"] = ""
 
-    config = Config(None)
+    config = Config()
 
-    assert config.environment_source.get("active") is None
+    assert config.sources["environment"].get("active") is None
     assert config.options.get("active") is None
 
 
 def test_environ_source_bool_is_invalid():
     os.environ["APPSIGNAL_ACTIVE"] = "invalid"
 
-    config = Config(None)
+    config = Config()
 
-    assert config.environment_source.get("active") is None
+    assert config.sources["environment"].get("active") is None
     assert config.options.get("active") is None
 
 
@@ -105,9 +105,9 @@ def test_environ_source_disable_default_instrumentations_list():
         ["opentelemetry.instrumentation.celery", "something.else"]
     )
 
-    config = Config(None)
+    config = Config()
 
-    assert config.environment_source["disable_default_instrumentations"] == [
+    assert config.sources["environment"]["disable_default_instrumentations"] == [
         "opentelemetry.instrumentation.celery"
     ]
     assert config.options["disable_default_instrumentations"] == [
@@ -123,7 +123,7 @@ def test_environ_source_disable_default_instrumentations_bool():
         ("false", False),
     ]:
         os.environ["APPSIGNAL_DISABLE_DEFAULT_INSTRUMENTATIONS"] = value
-        config = Config(None)
+        config = Config()
         assert config.options["disable_default_instrumentations"] is expected
 
 

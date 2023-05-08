@@ -44,7 +44,16 @@ class Options(TypedDict, total=False):
     working_directory_path: Optional[str]
 
 
+class Sources(TypedDict):
+    default: Options
+    system: Options
+    initial: Options
+    environment: Options
+
+
 class Config:
+    sources: Sources
+
     CA_FILE_PATH = os.path.join(
         os.path.dirname(os.path.abspath(__file__)), "resources", "cacert.pem"
     )
@@ -73,19 +82,26 @@ class Config:
         list[DefaultInstrumentation], list(get_args(DefaultInstrumentation))
     )
 
-    def __init__(self, options: Optional[Options]):
-        self.initial_source = options
-        self.system_source = self.load_from_system()
-        self.environment_source = self.load_from_environment()
-        self.options = self.DEFAULT_CONFIG | self.system_source
-        if self.initial_source:
-            self.options = self.options | self.initial_source
-        self.options = self.options | self.environment_source
+    def __init__(self, options: Optional[Options] = None):
+        self.sources = Sources(
+            default=self.DEFAULT_CONFIG,
+            system=Config.load_from_system(),
+            initial=options or Options(),
+            environment=Config.load_from_environment(),
+        )
+        self.options = (
+            self.sources["default"]
+            | self.sources["system"]
+            | self.sources["initial"]
+            | self.sources["environment"]
+        )
 
-    def load_from_system(self) -> Options:
+    @classmethod
+    def load_from_system(_cls) -> Options:
         return Options(app_path=os.getcwd())
 
-    def load_from_environment(self) -> Options:
+    @classmethod
+    def load_from_environment(_cls) -> Options:
         options = Options(
             active=parse_bool(os.environ.get("APPSIGNAL_ACTIVE")),
             ca_file_path=os.environ.get("APPSIGNAL_CA_FILE_PATH"),
