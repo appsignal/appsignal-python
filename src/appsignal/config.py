@@ -73,14 +73,16 @@ class Config:
         list[DefaultInstrumentation], list(get_args(DefaultInstrumentation))
     )
 
-    def __init__(self, options: Optional[Options]):
-        self.initial_source = options
+    def __init__(self, options: Optional[Options] = None):
+        self.initial_source = options or Options()
         self.system_source = self.load_from_system()
         self.environment_source = self.load_from_environment()
-        self.options = self.DEFAULT_CONFIG | self.system_source
-        if self.initial_source:
-            self.options = self.options | self.initial_source
-        self.options = self.options | self.environment_source
+        self.options = (
+            self.DEFAULT_CONFIG
+            | self.system_source
+            | self.initial_source
+            | self.environment_source
+        )
 
     def load_from_system(self) -> Options:
         return Options(app_path=os.getcwd())
