@@ -32,6 +32,7 @@ class Options(TypedDict, total=False):
     ignore_actions: Optional[list[str]]
     ignore_errors: Optional[list[str]]
     ignore_namespaces: Optional[list[str]]
+    log: Optional[str]
     log_level: Optional[str]
     log_path: Optional[str]
     name: Optional[str]
@@ -66,6 +67,8 @@ class Config:
         environment="development",
         endpoint="https://push.appsignal.com",
         files_world_accessible=True,
+        log="file",
+        log_level="info",
         send_environment_metadata=True,
         send_params=True,
         send_session_data=True,
@@ -144,6 +147,7 @@ class Config:
             ignore_actions=parse_list(os.environ.get("APPSIGNAL_IGNORE_ACTIONS")),
             ignore_errors=parse_list(os.environ.get("APPSIGNAL_IGNORE_ERRORS")),
             ignore_namespaces=parse_list(os.environ.get("APPSIGNAL_IGNORE_NAMESPACES")),
+            log=os.environ.get("APPSIGNAL_LOG"),
             log_level=os.environ.get("APPSIGNAL_LOG_LEVEL"),
             log_path=os.environ.get("APPSIGNAL_LOG_PATH"),
             name=os.environ.get("APPSIGNAL_APP_NAME"),
@@ -204,6 +208,7 @@ class Config:
             "_APPSIGNAL_IGNORE_NAMESPACES": list_to_env_str(
                 options.get("ignore_namespaces")
             ),
+            "_APPSIGNAL_LOG": options.get("log"),
             "_APPSIGNAL_LOG_LEVEL": options.get("log_level"),
             "_APPSIGNAL_LOG_FILE_PATH": self.log_file_path(),
             "_APPSIGNAL_PUSH_API_KEY": options.get("push_api_key"),
