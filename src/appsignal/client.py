@@ -14,7 +14,7 @@ class Client:
     _logger: Logger
     _config: Config
 
-    LOG_LEVELS = dict(error=ERROR, warning=WARNING, info=INFO, debug=DEBUG)
+    LOG_LEVELS = dict(error=ERROR, warning=WARNING, info=INFO, debug=DEBUG, trace=DEBUG)
 
     def __init__(self, **options: Unpack[Options]):
         self._config = Config(options)
