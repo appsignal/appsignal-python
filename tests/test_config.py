@@ -40,6 +40,7 @@ def test_environ_source():
     os.environ["APPSIGNAL_LOG_PATH"] = "/path/to/log_dir"
     os.environ["APPSIGNAL_PUSH_API_KEY"] = "some-api-key"
     os.environ["APPSIGNAL_PUSH_API_ENDPOINT"] = "https://push.appsignal.com"
+    os.environ["APPSIGNAL_REQUEST_HEADERS"] = "accept,x-custom-header"
     os.environ["APPSIGNAL_RUNNING_IN_CONTAINER"] = "true"
     os.environ["APPSIGNAL_SEND_ENVIRONMENT_METADATA"] = "true"
     os.environ["APPSIGNAL_SEND_PARAMS"] = "true"
@@ -71,6 +72,7 @@ def test_environ_source():
         name="MyApp",
         push_api_key="some-api-key",
         revision="abc123",
+        request_headers=["accept", "x-custom-header"],
         running_in_container=True,
         send_environment_metadata=True,
         send_params=True,

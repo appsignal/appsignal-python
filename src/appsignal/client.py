@@ -15,6 +15,6 @@ class Client:
         self._config = Config(options)
 
     def start(self):
-        if self._config.options.get("active"):
+        if self._config.option("active"):
             start_agent(self._config)
             start_opentelemetry(self._config)
