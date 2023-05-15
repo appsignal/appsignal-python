@@ -33,7 +33,6 @@ class Options(TypedDict, total=False):
     ignore_namespaces: Optional[list[str]]
     log_level: Optional[str]
     log_path: Optional[str]
-    log_file_path: Optional[str]
     name: Optional[str]
     push_api_key: Optional[str]
     revision: Optional[str]
