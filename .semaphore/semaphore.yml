@@ -31,6 +31,10 @@ blocks:
   dependencies: []
   task:
     jobs:
+    - name: Python 3.8
+      commands:
+      - "sem-version python 3.8"
+      - "hatch run test.py38:pytest"
     - name: Python 3.9
       commands:
       - "sem-version python 3.9"
