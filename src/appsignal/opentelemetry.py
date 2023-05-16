@@ -1,5 +1,6 @@
 from __future__ import annotations
 import os
+from typing import Dict
 
 from .config import Config, list_to_env_str
 
@@ -55,7 +56,7 @@ def add_requests_instrumentation():
 
 
 DefaultInstrumentationAdder = Callable[[], None]
-DefaultInstrumentationAdders = dict[
+DefaultInstrumentationAdders = Dict[
     Config.DefaultInstrumentation, DefaultInstrumentationAdder
 ]
 

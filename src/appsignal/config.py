@@ -1,5 +1,6 @@
 from __future__ import annotations
 from .__about__ import __version__
+from typing import List
 
 import os
 import platform
@@ -89,7 +90,7 @@ class Config:
         "opentelemetry.instrumentation.requests",
     ]
     DEFAULT_INSTRUMENTATIONS = cast(
-        list[DefaultInstrumentation], list(get_args(DefaultInstrumentation))
+        List[DefaultInstrumentation], list(get_args(DefaultInstrumentation))
     )
 
     def __init__(self, options: Optional[Options] = None):
@@ -284,7 +285,7 @@ def parse_disable_default_instrumentations(
         return False
 
     return cast(
-        list[Config.DefaultInstrumentation],
+        List[Config.DefaultInstrumentation],
         [x for x in value.split(",") if x in Config.DEFAULT_INSTRUMENTATIONS],
     )
 
