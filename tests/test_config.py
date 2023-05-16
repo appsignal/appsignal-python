@@ -80,9 +80,11 @@ def test_environ_source():
         working_directory_path="/path/to/working/dir",
     )
     assert config.sources["environment"] == env_options
-    assert config.options == (
-        config.sources["default"] | config.sources["system"] | env_options
-    )
+    final_options = Options()
+    final_options.update(config.sources["default"])
+    final_options.update(config.sources["system"])
+    final_options.update(env_options)
+    assert config.options == final_options
 
 
 def test_environ_source_bool_is_unset():

@@ -100,12 +100,12 @@ class Config:
             initial=options or Options(),
             environment=Config.load_from_environment(),
         )
-        self.options = (
-            self.sources["default"]
-            | self.sources["system"]
-            | self.sources["initial"]
-            | self.sources["environment"]
-        )
+        final_options = Options()
+        final_options.update(self.sources["default"])
+        final_options.update(self.sources["system"])
+        final_options.update(self.sources["initial"])
+        final_options.update(self.sources["environment"])
+        self.options = final_options
 
     def option(self, option: str):
         return self.options.get(option)
@@ -220,7 +220,8 @@ class Config:
             ),
             "_APPSIGNAL_WORKING_DIRECTORY_PATH": options.get("working_directory_path"),
             "_APP_REVISION": options.get("revision"),
-        } | self.CONSTANT_PRIVATE_ENVIRON
+        }
+        private_environ.update(self.CONSTANT_PRIVATE_ENVIRON)
 
         for var, value in private_environ.items():
             if value is not None:
