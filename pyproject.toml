@@ -41,6 +41,11 @@ Source = "https://github.com/appsignal/appsignal-python"
 [project.scripts]
 appsignal = "appsignal.cli:run"
 
+[tool.pytest.ini_options]
+pythonpath = [
+  "src"
+]
+
 [tool.hatch.version]
 path = "src/appsignal/__about__.py"
 
