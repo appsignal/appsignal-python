@@ -1,5 +1,6 @@
 from typing import Any
 from runpy import run_path
+from typing import Dict
 import os
 import stat
 import hashlib
@@ -77,7 +78,7 @@ class DownloadError(Exception):
 
 
 class CustomBuildHook(BuildHookInterface):
-    def initialize(self, _version: str, build_data: dict[str, Any]) -> None:
+    def initialize(self, _version: str, build_data: Dict[str, Any]) -> None:
         """
         This occurs immediately before each build.
 

@@ -1,4 +1,5 @@
 from unittest.mock import Mock
+from typing import Dict
 
 from appsignal.config import Config, Options
 from appsignal.opentelemetry import add_instrumentations
@@ -8,7 +9,7 @@ def raise_module_not_found_error():
     raise ModuleNotFoundError()
 
 
-def mock_adders() -> dict[Config.DefaultInstrumentation, Mock]:
+def mock_adders() -> Dict[Config.DefaultInstrumentation, Mock]:
     return {
         "opentelemetry.instrumentation.celery": Mock(),
         "opentelemetry.instrumentation.jinja2": Mock(

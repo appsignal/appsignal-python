@@ -1,5 +1,6 @@
 from __future__ import annotations
 from .__about__ import __version__
+from typing import List
 
 import os
 import platform
@@ -89,7 +90,7 @@ class Config:
         "opentelemetry.instrumentation.requests",
     ]
     DEFAULT_INSTRUMENTATIONS = cast(
-        list[DefaultInstrumentation], list(get_args(DefaultInstrumentation))
+        List[DefaultInstrumentation], list(get_args(DefaultInstrumentation))
     )
 
     def __init__(self, options: Optional[Options] = None):
@@ -99,12 +100,12 @@ class Config:
             initial=options or Options(),
             environment=Config.load_from_environment(),
         )
-        self.options = (
-            self.sources["default"]
-            | self.sources["system"]
-            | self.sources["initial"]
-            | self.sources["environment"]
-        )
+        final_options = Options()
+        final_options.update(self.sources["default"])
+        final_options.update(self.sources["system"])
+        final_options.update(self.sources["initial"])
+        final_options.update(self.sources["environment"])
+        self.options = final_options
 
     def option(self, option: str):
         return self.options.get(option)
@@ -219,7 +220,8 @@ class Config:
             ),
             "_APPSIGNAL_WORKING_DIRECTORY_PATH": options.get("working_directory_path"),
             "_APP_REVISION": options.get("revision"),
-        } | self.CONSTANT_PRIVATE_ENVIRON
+        }
+        private_environ.update(self.CONSTANT_PRIVATE_ENVIRON)
 
         for var, value in private_environ.items():
             if value is not None:
@@ -284,7 +286,7 @@ def parse_disable_default_instrumentations(
         return False
 
     return cast(
-        list[Config.DefaultInstrumentation],
+        List[Config.DefaultInstrumentation],
         [x for x in value.split(",") if x in Config.DEFAULT_INSTRUMENTATIONS],
     )
 
