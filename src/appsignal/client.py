@@ -1,5 +1,6 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
+import sys
 import logging
 from logging import Logger, ERROR, WARNING, INFO, DEBUG
 from .agent import start_agent
@@ -29,20 +30,33 @@ class Client:
             start_opentelemetry(self._config)
 
     def start_logger(self):
-        log_file_path = self._config.log_file_path()
-        if log_file_path:
-            self._logger = logging.getLogger("appsignal")
-            handler = logging.FileHandler(log_file_path)
-            handler.setFormatter(
-                logging.Formatter(
-                    "[%(asctime)s (process) #%(process)d][%(levelname)s] %(message)s",
-                    "%Y-%m-%dT%H:%M:%S",
+        self._logger = logging.getLogger("appsignal")
+        self._logger.setLevel(self.LOG_LEVELS[self._config.option("log_level")])
+
+        if self._config.option("log") == "file":
+            log_file_path = self._config.log_file_path()
+            if log_file_path:
+                handler = logging.FileHandler(log_file_path)
+                handler.setFormatter(
+                    logging.Formatter(
+                        "[%(asctime)s (process) #%(process)d][%(levelname)s] "
+                        "%(message)s",
+                        "%Y-%m-%dT%H:%M:%S",
+                    )
                 )
-            )
-            self._logger.addHandler(handler)
-            self._logger.setLevel(self.LOG_LEVELS[self._config.option("log_level")])
+                self._logger.addHandler(handler)
+            else:
+                self._start_stdout_logger()
         else:
-            print(
-                "[appsignal][ERROR] Could not initialize file logger. "
-                "Logger is inactive."
+            self._start_stdout_logger()
+
+    def _start_stdout_logger(self):
+        handler = logging.StreamHandler(sys.stdout)
+        handler.setFormatter(
+            logging.Formatter(
+                "[%(asctime)s (process) #%(process)d][appsignal][%(levelname)s] "
+                "%(message)s",
+                "%Y-%m-%dT%H:%M:%S",
             )
+        )
+        self._logger.addHandler(handler)

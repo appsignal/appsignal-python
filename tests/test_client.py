@@ -105,3 +105,34 @@ def test_logger_file(tmp_path):
         r"\[\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2} \(process\) #\d+\]\[INFO\] test me"
     )
     assert log_line_regex.search(contents)
+
+
+def test_logger_stdout(capsys):
+    client = Client(log="stdout")
+    logger = client._logger
+    logger.info("test me")
+
+    captured = capsys.readouterr()
+    log_line_regex = re.compile(
+        r"\[\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2} \(process\) #\d+\]\[appsignal\]"
+        r"\[INFO\] test me"
+    )
+    assert log_line_regex.search(captured.out)
+
+
+def test_logger_stdout_fallback(capsys, mocker):
+    # Make any path appear unwritable so it will fall back to the STDOUT logger
+    mocker.patch("os.access", return_value=False)
+
+    client = Client(log="file", log_path=None)
+    logger = client._logger
+    logger.info("test me")
+
+    captured = capsys.readouterr()
+    print("!!! out")
+    print(captured.out)
+    log_line_regex = re.compile(
+        r"\[\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2} \(process\) #\d+\]\[appsignal\]"
+        r"\[INFO\] test me"
+    )
+    assert log_line_regex.search(captured.out)
