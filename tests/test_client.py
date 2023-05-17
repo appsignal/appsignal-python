@@ -129,8 +129,6 @@ def test_logger_stdout_fallback(capsys, mocker):
     logger.info("test me")
 
     captured = capsys.readouterr()
-    print("!!! out")
-    print(captured.out)
     log_line_regex = re.compile(
         r"\[\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2} \(process\) #\d+\]\[appsignal\]"
         r"\[INFO\] test me"
