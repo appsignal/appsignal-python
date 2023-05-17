@@ -1,6 +1,7 @@
 from __future__ import annotations
 import os
 from typing import Dict
+import logging
 
 from .config import Config, list_to_env_str
 
@@ -91,6 +92,7 @@ def start_opentelemetry(config: Config):
 def add_instrumentations(
     config: Config, default_instrumentation_adders=DEFAULT_INSTRUMENTATION_ADDERS
 ):
+    logger = logging.getLogger("appsignal")
     disable_list = config.options.get("disable_default_instrumentations") or []
 
     if disable_list is True:
@@ -99,6 +101,7 @@ def add_instrumentations(
     for name, adder in default_instrumentation_adders.items():
         if name not in disable_list:
             try:
+                logger.info(f"Instrumenting {name}")
                 adder()
             except ModuleNotFoundError:
                 pass
