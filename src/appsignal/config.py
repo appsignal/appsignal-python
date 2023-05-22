@@ -241,11 +241,11 @@ class Config:
                 path = os.path.dirname(path)
 
             if not os.access(path, os.W_OK):
-                path = None
                 print(
                     f"appsignal: Unable to write to configured '{path}'. Please "
                     "check the permissions of the 'log_path' directory."
                 )
+                path = None
 
         if not path:
             path = "/tmp" if platform.system() == "Darwin" else tempfile.gettempdir()
