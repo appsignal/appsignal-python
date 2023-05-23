@@ -31,6 +31,12 @@ def add_django_instrumentation():
     DjangoInstrumentor().instrument(response_hook=response_hook)
 
 
+def add_flask_instrumentation():
+    from opentelemetry.instrumentation.flask import FlaskInstrumentor
+
+    FlaskInstrumentor().instrument()
+
+
 def add_jinja2_instrumentation():
     from opentelemetry.instrumentation.jinja2 import Jinja2Instrumentor
 
@@ -63,6 +69,7 @@ DefaultInstrumentationAdders = Dict[
 DEFAULT_INSTRUMENTATION_ADDERS: DefaultInstrumentationAdders = {
     "opentelemetry.instrumentation.celery": add_celery_instrumentation,
     "opentelemetry.instrumentation.django": add_django_instrumentation,
+    "opentelemetry.instrumentation.flask": add_flask_instrumentation,
     "opentelemetry.instrumentation.jinja2": add_jinja2_instrumentation,
     "opentelemetry.instrumentation.psycopg2": add_psycopg2_instrumentation,
     "opentelemetry.instrumentation.redis": add_redis_instrumentation,
