@@ -26,6 +26,7 @@ class Client:
 
     def start(self):
         if self._config.option("active"):
+            self._logger.info("Starting AppSignal")
             start_agent(self._config)
             start_opentelemetry(self._config)
 

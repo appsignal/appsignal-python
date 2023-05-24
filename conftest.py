@@ -1,4 +1,5 @@
 import os
+import logging
 import pytest
 
 
@@ -10,3 +11,12 @@ def reset_environment_between_tests():
 
     os.environ.clear()
     os.environ.update(old_environ)
+
+
+@pytest.fixture(scope="function", autouse=True)
+def remove_logging_handlers_after_tests():
+    yield
+
+    logger = logging.getLogger("appsignal")
+    for handler in logger.handlers:
+        logger.removeHandler(handler)
