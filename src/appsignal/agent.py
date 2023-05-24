@@ -14,6 +14,11 @@ def is_agent_active():
     return agent_active
 
 
+def _reset_agent_active():
+    global agent_active
+    agent_active = False
+
+
 def agent_is_active():
     global agent_active
     agent_active = True
