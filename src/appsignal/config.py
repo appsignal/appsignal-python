@@ -87,6 +87,7 @@ class Config:
     DefaultInstrumentation = Literal[
         "opentelemetry.instrumentation.celery",
         "opentelemetry.instrumentation.django",
+        "opentelemetry.instrumentation.flask",
         "opentelemetry.instrumentation.jinja2",
         "opentelemetry.instrumentation.psycopg2",
         "opentelemetry.instrumentation.redis",
