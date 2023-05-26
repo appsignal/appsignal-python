@@ -1,6 +1,7 @@
 import os
 import logging
 import pytest
+from appsignal.agent import _reset_agent_active
 
 
 @pytest.fixture(scope="function", autouse=True)
@@ -20,3 +21,8 @@ def remove_logging_handlers_after_tests():
     logger = logging.getLogger("appsignal")
     for handler in logger.handlers:
         logger.removeHandler(handler)
+
+
+@pytest.fixture(scope="function", autouse=True)
+def reset_agent_active_state():
+    _reset_agent_active()
