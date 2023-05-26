@@ -1,6 +1,9 @@
 import os
 import logging
 import pytest
+import platform
+import shutil
+import tempfile
 from appsignal.agent import _reset_agent_active
 
 
@@ -26,3 +29,13 @@ def remove_logging_handlers_after_tests():
 @pytest.fixture(scope="function", autouse=True)
 def reset_agent_active_state():
     _reset_agent_active()
+
+
+@pytest.fixture(scope="function", autouse=True)
+def stop_agent():
+    tmp_path = "/tmp" if platform.system() == "Darwin" else tempfile.gettempdir()
+    working_dir = os.path.join(tmp_path, "appsignal")
+    if os.path.isdir(working_dir):
+        shutil.rmtree(working_dir)
+
+    yield
