@@ -34,8 +34,17 @@ def add_django_instrumentation():
 
 def add_flask_instrumentation():
     from opentelemetry.instrumentation.flask import FlaskInstrumentor
+    import json
+    from urllib.parse import parse_qs
 
-    FlaskInstrumentor().instrument()
+    def request_hook(span, environ):
+        if span and span.is_recording():
+            query_params = parse_qs(environ.get("QUERY_STRING", ""))
+            span.set_attribute(
+                "appsignal.request.parameters", json.dumps({"args": query_params})
+            )
+
+    FlaskInstrumentor().instrument(request_hook=request_hook)
 
 
 def add_jinja2_instrumentation():
