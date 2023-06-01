@@ -1,11 +1,13 @@
 from abc import ABC, abstractmethod
 import os
 import json
+import requests
 
 from typing import Optional
 from docopt import docopt
 
 from .__about__ import __version__
+from .config import Config
 
 from appsignal.client import Client
 from opentelemetry import trace
@@ -87,6 +89,7 @@ class InstallCommand(AppsignalCLICommand):
     def __init__(self, push_api_key=None):
         self._push_api_key = push_api_key
         self._name = None
+        self._config = Config()
 
     def run(self) -> int:
         print("👋 Welcome to the AppSignal for Python installer!")
@@ -101,6 +104,15 @@ class InstallCommand(AppsignalCLICommand):
             self._input_push_api_key()
 
         print()
+
+        print("Validating API key")
+        print()
+        if self._validate_push_api_key():
+            print("API key is valid!")
+        else:
+            print(f"API key {self._push_api_key} is not valid ")
+            print("please get a new one on https://appsignal.com")
+            return 1
 
         if self._should_write_file():
             print(f"Writing the {INSTALL_FILE_NAME} configuration file...")
@@ -214,6 +226,19 @@ class InstallCommand(AppsignalCLICommand):
         if requirement_file:
             with open(requirement_file, "a") as f:
                 f.write(f"{dependency_name}\n")
+
+    def _validate_push_api_key(self):
+        endpoint = self._config.option("endpoint")
+        url = f"{endpoint}/1/auth?api_key={self._push_api_key}"
+        proxies = {}
+        if self._config.option("http_proxy"):
+            proxies["http"] = self._config.option("http_proxy")
+            proxies["https"] = self._config.option("http_proxy")
+
+        cert = self._config.option("ca_file_path")
+
+        response = requests.get(url, proxies=proxies, verify=cert)
+        return response.status_code == 200
 
 
 class DemoCommand(AppsignalCLICommand):

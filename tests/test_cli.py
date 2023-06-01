@@ -40,8 +40,14 @@ def assert_wrote_file_contents(mocker):
     )
 
 
+def mock_validate_push_api_key_request(mocker, status_code=200):
+    mock_request = mocker.patch("requests.get")
+    mock_request.return_value = MagicMock(status_code=status_code)
+
+
 def test_install_command_run(mocker):
     mock_file_operations(mocker)
+    mock_validate_push_api_key_request(mocker)
 
     with mock_input(
         mocker,
@@ -59,6 +65,7 @@ def test_install_command_run(mocker):
 
 def test_install_command_when_empty_value_ask_again(mocker):
     mock_file_operations(mocker)
+    mock_validate_push_api_key_request(mocker)
 
     with mock_input(
         mocker,
@@ -78,6 +85,7 @@ def test_install_command_when_empty_value_ask_again(mocker):
 
 def test_install_command_when_push_api_key_given(mocker):
     mock_file_operations(mocker)
+    mock_validate_push_api_key_request(mocker)
 
     with mock_input(
         mocker,
@@ -94,6 +102,7 @@ def test_install_command_when_push_api_key_given(mocker):
 
 def test_install_command_when_file_exists_overwrite(mocker):
     mock_file_operations(mocker, file_exists=True)
+    mock_validate_push_api_key_request(mocker)
 
     with mock_input(
         mocker,
@@ -116,6 +125,7 @@ def test_install_command_when_file_exists_overwrite(mocker):
 
 def test_install_command_when_file_exists_no_overwrite(mocker):
     mock_file_operations(mocker, file_exists=True)
+    mock_validate_push_api_key_request(mocker)
 
     with mock_input(
         mocker,
@@ -134,3 +144,17 @@ def test_install_command_when_file_exists_no_overwrite(mocker):
         InstallCommand().run()
 
     assert [] == cast(MagicMock, builtins.open).mock_calls
+
+
+def test_install_comand_when_api_key_is_not_valid(mocker):
+    mock_validate_push_api_key_request(mocker, status_code=401)
+
+    with mock_input(
+        mocker,
+        [
+            ("Please enter the name of your application: ", "My app name"),
+        ],
+    ):
+        from appsignal.cli import InstallCommand
+
+        assert InstallCommand(push_api_key="bad-push-api-key").run() == 1
