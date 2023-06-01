@@ -2,7 +2,6 @@ import os
 import logging
 import pytest
 import platform
-import shutil
 import tempfile
 from appsignal.agent import _reset_agent_active
 
@@ -36,6 +35,6 @@ def stop_agent():
     tmp_path = "/tmp" if platform.system() == "Darwin" else tempfile.gettempdir()
     working_dir = os.path.join(tmp_path, "appsignal")
     if os.path.isdir(working_dir):
-        shutil.rmtree(working_dir)
+        os.system(r"rm -rf {working_dir}")
 
     yield
