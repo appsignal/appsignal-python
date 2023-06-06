@@ -107,8 +107,8 @@ class Config:
         final_options = Options()
         final_options.update(self.sources["default"])
         final_options.update(self.sources["system"])
-        final_options.update(self.sources["initial"])
         final_options.update(self.sources["environment"])
+        final_options.update(self.sources["initial"])
         self.options = final_options
 
     def option(self, option: str):
