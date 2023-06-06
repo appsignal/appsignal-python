@@ -8,7 +8,7 @@ clean:
 build:
   command: "mono clean; hatch run build:all"
 publish:
-  command: "hatch publish --repo test"
+  command: "hatch publish"
 test:
   command: "hatch run test:pytest"
 read_version: "hatch version"
