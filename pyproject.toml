@@ -50,8 +50,12 @@ path = "src/appsignal/__about__.py"
 
 [tool.hatch.build]
 sources = ["src"]
-exclude = ["src/scripts"]
-artifacts = ["src/appsignal/appsignal-agent"]
+exclude = ["src/scripts", "tests", "conftest.py"]
+artifacts = [
+  "src/appsignal/appsignal-agent",
+  "src/appsignal/resources/cacert.pem",
+  "src/appsignal/py.typed",
+]
 
 [tool.hatch.envs.default]
 dependencies = [
