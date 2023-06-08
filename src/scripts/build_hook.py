@@ -144,6 +144,9 @@ class CustomBuildHook(BuildHookInterface):
                     tar_agent = tar.extractfile("appsignal-agent")
                     if tar_agent is not None:
                         agent.write(tar_agent.read())
+                    else:
+                        print("Failed to extract agent binary; exiting...")
+                        exit(1)
 
             with open(tempversion_path, "w") as version:
                 version.write(APPSIGNAL_AGENT_CONFIG["version"])
