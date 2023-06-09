@@ -13,7 +13,7 @@
 ## Installation
 
 ```console
-pip install appsignal
+pip install appsignal-beta
 ```
 
 ## Development
