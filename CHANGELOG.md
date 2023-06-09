@@ -1,5 +1,19 @@
 # AppSignal for Python Changelog
 
+## 0.1.2
+
+### Changed
+
+- [a96736a](https://github.com/appsignal/appsignal-python/commit/a96736a9dbb69764cd44b429ff5dfa7cb8cb14eb) patch - Bump agent to 8cb4ef2
+  
+  - Fix backtrace parsing for Python.
+  - Add Flask support.
+  - Fix running_in_container detecting for hosts running Docker.
+  - Improve running_in_container config option load order.
+- [7fbf731](https://github.com/appsignal/appsignal-python/commit/7fbf731064de0a79266f8cc467d60346f2484d77) patch - Bump agent d21e1f4
+  
+  - Don't report incidents for root spans that are only psycopg2 queries.
+
 ## 0.1.1
 
 ### Fixed
