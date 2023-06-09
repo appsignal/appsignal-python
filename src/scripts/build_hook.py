@@ -101,6 +101,13 @@ class CustomBuildHook(BuildHookInterface):
         build_data["pure_python"] = False
 
         agent_path = os.path.join(self.root, "src", "appsignal", "appsignal-agent")
+
+        if os.environ.get(
+            "_APPSIGNAL_BUILD_AGENT_PATH", ""
+        ).strip() == "--keep-agent" and os.path.isfile(agent_path):
+            print(f"Using existing agent binary at {agent_path}")
+            return
+
         rm(agent_path)
 
         tempdir_path = os.path.join(self.root, "tmp", triple)
@@ -109,7 +116,19 @@ class CustomBuildHook(BuildHookInterface):
         tempagent_path = os.path.join(tempdir_path, "appsignal_agent")
         tempversion_path = os.path.join(tempdir_path, "version")
 
-        if should_download(tempagent_path, tempversion_path):
+        if os.environ.get("_APPSIGNAL_BUILD_AGENT_PATH", "").strip() != "":
+            tempagent_path = os.path.abspath(
+                os.environ["_APPSIGNAL_BUILD_AGENT_PATH"].strip()
+            )
+
+            if not os.path.isfile(tempagent_path):
+                print(
+                    f"Custom agent binary at {tempagent_path} is not a file; exiting..."
+                )
+                exit(1)
+
+            print(f"Using custom agent binary at {tempagent_path}")
+        elif should_download(tempagent_path, tempversion_path):
             temptar_path = os.path.join(tempdir_path, triple_filename(triple))
 
             rm(tempagent_path)
@@ -144,6 +163,9 @@ class CustomBuildHook(BuildHookInterface):
                     tar_agent = tar.extractfile("appsignal-agent")
                     if tar_agent is not None:
                         agent.write(tar_agent.read())
+                    else:
+                        print("Failed to extract agent binary; exiting...")
+                        exit(1)
 
             with open(tempversion_path, "w") as version:
                 version.write(APPSIGNAL_AGENT_CONFIG["version"])

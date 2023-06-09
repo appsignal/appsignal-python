@@ -13,7 +13,7 @@
 ## Installation
 
 ```console
-pip install appsignal
+pip install appsignal-beta
 ```
 
 ## Development
@@ -53,6 +53,14 @@ appsignal
 hatch run build:all # for all platforms
 hatch run build:me # for your current platform
 hatch run build:for <triple> # for a specific agent triple
+```
+
+#### Custom agent build
+```sh
+hatch run build:me /path/to/agent
+# or place the desired agent binary at
+# `src/appsignal/appsignal-agent`, and then:
+hatch run build:me --keep-agent
 ```
 
 ### Clean up build artifacts
