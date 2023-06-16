@@ -1,7 +1,7 @@
 # AppSignal Python
 
-[![PyPI - Version](https://img.shields.io/pypi/v/appsignal-python.svg)](https://pypi.org/project/appsignal-python)
-[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/appsignal-python.svg)](https://pypi.org/project/appsignal-python)
+[![PyPI - Version](https://img.shields.io/pypi/v/appsignal-beta.svg)](https://pypi.org/project/appsignal-beta)
+[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/appsignal-beta.svg)](https://pypi.org/project/appsignal-beta)
 
 -----
 
