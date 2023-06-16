@@ -1,5 +1,21 @@
 # AppSignal for Python Changelog
 
+## 0.1.3
+
+### Changed
+
+- [e2572ea](https://github.com/appsignal/appsignal-python/commit/e2572ead60b411ec5dfa5ab6e8465f50c2cecf08) patch - Change the configuration source load order. The environment variables are no longer leading, but the `__appsignal__.py` file source is. The load order is now:
+  
+  - Default source (hardcoded config)
+  - System source (context dependent config)
+  - Environment source (environment variables)
+  - Initial source (any config given to `Config()` in `__appsignal__.py`)
+- [6a23212](https://github.com/appsignal/appsignal-python/commit/6a232129c634b4e0c3880e80d8425c0d032ab344) patch - Bump agent to 91f1a7c
+  
+  - Fall back on the revision option for OpenTelemetry endpoint from config, rather than only read it from the OpenTelemetry resource attributes.
+  - Fix agent restart when the config changes, not detecting a config change and not starting a new agent process.
+  - Retry agent servers port binding when port is busy. This fixes Python package restarting the agent when another agent instance is still running.
+
 ## 0.1.2
 
 ### Changed
