@@ -125,3 +125,4 @@ Also see our [SUPPORT.md file](SUPPORT.md).
 [semver]: http://semver.org/
 [waffles-page]: https://www.appsignal.com/waffles
 [coc]: https://docs.appsignal.com/appsignal/code-of-conduct.html
+[contributing-guide]: https://docs.appsignal.com/appsignal/contributing.html
