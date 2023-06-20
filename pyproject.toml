@@ -11,6 +11,7 @@ keywords = []
 authors = [
   { name = "Tom de Bruijn", email = "tom@tomdebruijn.com" },
   { name = "Noemi Lapresta", email = "noemi@appsignal.com" },
+  { name = "Luismi Ramirez", email = "luismi@appsignal.com" },
 ]
 classifiers = [
   # Python versions
@@ -38,7 +39,7 @@ Issues = "https://github.com/appsignal/appsignal-python/issues"
 Source = "https://github.com/appsignal/appsignal-python"
 
 [project.scripts]
-appsignal = "appsignal.cli:run"
+appsignal = "appsignal.cli.base:run"
 
 [tool.pytest.ini_options]
 pythonpath = [
