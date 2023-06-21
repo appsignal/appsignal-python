@@ -56,7 +56,7 @@ def test_install_command_run(mocker):
             ("Please enter your Push API key: ", "My push API key"),
         ],
     ):
-        from appsignal.cli import InstallCommand
+        from appsignal.cli.install import InstallCommand
 
         InstallCommand().run()
 
@@ -76,7 +76,7 @@ def test_install_command_when_empty_value_ask_again(mocker):
             ("Please enter your Push API key: ", "My push API key"),
         ],
     ):
-        from appsignal.cli import InstallCommand
+        from appsignal.cli.install import InstallCommand
 
         InstallCommand().run()
 
@@ -93,7 +93,7 @@ def test_install_command_when_push_api_key_given(mocker):
             ("Please enter the name of your application: ", "My app name"),
         ],
     ):
-        from appsignal.cli import InstallCommand
+        from appsignal.cli.install import InstallCommand
 
         InstallCommand(push_api_key="My push API key").run()
 
@@ -116,7 +116,7 @@ def test_install_command_when_file_exists_overwrite(mocker):
             ),
         ],
     ):
-        from appsignal.cli import InstallCommand
+        from appsignal.cli.install import InstallCommand
 
         InstallCommand().run()
 
@@ -139,7 +139,7 @@ def test_install_command_when_file_exists_no_overwrite(mocker):
             ),
         ],
     ):
-        from appsignal.cli import InstallCommand
+        from appsignal.cli.install import InstallCommand
 
         InstallCommand().run()
 
@@ -155,6 +155,6 @@ def test_install_comand_when_api_key_is_not_valid(mocker):
             ("Please enter the name of your application: ", "My app name"),
         ],
     ):
-        from appsignal.cli import InstallCommand
+        from appsignal.cli.install import InstallCommand
 
         assert InstallCommand(push_api_key="bad-push-api-key").run() == 1
