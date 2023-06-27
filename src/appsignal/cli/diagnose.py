@@ -43,8 +43,4 @@ class DiagnoseCommand(AppsignalCLICommand):
         print(f"  Python version: {platform.python_version()}")
         print(f"  Root user: {os.getuid() == 0}")
         running_in_container = self.config.option("running_in_container")
-        print(f"  Running in container: {running_in_container)}")
-
-    def _get_agent_version(self):
-
-
+        print(f"  Running in container: {running_in_container}")
