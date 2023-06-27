@@ -4,6 +4,7 @@ from ..__about__ import __version__
 from .command import AppsignalCLICommand
 from .demo import DemoCommand
 from .install import InstallCommand
+from .diagnose import DiagnoseCommand
 
 
 DOC = """AppSignal for Python CLI.
@@ -11,6 +12,7 @@ DOC = """AppSignal for Python CLI.
 Usage:
   appsignal install [--push-api-key=<key>]
   appsignal demo [--application=<app>] [--push-api-key=<key>]
+  appsignal diagnose
   appsignal (-h | --help)
   appsignal --version
 
@@ -41,4 +43,7 @@ def command_for(arguments) -> AppsignalCLICommand:
             push_api_key=arguments["--push-api-key"],
             application=arguments["--application"],
         )
-    raise NotImplementedError
+    if arguments["diagnose"]:
+        return DiagnoseCommand()
+    else:
+        raise NotImplementedError
