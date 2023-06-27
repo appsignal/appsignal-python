@@ -6,6 +6,7 @@ from typing import Mapping, NoReturn
 
 from .command import AppsignalCLICommand
 from .demo import DemoCommand
+from .diagnose import DiagnoseCommand
 from .install import InstallCommand
 from .version import VersionCommand
 
@@ -14,6 +15,7 @@ COMMANDS: Mapping[str, type[AppsignalCLICommand]] = {
     "demo": DemoCommand,
     "install": InstallCommand,
     "version": VersionCommand,
+    "diagnose": DiagnoseCommand,
 }
 
 
