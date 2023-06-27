@@ -1,5 +1,11 @@
 # AppSignal for Python Changelog
 
+## 0.1.4
+
+### Added
+
+- [8490ba0](https://github.com/appsignal/appsignal-python/commit/8490ba0af53ae87b92d61eed4834a6ae33600902) patch - Add support for OpenTelemetry instrumentation of ASGI-based frameworks, such as FastAPI and Starlette.
+
 ## 0.1.3
 
 ### Changed
