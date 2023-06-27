@@ -1,18 +1,22 @@
-import platform
 import os
-
+import platform
+from argparse import ArgumentParser
 from pathlib import Path
 
-from .command import AppsignalCLICommand
 from appsignal.config import Config
 
 from ..__about__ import __version__
+from .command import AppsignalCLICommand
+
 
 class DiagnoseCommand(AppsignalCLICommand):
-    def __init__(self):
-        self.config = Config()
+    @staticmethod
+    def init_parser(parser: ArgumentParser) -> None:
+        pass
 
     def run(self):
+        self.config = Config()
+
         self._header()
 
         self._library_information()
