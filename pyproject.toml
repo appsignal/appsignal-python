@@ -82,10 +82,13 @@ dependencies = [
   "opentelemetry-sdk",
   "opentelemetry-exporter-otlp-proto-http",
   "docopt",
+  "types-deprecated",
+  "types-docopt",
+  "types-requests",
 ]
 
 [tool.hatch.envs.lint.scripts]
-typing = "mypy --install-types --non-interactive --check-untyped-defs --enable-incomplete-feature=Unpack {args:src tests}"
+typing = "mypy --enable-incomplete-feature=Unpack {args}"
 style = [
   "ruff {args:.}",
   "black --check --diff {args:.}",
@@ -129,6 +132,10 @@ exclude_lines = [
   "if __name__ == .__main__.:",
   "if TYPE_CHECKING:",
 ]
+
+[tool.mypy]
+files = ["src", "tests"]
+check_untyped_defs = true
 
 [[tool.mypy.overrides]]
 module = "opentelemetry.instrumentation.*"

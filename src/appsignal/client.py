@@ -8,7 +8,7 @@ from .opentelemetry import start_opentelemetry
 from .config import Config, Options
 
 if TYPE_CHECKING:
-    from typing import Unpack
+    from typing_extensions import Unpack
 
 
 class Client:
