@@ -9,7 +9,7 @@ from .command import AppsignalCLICommand
 
 
 class DemoCommand(AppsignalCLICommand):
-    def __init__(self, push_api_key=None, application=None):
+    def __init__(self, push_api_key=None, application=None) -> None:
         self._push_api_key = push_api_key or os.environ.get("APPSIGNAL_PUSH_API_KEY")
         self._name = application or os.environ.get("APPSIGNAL_APP_NAME")
 

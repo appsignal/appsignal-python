@@ -19,7 +19,7 @@ INSTALL_FILE_NAME = "__appsignal__.py"
 
 
 class InstallCommand(AppsignalCLICommand):
-    def __init__(self, push_api_key=None):
+    def __init__(self, push_api_key=None) -> None:
         self._push_api_key = push_api_key
         self._name = None
         self._config = Config()
@@ -84,7 +84,7 @@ class InstallCommand(AppsignalCLICommand):
             print('Please answer "y" (yes) or "n" (no)')
             return self._input_should_overwrite_file()
 
-    def _write_file(self):
+    def _write_file(self) -> None:
         with open(INSTALL_FILE_NAME, "w") as f:
             file_contents = INSTALL_FILE_TEMPLATE.format(
                 name=self._name,
@@ -110,7 +110,7 @@ class InstallCommand(AppsignalCLICommand):
 
         return False
 
-    def _django_installation(self):
+    def _django_installation(self) -> None:
         print("We've detected that you're using Django.")
         print()
 
@@ -126,7 +126,7 @@ class InstallCommand(AppsignalCLICommand):
         print("Please refer to the documentation for more information:")
         print("https://docs.appsignal.com/python/instrumentations/django.html")
 
-    def _flask_installation(self):
+    def _flask_installation(self) -> None:
         print("We've detected that you're using Flask.")
         print()
 
@@ -142,7 +142,7 @@ class InstallCommand(AppsignalCLICommand):
         print("Please refer to the documentation for more information:")
         print("https://docs.appsignal.com/python/instrumentations/flask.html")
 
-    def _generic_installation(self):
+    def _generic_installation(self) -> None:
         print("✅ Done! AppSignal for Python has now been installed.")
         print()
         print("To start AppSignal in your application, add the following code to your")
@@ -154,7 +154,7 @@ class InstallCommand(AppsignalCLICommand):
         print("You can check a list of the supported integrations here:")
         print("https://docs.appsignal.com/python/instrumentations")
 
-    def _add_dependency(self, dependency_name):
+    def _add_dependency(self, dependency_name) -> None:
         requirement_file = self._requirements_file()
         if requirement_file:
             with open(requirement_file, "a") as f:

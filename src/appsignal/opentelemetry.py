@@ -13,17 +13,17 @@ from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
 
 
-def add_celery_instrumentation():
+def add_celery_instrumentation() -> None:
     from opentelemetry.instrumentation.celery import CeleryInstrumentor
 
     CeleryInstrumentor().instrument()
 
 
-def add_django_instrumentation():
+def add_django_instrumentation() -> None:
     from opentelemetry.instrumentation.django import DjangoInstrumentor
     import json
 
-    def response_hook(span, request, response):
+    def response_hook(span, request, response) -> None:
         span.set_attribute(
             "appsignal.request.parameters",
             json.dumps({"GET": request.GET, "POST": request.POST}),
@@ -32,12 +32,12 @@ def add_django_instrumentation():
     DjangoInstrumentor().instrument(response_hook=response_hook)
 
 
-def add_flask_instrumentation():
+def add_flask_instrumentation() -> None:
     from opentelemetry.instrumentation.flask import FlaskInstrumentor
     import json
     from urllib.parse import parse_qs
 
-    def request_hook(span, environ):
+    def request_hook(span, environ) -> None:
         if span and span.is_recording():
             query_params = parse_qs(environ.get("QUERY_STRING", ""))
             span.set_attribute(
@@ -47,25 +47,25 @@ def add_flask_instrumentation():
     FlaskInstrumentor().instrument(request_hook=request_hook)
 
 
-def add_jinja2_instrumentation():
+def add_jinja2_instrumentation() -> None:
     from opentelemetry.instrumentation.jinja2 import Jinja2Instrumentor
 
     Jinja2Instrumentor().instrument()
 
 
-def add_psycopg2_instrumentation():
+def add_psycopg2_instrumentation() -> None:
     from opentelemetry.instrumentation.psycopg2 import Psycopg2Instrumentor
 
     Psycopg2Instrumentor().instrument(enable_commenter=True, commenter_options={})
 
 
-def add_redis_instrumentation():
+def add_redis_instrumentation() -> None:
     from opentelemetry.instrumentation.redis import RedisInstrumentor
 
     RedisInstrumentor().instrument(sanitize_query=True)
 
 
-def add_requests_instrumentation():
+def add_requests_instrumentation() -> None:
     from opentelemetry.instrumentation.requests import RequestsInstrumentor
 
     RequestsInstrumentor().instrument()
@@ -87,7 +87,7 @@ DEFAULT_INSTRUMENTATION_ADDERS: DefaultInstrumentationAdders = {
 }
 
 
-def start_opentelemetry(config: Config):
+def start_opentelemetry(config: Config) -> None:
     # Configure OpenTelemetry request headers config
     request_headers = list_to_env_str(config.option("request_headers"))
     if request_headers:
@@ -107,7 +107,7 @@ def start_opentelemetry(config: Config):
 
 def add_instrumentations(
     config: Config, default_instrumentation_adders=DEFAULT_INSTRUMENTATION_ADDERS
-):
+) -> None:
     logger = logging.getLogger("appsignal")
     disable_list = config.options.get("disable_default_instrumentations") or []
 
