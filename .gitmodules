@@ -1,0 +1,3 @@
+[submodule "tests/diagnose"]
+	path = tests/diagnose
+	url = https://github.com/appsignal/diagnose_tests.git
