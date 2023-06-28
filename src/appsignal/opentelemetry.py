@@ -7,10 +7,15 @@ from .config import Config, list_to_env_str
 
 from typing import Callable
 
-from opentelemetry import trace
+from opentelemetry import trace, metrics
+
 from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
+
+from opentelemetry.exporter.otlp.proto.http.metric_exporter import OTLPMetricExporter
+from opentelemetry.sdk.metrics import MeterProvider
+from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
 
 
 def add_celery_instrumentation():
@@ -95,15 +100,25 @@ def start_opentelemetry(config: Config):
             "OTEL_INSTRUMENTATION_HTTP_CAPTURE_HEADERS_SERVER_REQUEST"
         ] = request_headers
 
-    provider = TracerProvider()
-
-    otlp_exporter = OTLPSpanExporter(endpoint="http://localhost:8099")
-    exporter_processor = BatchSpanProcessor(otlp_exporter)
-    provider.add_span_processor(exporter_processor)
-    trace.set_tracer_provider(provider)
+    # _start_opentelemetry_tracer()
+    _start_opentelemetry_metrics()
 
     add_instrumentations(config)
 
+def _start_opentelemetry_tracer():
+    provider = TracerProvider()
+
+    span_exporter = OTLPSpanExporter(endpoint="http://localhost:8099")
+    span_processor = BatchSpanProcessor(span_exporter)
+    provider.add_span_processor(span_processor)
+    trace.set_tracer_provider(provider)
+
+def _start_opentelemetry_metrics():
+    metric_exporter = OTLPMetricExporter(endpoint="http://localhost:8099")
+    metric_reader = PeriodicExportingMetricReader(metric_exporter)
+
+    provider = MeterProvider(metric_readers=[metric_reader])
+    metrics.set_meter_provider(provider)
 
 def add_instrumentations(
     config: Config, default_instrumentation_adders=DEFAULT_INSTRUMENTATION_ADDERS
