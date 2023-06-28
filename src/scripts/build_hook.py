@@ -37,7 +37,7 @@ def triple_urls(triple: str):
     return [f"{mirror}/{version}/{filename}" for mirror in mirrors]
 
 
-def rm(path: str):
+def rm(path: str) -> None:
     try:
         os.remove(path)
     except FileNotFoundError:

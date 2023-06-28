@@ -17,20 +17,20 @@ class Client:
 
     LOG_LEVELS = dict(error=ERROR, warning=WARNING, info=INFO, debug=DEBUG, trace=DEBUG)
 
-    def __init__(self, **options: Unpack[Options]):
+    def __init__(self, **options: Unpack[Options]) -> None:
         self._config = Config(options)
         self.start_logger()
 
         if not self._config.option("active"):
             self._logger.info("AppSignal not starting: no active config found")
 
-    def start(self):
+    def start(self) -> None:
         if self._config.option("active"):
             self._logger.info("Starting AppSignal")
             start_agent(self._config)
             start_opentelemetry(self._config)
 
-    def start_logger(self):
+    def start_logger(self) -> None:
         self._logger = logging.getLogger("appsignal")
         self._logger.setLevel(self.LOG_LEVELS[self._config.option("log_level")])
 
@@ -51,7 +51,7 @@ class Client:
         else:
             self._start_stdout_logger()
 
-    def _start_stdout_logger(self):
+    def _start_stdout_logger(self) -> None:
         handler = logging.StreamHandler(sys.stdout)
         handler.setFormatter(
             logging.Formatter(

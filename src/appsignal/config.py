@@ -97,7 +97,7 @@ class Config:
         List[DefaultInstrumentation], list(get_args(DefaultInstrumentation))
     )
 
-    def __init__(self, options: Optional[Options] = None):
+    def __init__(self, options: Optional[Options] = None) -> None:
         self.sources = Sources(
             default=self.DEFAULT_CONFIG,
             system=Config.load_from_system(),
@@ -177,7 +177,7 @@ class Config:
         "_APPSIGNAL_ENABLE_OPENTELEMETRY_HTTP": "true",
     }
 
-    def set_private_environ(self):
+    def set_private_environ(self) -> None:
         options = self.options
         private_environ = {
             "_APPSIGNAL_ACTIVE": bool_to_env_str(options.get("active")),

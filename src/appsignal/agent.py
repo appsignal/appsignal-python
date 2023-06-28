@@ -14,17 +14,17 @@ def is_agent_active():
     return agent_active
 
 
-def _reset_agent_active():
+def _reset_agent_active() -> None:
     global agent_active
     agent_active = False
 
 
-def agent_is_active():
+def agent_is_active() -> None:
     global agent_active
     agent_active = True
 
 
-def start_agent(config: Config):
+def start_agent(config: Config) -> None:
     config.set_private_environ()
     p = subprocess.Popen(
         [AGENT_PATH, "start", "--private"],
