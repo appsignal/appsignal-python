@@ -55,7 +55,7 @@ class DiagnoseCommand(AppsignalCLICommand):
     def _library_information(self):
         print("AppSignal library")
         print("  Language: Python")
-        print(f"  Package version: {__version__}")
+        print(f"  Package version: \"{__version__}\"")
         print(f"  Agent version: ")
 
     def _installation_information(self):
