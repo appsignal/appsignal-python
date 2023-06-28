@@ -22,7 +22,25 @@ class DiagnoseCommand(AppsignalCLICommand):
         self._library_information()
         print()
 
+        self._installation_information()
+        print()
+
         self._host_information()
+        print()
+
+        self._agent_information()
+        print()
+
+        self._configuration_information()
+        print()
+
+        self._validation_information()
+        print()
+
+        self._paths_information()
+        print()
+
+        self._report_information()
         print()
 
     def _header(self):
@@ -40,6 +58,9 @@ class DiagnoseCommand(AppsignalCLICommand):
         print(f"  Package version: {__version__}")
         print(f"  Agent version: ")
 
+    def _installation_information(self):
+        print("Extension installation report")
+
     def _host_information(self):
         print("Host information")
         print(f"  Architecture: {platform.platform()}")
@@ -48,3 +69,18 @@ class DiagnoseCommand(AppsignalCLICommand):
         print(f"  Root user: {os.getuid() == 0}")
         running_in_container = self.config.option("running_in_container")
         print(f"  Running in container: {running_in_container}")
+
+    def _agent_information(self):
+        print("Agent diagnostics")
+
+    def _configuration_information(self):
+      print(f"Configuration")
+
+    def _validation_information(self):
+      print(f"Validation")
+
+    def _paths_information(self):
+      print(f"Paths")
+
+    def _report_information(self):
+      print(f"Diagnostics report")
