@@ -4,8 +4,11 @@ import logging
 import os
 from typing import TYPE_CHECKING, Callable, Mapping
 
-from opentelemetry import trace
+from opentelemetry import metrics, trace
+from opentelemetry.exporter.otlp.proto.http.metric_exporter import OTLPMetricExporter
 from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
+from opentelemetry.sdk.metrics import MeterProvider
+from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
 
@@ -101,17 +104,31 @@ def start_opentelemetry(config: Config) -> None:
             "OTEL_INSTRUMENTATION_HTTP_CAPTURE_HEADERS_SERVER_REQUEST"
         ] = request_headers
 
-    provider = TracerProvider()
-
     opentelemetry_port = config.option("opentelemetry_port")
+    _start_opentelemetry_tracer(opentelemetry_port)
+    _start_opentelemetry_metrics(opentelemetry_port)
+
+    add_instrumentations(config)
+
+
+def _start_opentelemetry_tracer(opentelemetry_port: str | int) -> None:
     otlp_exporter = OTLPSpanExporter(
         endpoint=f"http://localhost:{opentelemetry_port}/v1/traces"
     )
     exporter_processor = BatchSpanProcessor(otlp_exporter)
+    provider = TracerProvider()
     provider.add_span_processor(exporter_processor)
     trace.set_tracer_provider(provider)
 
-    add_instrumentations(config)
+
+def _start_opentelemetry_metrics(opentelemetry_port: str | int) -> None:
+    metric_exporter = OTLPMetricExporter(
+        endpoint=f"http://localhost:{opentelemetry_port}/v1/metrics"
+    )
+    metric_reader = PeriodicExportingMetricReader(metric_exporter)
+
+    provider = MeterProvider(metric_readers=[metric_reader])
+    metrics.set_meter_provider(provider)
 
 
 def add_instrumentations(
