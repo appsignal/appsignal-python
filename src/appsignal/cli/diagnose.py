@@ -15,10 +15,15 @@ from .command import AppsignalCLICommand
 class DiagnoseCommand(AppsignalCLICommand):
     @staticmethod
     def init_parser(parser: ArgumentParser) -> None:
-        pass
+        parser.add_argument(
+            "--send-report",
+            action="store_true",
+            help="Send the report to AppSignal",
+        )
 
     def run(self):
         self.config = Config()
+        self.send_report = self.args.send_report
 
         self._header()
 
