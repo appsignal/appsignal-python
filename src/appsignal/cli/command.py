@@ -5,7 +5,7 @@ from typing import Optional
 class AppsignalCLICommand(ABC):
     @abstractmethod
     def run(self) -> int:
-        raise
+        raise NotImplementedError
 
     _push_api_key: Optional[str]
     _name: Optional[str]

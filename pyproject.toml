@@ -65,7 +65,7 @@ dependencies = [
   "pytest-mock",
 ]
 [tool.hatch.envs.default.scripts]
-cov = "pytest --cov-report=term-missing --cov-config=pyproject.toml --cov=src --cov=tests {args}"
+cov = "pytest --cov-report=term-missing --cov=src/appsignal --cov-fail-under=84 {args}"
 no-cov = "cov --no-cov {args}"
 
 [[tool.hatch.envs.test.matrix]]
@@ -134,6 +134,7 @@ exclude_lines = [
   "no cov",
   "if __name__ == .__main__.:",
   "if TYPE_CHECKING:",
+  "raise NotImplementedError",
 ]
 
 [tool.isort]
