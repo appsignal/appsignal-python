@@ -1,7 +1,10 @@
 import os
 import platform
+import urllib
 from argparse import ArgumentParser
 from pathlib import Path
+
+import requests
 
 from appsignal.config import Config
 
@@ -43,6 +46,8 @@ class DiagnoseCommand(AppsignalCLICommand):
         self._report_information()
         print()
 
+        self._send_diagnose_report()
+
     def _header(self):
         print("AppSignal diagnose")
         print("=" * 80)
@@ -55,7 +60,7 @@ class DiagnoseCommand(AppsignalCLICommand):
     def _library_information(self):
         print("AppSignal library")
         print("  Language: Python")
-        print(f"  Package version: \"{__version__}\"")
+        print(f'  Package version: "{__version__}"')
         print(f"  Agent version: ")
         print(f"  Extension loaded: ")
 
@@ -75,13 +80,28 @@ class DiagnoseCommand(AppsignalCLICommand):
         print("Agent diagnostics")
 
     def _configuration_information(self):
-      print(f"Configuration")
+        print(f"Configuration")
 
     def _validation_information(self):
-      print(f"Validation")
+        print(f"Validation")
 
     def _paths_information(self):
-      print(f"Paths")
+        print(f"Paths")
 
     def _report_information(self):
-      print(f"Diagnostics report")
+        print(f"Diagnostics report")
+
+    def _send_diagnose_report(self):
+        params = urllib.parse.urlencode(
+            {
+                "api_key": self.config.option("push_api_key"),
+                "name": self.config.option("name"),
+                "environment": self.config.option("environment"),
+                "hostname": self.config.option("hostname") or "",
+            }
+        )
+
+        endpoint = self.config.option("diagnose_endpoint")
+        url = f"{endpoint}?{params}"
+
+        response = requests.post(url, json={})
