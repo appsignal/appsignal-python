@@ -125,4 +125,15 @@ class DiagnoseCommand(AppsignalCLICommand):
         endpoint = self.config.option("diagnose_endpoint")
         url = f"{endpoint}?{params}"
 
-        response = requests.post(url, json={})
+        response = requests.post(url, json={
+            'diagnose': {
+                'agent': None,
+                'config': None,
+                'host': None,
+                'installation': None,
+                'library': None,
+                'paths': None,
+                'process': None,
+                'validation': None,
+            }
+        })
