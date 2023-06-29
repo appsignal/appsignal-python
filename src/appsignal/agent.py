@@ -28,5 +28,8 @@ class Agent:
             out = output.decode("utf-8")
             print(f"AppSignal agent is unable to start ({returncode}): ", out)
 
+    def diagnose(self) -> str:
+        return subprocess.run([self.path, "diagnose"], capture_output=True).stdout
+
 
 agent = Agent()

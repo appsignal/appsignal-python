@@ -2,11 +2,15 @@ import os
 import platform
 import urllib
 from argparse import ArgumentParser
+import requests
+import json
+
 from pathlib import Path
 
 import requests
 
 from appsignal.config import Config
+from appsignal.agent import Agent
 
 from ..__about__ import __version__
 from .command import AppsignalCLICommand
@@ -27,9 +31,11 @@ class DiagnoseCommand(AppsignalCLICommand):
         )
 
     def run(self):
+        agent = Agent()
         self.config = Config()
         self.send_report = self.args.send_report
         self.no_send_report = self.args.no_send_report
+        self.agent_report = json.loads(agent.diagnose())
 
         self._header()
 
@@ -74,7 +80,7 @@ class DiagnoseCommand(AppsignalCLICommand):
         print("  Language: Python")
         print(f'  Package version: "{__version__}"')
         print(f'  Agent version: "91f1a7c"')
-        print(f"  Extension loaded: true")
+        print(f"  Extension loaded: {self.agent_report['boot']['started']['result']}")
 
     def _installation_information(self):
         print("Extension installation report")
