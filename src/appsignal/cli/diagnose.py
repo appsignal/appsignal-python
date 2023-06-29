@@ -20,10 +20,16 @@ class DiagnoseCommand(AppsignalCLICommand):
             action="store_true",
             help="Send the report to AppSignal",
         )
+        parser.add_argument(
+            "--no-send-report",
+            action="store_true",
+            help="Do not send the report to AppSignal",
+        )
 
     def run(self):
         self.config = Config()
         self.send_report = self.args.send_report
+        self.no_send_report = self.args.no_send_report
 
         self._header()
 
@@ -51,7 +57,7 @@ class DiagnoseCommand(AppsignalCLICommand):
         self._report_information()
         print()
 
-        if(self.send_report or self._report_prompt()):
+        if(self.send_report or (not self.no_send_report and self._report_prompt())):
             self._send_diagnose_report()
 
     def _header(self):
