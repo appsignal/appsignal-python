@@ -76,6 +76,7 @@ detached = true
 dependencies = [
   "black>=23.1.0",
   "mypy>=1.0.0",
+  "isort",
   "ruff>=0.0.243",
   "hatchling", # needed for type checking
   "opentelemetry-api",
@@ -91,9 +92,11 @@ dependencies = [
 typing = "mypy --enable-incomplete-feature=Unpack {args}"
 style = [
   "ruff {args:.}",
+  "isort --check {args:.}",
   "black --check --diff {args:.}",
 ]
 fmt = [
+  "isort {args:.}",
   "black {args:.}",
   "ruff --fix {args:.}",
 ]
