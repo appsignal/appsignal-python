@@ -46,7 +46,8 @@ class DiagnoseCommand(AppsignalCLICommand):
         self._report_information()
         print()
 
-        self._send_diagnose_report()
+        if(self._report_prompt()):
+            self._send_diagnose_report()
 
     def _header(self):
         print("AppSignal diagnose")
@@ -90,6 +91,15 @@ class DiagnoseCommand(AppsignalCLICommand):
 
     def _report_information(self):
         print(f"Diagnostics report")
+
+    def _report_prompt(self):
+      match input("  Send diagnostics report to AppSignal? (Y/n):"):
+        case "y" | "yes" | "":
+            return True
+        case "n" | "no" :
+            return False
+        case _:
+            report_prompt()
 
     def _send_diagnose_report(self):
         params = urllib.parse.urlencode(
