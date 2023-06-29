@@ -1,10 +1,12 @@
-import requests
 import os
+
+import requests
+
+from appsignal.config import Config
 
 from .command import AppsignalCLICommand
 from .demo import DemoCommand
 
-from appsignal.config import Config
 
 INSTALL_FILE_TEMPLATE = """from appsignal import Appsignal
 

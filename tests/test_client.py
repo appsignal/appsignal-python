@@ -1,9 +1,9 @@
-from appsignal.client import Client
-from appsignal.agent import is_agent_active
-
 import os
 import re
-from logging import ERROR, WARNING, INFO, DEBUG
+from logging import DEBUG, ERROR, INFO, WARNING
+
+from appsignal.agent import is_agent_active
+from appsignal.client import Client
 
 
 def test_client_options_merge_sources():

@@ -5,3 +5,4 @@ __pycache__
 /dist
 /src/appsignal/appsignal-agent
 /tmp
+/.coverage

@@ -1,11 +1,14 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING
-import sys
+
 import logging
-from logging import Logger, ERROR, WARNING, INFO, DEBUG
+import sys
+from logging import DEBUG, ERROR, INFO, WARNING, Logger
+from typing import TYPE_CHECKING
+
 from .agent import start_agent
-from .opentelemetry import start_opentelemetry
 from .config import Config, Options
+from .opentelemetry import start_opentelemetry
+
 
 if TYPE_CHECKING:
     from typing_extensions import Unpack

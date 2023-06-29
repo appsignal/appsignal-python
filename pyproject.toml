@@ -133,6 +133,11 @@ exclude_lines = [
   "if TYPE_CHECKING:",
 ]
 
+[tool.isort]
+profile = "black"
+lines_after_imports = 2
+line_length = 88
+
 [tool.mypy]
 files = ["src", "tests"]
 check_untyped_defs = true

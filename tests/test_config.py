@@ -1,6 +1,6 @@
 import os
-from appsignal.__about__ import __version__
 
+from appsignal.__about__ import __version__
 from appsignal.config import Config, Options
 
 

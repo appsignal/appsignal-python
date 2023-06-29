@@ -1,8 +1,8 @@
-from contextlib import contextmanager
 import builtins
-
+from contextlib import contextmanager
 from typing import cast
 from unittest.mock import MagicMock
+
 
 EXPECTED_FILE_CONTENTS = """from appsignal import Appsignal
 
