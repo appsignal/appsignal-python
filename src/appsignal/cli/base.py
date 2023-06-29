@@ -42,5 +42,4 @@ def command_for(arguments) -> AppsignalCLICommand:
             push_api_key=arguments["--push-api-key"],
             application=arguments["--application"],
         )
-    else:
-        raise NotImplementedError
+    raise NotImplementedError
