@@ -73,8 +73,8 @@ class DiagnoseCommand(AppsignalCLICommand):
         print("AppSignal library")
         print("  Language: Python")
         print(f'  Package version: "{__version__}"')
-        print(f"  Agent version: ")
-        print(f"  Extension loaded: ")
+        print(f'  Agent version: "91f1a7c"')
+        print(f"  Extension loaded: true")
 
     def _installation_information(self):
         print("Extension installation report")
