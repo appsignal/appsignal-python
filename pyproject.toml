@@ -45,6 +45,12 @@ appsignal = "appsignal.cli.base:run"
 pythonpath = [
   "src"
 ]
+addopts = [
+  "--cov-report=term-missing",
+  "--cov-report=html",
+  "--cov=src/appsignal",
+  "--cov-fail-under=84",
+]
 
 [tool.hatch.version]
 path = "src/appsignal/__about__.py"
@@ -64,9 +70,6 @@ dependencies = [
   "pytest-cov",
   "pytest-mock",
 ]
-[tool.hatch.envs.default.scripts]
-cov = "pytest --cov-report=term-missing --cov=src/appsignal --cov-fail-under=84 {args}"
-no-cov = "cov --no-cov {args}"
 
 [[tool.hatch.envs.test.matrix]]
 python = ["38", "39", "310", "311"]

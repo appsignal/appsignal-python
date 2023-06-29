@@ -6,3 +6,4 @@ __pycache__
 /src/appsignal/appsignal-agent
 /tmp
 /.coverage
+/htmlcov/
