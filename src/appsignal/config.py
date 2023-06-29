@@ -26,6 +26,7 @@ class Options(TypedDict, total=False):
     app_path: str | None
     bind_address: str | None
     ca_file_path: str | None
+    diagnose_endpoint: Optional[str]
     disable_default_instrumentations: None | (
         list[Config.DefaultInstrumentation] | bool
     )
@@ -72,6 +73,7 @@ class Config:
     )
     DEFAULT_CONFIG = Options(
         ca_file_path=CA_FILE_PATH,
+        diagnose_endpoint="https://appsignal.com/diag",
         enable_host_metrics=True,
         enable_nginx_metrics=False,
         enable_statsd=False,
@@ -135,6 +137,7 @@ class Config:
             active=parse_bool(os.environ.get("APPSIGNAL_ACTIVE")),
             bind_address=os.environ.get("APPSIGNAL_BIND_ADDRESS"),
             ca_file_path=os.environ.get("APPSIGNAL_CA_FILE_PATH"),
+            diagnose_endpoint=os.environ.get("APPSIGNAL_DIAGNOSE_ENDPOINT"),
             disable_default_instrumentations=parse_disable_default_instrumentations(
                 os.environ.get("APPSIGNAL_DISABLE_DEFAULT_INSTRUMENTATIONS")
             ),
@@ -199,6 +202,7 @@ class Config:
             "_APPSIGNAL_BIND_ADDRESS": options.get("bind_address"),
             "_APPSIGNAL_CA_FILE_PATH": options.get("ca_file_path"),
             "_APPSIGNAL_DNS_SERVERS": list_to_env_str(options.get("dns_servers")),
+            "_APPSIGNAL_DIAGNOSE_ENDPOINT": options.get("diagnose_endpoint"),
             "_APPSIGNAL_ENABLE_HOST_METRICS": bool_to_env_str(
                 options.get("enable_host_metrics")
             ),
