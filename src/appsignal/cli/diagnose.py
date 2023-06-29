@@ -1,5 +1,7 @@
 import platform
 import os
+import urllib
+import requests
 
 from pathlib import Path
 
@@ -38,6 +40,8 @@ class DiagnoseCommand(AppsignalCLICommand):
 
         self._report_information()
         print()
+
+        self._send_diagnose_report()
 
     def _header(self):
         print("AppSignal diagnose")
@@ -81,3 +85,16 @@ class DiagnoseCommand(AppsignalCLICommand):
 
     def _report_information(self):
       print(f"Diagnostics report")
+
+    def _send_diagnose_report(self):
+        params = urllib.parse.urlencode({
+            'api_key': self.config.option("push_api_key"),
+            'name': self.config.option("name"),
+            'environment': self.config.option("environment"),
+            'hostname': self.config.option("hostname") or ''
+        })
+
+        endpoint = self.config.option("diagnose_endpoint")
+        url = f"{endpoint}?{params}"
+
+        response = requests.post(url, json={})
