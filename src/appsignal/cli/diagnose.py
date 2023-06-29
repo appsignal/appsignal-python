@@ -51,7 +51,7 @@ class DiagnoseCommand(AppsignalCLICommand):
         self._report_information()
         print()
 
-        if(self._report_prompt()):
+        if(self.send_report or self._report_prompt()):
             self._send_diagnose_report()
 
     def _header(self):
