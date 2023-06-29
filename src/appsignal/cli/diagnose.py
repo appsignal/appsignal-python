@@ -11,9 +11,10 @@ from appsignal.config import Config
 from ..__about__ import __version__
 
 class DiagnoseCommand(AppsignalCLICommand):
-    def __init__(self, send_report=None):
+    def __init__(self, send_report=None, no_send_report=None):
         self.config = Config()
         self.send_report = send_report
+        self.no_send_report = no_send_report
 
     def run(self):
         self._header()
@@ -42,7 +43,7 @@ class DiagnoseCommand(AppsignalCLICommand):
         self._report_information()
         print()
 
-        if(self.send_report or self._report_prompt()):
+        if(self.send_report or (not self.no_send_report and self._report_prompt())):
             self._send_diagnose_report()
 
     def _header(self):
