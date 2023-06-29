@@ -11,7 +11,7 @@ from appsignal.config import Config
 from ..__about__ import __version__
 
 class DiagnoseCommand(AppsignalCLICommand):
-    def __init__(self):
+    def __init__(self, send_report=None):
         self.config = Config()
 
     def run(self):

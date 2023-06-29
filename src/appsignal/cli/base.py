@@ -12,7 +12,7 @@ DOC = """AppSignal for Python CLI.
 Usage:
   appsignal install [--push-api-key=<key>]
   appsignal demo [--application=<app>] [--push-api-key=<key>]
-  appsignal diagnose
+  appsignal diagnose [--send-report]
   appsignal (-h | --help)
   appsignal --version
 
@@ -44,6 +44,8 @@ def command_for(arguments) -> AppsignalCLICommand:
             application=arguments["--application"],
         )
     if arguments["diagnose"]:
-        return DiagnoseCommand()
+        return DiagnoseCommand(
+            send_report=arguments["--send-report"]
+        )
     else:
         raise NotImplementedError
