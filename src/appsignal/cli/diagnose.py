@@ -38,7 +38,6 @@ class DiagnoseCommand(AppsignalCLICommand):
             "agent": None,
             "config": None,
             "host": None,
-            "installation": None,
             "library": {
                 "language": "python",
                 "package_version": __version__,
@@ -53,9 +52,6 @@ class DiagnoseCommand(AppsignalCLICommand):
         self._header()
 
         self._library_information()
-        print()
-
-        self._installation_information()
         print()
 
         self._host_information()
@@ -95,9 +91,6 @@ class DiagnoseCommand(AppsignalCLICommand):
         print(f'  Package version: "{library_report["package_version"]}"')
         print(f'  Agent version: "{library_report["agent_version"]}"')
         print(f'  Extension loaded: {library_report["extension_loaded"]}')
-
-    def _installation_information(self):
-        print("Extension installation report")
 
     def _host_information(self):
         print("Host information")
