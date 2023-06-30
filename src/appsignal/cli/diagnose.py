@@ -44,7 +44,8 @@ class DiagnoseCommand(AppsignalCLICommand):
                 "os": platform.system().lower(),
                 "os_distribution": "",
                 "root": False,
-                "running_in_container": self.config.option("running_in_container") is not None
+                "running_in_container": self.config.option("running_in_container")
+                is not None,
             },
             "library": {
                 "language": "python",
@@ -111,6 +112,36 @@ class DiagnoseCommand(AppsignalCLICommand):
 
     def _agent_information(self):
         print("Agent diagnostics")
+        print("  Extension tests")
+        print(
+            f'    Configuration: {"valid" if self.agent_report["config"]["valid"]["result"] else "invalid"}'
+        )
+        print("  Agent tests")
+        print(
+            f'    Started: {"started" if self.agent_report["boot"]["started"]["result"] else "not started"}'
+        )
+        print(f'    Process user id: {self.agent_report["host"]["uid"]["result"]}')
+        print(
+            f'    Process user group id: {self.agent_report["host"]["gid"]["result"]}'
+        )
+        print(
+            f'    Configuration: {"valid" if self.agent_report["config"]["valid"]["result"] else "invalid"}'
+        )
+        print(
+            f'    Logger: {"started" if self.agent_report["logger"]["started"]["result"] else "not started"}'
+        )
+        print(
+            f'    Working directory user id: {self.agent_report["working_directory_stat"]["uid"]["result"]}'
+        )
+        print(
+            f'    Working directory user group id: {self.agent_report["working_directory_stat"]["gid"]["result"]}'
+        )
+        print(
+            f'    Working directory permissions: {self.agent_report["working_directory_stat"]["mode"]["result"]}'
+        )
+        print(
+            f'    Lock path: {"writable" if self.agent_report["lock_path"]["created"]["result"] else "not writable"}'
+        )
 
     def _configuration_information(self):
         print("Configuration")
