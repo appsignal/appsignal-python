@@ -1,5 +1,5 @@
-from unittest.mock import Mock
 from typing import Dict
+from unittest.mock import Mock
 
 from appsignal.config import Config, Options
 from appsignal.opentelemetry import add_instrumentations

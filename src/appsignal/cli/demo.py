@@ -1,9 +1,9 @@
-import os
 import json
-
-from appsignal.client import Client
+import os
 
 from opentelemetry import trace
+
+from appsignal.client import Client
 
 from .command import AppsignalCLICommand
 

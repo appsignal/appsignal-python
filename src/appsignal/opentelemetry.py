@@ -1,16 +1,15 @@
 from __future__ import annotations
-import os
-from typing import Dict
+
 import logging
-
-from .config import Config, list_to_env_str
-
-from typing import Callable
+import os
+from typing import Callable, Dict
 
 from opentelemetry import trace
 from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
+
+from .config import Config, list_to_env_str
 
 
 def add_celery_instrumentation() -> None:
@@ -20,8 +19,9 @@ def add_celery_instrumentation() -> None:
 
 
 def add_django_instrumentation() -> None:
-    from opentelemetry.instrumentation.django import DjangoInstrumentor
     import json
+
+    from opentelemetry.instrumentation.django import DjangoInstrumentor
 
     def response_hook(span, request, response) -> None:
         span.set_attribute(
@@ -33,9 +33,10 @@ def add_django_instrumentation() -> None:
 
 
 def add_flask_instrumentation() -> None:
-    from opentelemetry.instrumentation.flask import FlaskInstrumentor
     import json
     from urllib.parse import parse_qs
+
+    from opentelemetry.instrumentation.flask import FlaskInstrumentor
 
     def request_hook(span, environ) -> None:
         if span and span.is_recording():

@@ -1,10 +1,9 @@
 from docopt import docopt
 
 from ..__about__ import __version__
-
 from .command import AppsignalCLICommand
-from .install import InstallCommand
 from .demo import DemoCommand
+from .install import InstallCommand
 
 
 DOC = """AppSignal for Python CLI.

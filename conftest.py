@@ -1,8 +1,10 @@
-import os
 import logging
-import pytest
+import os
 import platform
 import tempfile
+
+import pytest
+
 from appsignal.agent import _reset_agent_active
 
 
