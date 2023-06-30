@@ -37,7 +37,15 @@ class DiagnoseCommand(AppsignalCLICommand):
         self.report = {
             "agent": None,
             "config": None,
-            "host": None,
+            "host": {
+                "architecture": platform.platform(),
+                "heroku": os.environ.get("DYNO") is not None,
+                "language_version": platform.python_version(),
+                "os": platform.system().lower(),
+                "os_distribution": "",
+                "root": False,
+                "running_in_container": self.config.option("running_in_container") is not None
+            },
             "library": {
                 "language": "python",
                 "package_version": __version__,
@@ -93,13 +101,13 @@ class DiagnoseCommand(AppsignalCLICommand):
         print(f'  Extension loaded: {library_report["extension_loaded"]}')
 
     def _host_information(self):
+        host_report = self.report["host"]
         print("Host information")
-        print(f"  Architecture: {platform.platform()}")
-        print(f"  Operating System: {platform.system()} {platform.release()}")
-        print(f"  Python version: {platform.python_version()}")
-        print(f"  Root user: {os.getuid() == 0}")
-        running_in_container = self.config.option("running_in_container")
-        print(f"  Running in container: {running_in_container}")
+        print(f'  Architecture: "{host_report["architecture"]}"')
+        print(f'  Operating System: "{host_report["os"]}"')
+        print(f'  Python version: "{host_report["language_version"]}"')
+        print(f'  Root user: {host_report["root"]}')
+        print(f'  Running in container: {host_report["running_in_container"]}')
 
     def _agent_information(self):
         print("Agent diagnostics")
