@@ -35,6 +35,16 @@ class DiagnoseCommand(AppsignalCLICommand):
         self.config = Config()
         self.send_report = self.args.send_report
         self.no_send_report = self.args.no_send_report
+        self.report = {
+                'agent': None,
+                'config': None,
+                'host': None,
+                'installation': None,
+                'library': {},
+                'paths': None,
+                'process': None,
+                'validation': None,
+        }
         self.agent_report = json.loads(agent.diagnose())
 
         self._header()
@@ -131,15 +141,4 @@ class DiagnoseCommand(AppsignalCLICommand):
         endpoint = self.config.option("diagnose_endpoint")
         url = f"{endpoint}?{params}"
 
-        response = requests.post(url, json={
-            'diagnose': {
-                'agent': None,
-                'config': None,
-                'host': None,
-                'installation': None,
-                'library': None,
-                'paths': None,
-                'process': None,
-                'validation': None,
-            }
-        })
+        response = requests.post(url, json={'diagnose': self.report})
