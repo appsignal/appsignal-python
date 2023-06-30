@@ -33,17 +33,22 @@ class DiagnoseCommand(AppsignalCLICommand):
         self.config = Config()
         self.send_report = self.args.send_report
         self.no_send_report = self.args.no_send_report
+        self.agent_report = json.loads(agent.diagnose())
         self.report = {
             "agent": None,
             "config": None,
             "host": None,
             "installation": None,
-            "library": {},
+            "library": {
+                "language": "python",
+                "package_version": __version__,
+                "agent_version": "91f1a7c",
+                "extension_loaded": self.agent_report["boot"]["started"]["result"],
+            },
             "paths": None,
             "process": None,
             "validation": None,
         }
-        self.agent_report = json.loads(agent.diagnose())
 
         self._header()
 
