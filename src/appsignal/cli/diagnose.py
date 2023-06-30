@@ -89,11 +89,12 @@ class DiagnoseCommand(AppsignalCLICommand):
         print("=" * 80)
 
     def _library_information(self):
+        library_report = self.report["library"]
         print("AppSignal library")
         print("  Language: Python")
-        print(f'  Package version: "{__version__}"')
-        print(f'  Agent version: "91f1a7c"')
-        print(f"  Extension loaded: {self.agent_report['boot']['started']['result']}")
+        print(f'  Package version: "{library_report["package_version"]}"')
+        print(f'  Agent version: "{library_report["agent_version"]}"')
+        print(f'  Extension loaded: {library_report["extension_loaded"]}')
 
     def _installation_information(self):
         print("Extension installation report")
