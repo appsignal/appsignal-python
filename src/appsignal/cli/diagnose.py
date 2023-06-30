@@ -14,6 +14,50 @@ from ..__about__ import __version__
 from .command import AppsignalCLICommand
 
 
+class AgentReport:
+    def __init__(self, report):
+        self.report = report
+
+    def extension_loaded(self):
+        return self.report["boot"]["started"]["result"]
+
+    def configuration_valid(self):
+        if self.report["config"]["valid"]["result"]:
+            return "valid"
+        else:
+            return "invalid"
+
+    def started(self):
+        if self.report["boot"]["started"]["result"]:
+            return "started"
+        else:
+            return "not started"
+
+    def user_id(self):
+        return self.report["host"]["uid"]["result"]
+
+    def group_id(self):
+        return self.report["host"]["gid"]["result"]
+
+    def logger_started(self):
+        if self.report["logger"]["started"]["result"]:
+            return "started"
+        else:
+            return "not started"
+
+    def working_directory_user_id(self):
+        return self.report["working_directory_stat"]["uid"]["result"]
+
+    def working_directory_group_id(self):
+        return self.report["working_directory_stat"]["gid"]["result"]
+
+    def working_directory_permissions(self):
+        return self.report["working_directory_stat"]["mode"]["result"]
+
+    def lock_path(self):
+        return self.report["lock_path"]["created"]["result"]
+
+
 class DiagnoseCommand(AppsignalCLICommand):
     @staticmethod
     def init_parser(parser: ArgumentParser) -> None:
@@ -33,7 +77,7 @@ class DiagnoseCommand(AppsignalCLICommand):
         self.config = Config()
         self.send_report = self.args.send_report
         self.no_send_report = self.args.no_send_report
-        self.agent_report = json.loads(agent.diagnose())
+        self.agent_report = AgentReport(json.loads(agent.diagnose()))
         self.report = {
             "agent": None,
             "config": None,
@@ -51,7 +95,7 @@ class DiagnoseCommand(AppsignalCLICommand):
                 "language": "python",
                 "package_version": __version__,
                 "agent_version": "91f1a7c",
-                "extension_loaded": self.agent_report["boot"]["started"]["result"],
+                "extension_loaded": self.agent_report.extension_loaded(),
             },
             "paths": None,
             "process": None,
@@ -113,35 +157,23 @@ class DiagnoseCommand(AppsignalCLICommand):
     def _agent_information(self):
         print("Agent diagnostics")
         print("  Extension tests")
-        print(
-            f'    Configuration: {"valid" if self.agent_report["config"]["valid"]["result"] else "invalid"}'
-        )
+        print(f"    Configuration: {self.agent_report.configuration_valid}")
         print("  Agent tests")
+        print(f"    Started: {self.agent_report.started}")
+        print(f"    Process user id: {self.agent_report.user_id}")
+        print(f"    Process user group id: {self.agent_report.group_id}")
+        print(f"    Configuration: {self.agent_report.configuration_valid}")
+        print(f"    Logger: {self.agent_report.logger_started}")
         print(
-            f'    Started: {"started" if self.agent_report["boot"]["started"]["result"] else "not started"}'
-        )
-        print(f'    Process user id: {self.agent_report["host"]["uid"]["result"]}')
-        print(
-            f'    Process user group id: {self.agent_report["host"]["gid"]["result"]}'
-        )
-        print(
-            f'    Configuration: {"valid" if self.agent_report["config"]["valid"]["result"] else "invalid"}'
+            f"    Working directory user id: {self.agent_report.working_directory_user_id}"
         )
         print(
-            f'    Logger: {"started" if self.agent_report["logger"]["started"]["result"] else "not started"}'
+            f"    Working directory user group id: {self.agent_report.working_directory_group_id}"
         )
         print(
-            f'    Working directory user id: {self.agent_report["working_directory_stat"]["uid"]["result"]}'
+            f"    Working directory permissions: {self.agent_report.working_directory_permissions}"
         )
-        print(
-            f'    Working directory user group id: {self.agent_report["working_directory_stat"]["gid"]["result"]}'
-        )
-        print(
-            f'    Working directory permissions: {self.agent_report["working_directory_stat"]["mode"]["result"]}'
-        )
-        print(
-            f'    Lock path: {"writable" if self.agent_report["lock_path"]["created"]["result"] else "not writable"}'
-        )
+        print(f"    Lock path: {self.agent_report.lock_path}")
 
     def _configuration_information(self):
         print("Configuration")
