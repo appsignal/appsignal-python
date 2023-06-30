@@ -41,5 +41,6 @@ def start_agent(config: Config) -> None:
         out = output.decode("utf-8")
         print(f"AppSignal agent is unable to start ({returncode}): ", out)
 
+
 def diagnose():
     return subprocess.run([AGENT_PATH, "diagnose"], capture_output=True).stdout

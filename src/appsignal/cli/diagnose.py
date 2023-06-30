@@ -4,7 +4,6 @@ import urllib
 import requests
 import json
 
-from pathlib import Path
 
 from .command import AppsignalCLICommand
 from appsignal.config import Config
@@ -12,20 +11,21 @@ from appsignal.agent import diagnose
 
 from ..__about__ import __version__
 
+
 class DiagnoseCommand(AppsignalCLICommand):
     def __init__(self, send_report=None, no_send_report=None):
         self.config = Config()
         self.send_report = send_report
         self.no_send_report = no_send_report
         self.report = {
-                'agent': None,
-                'config': None,
-                'host': None,
-                'installation': None,
-                'library': {},
-                'paths': None,
-                'process': None,
-                'validation': None,
+            "agent": None,
+            "config": None,
+            "host": None,
+            "installation": None,
+            "library": {},
+            "paths": None,
+            "process": None,
+            "validation": None,
         }
         self.agent_report = json.loads(diagnose())
 
@@ -56,7 +56,7 @@ class DiagnoseCommand(AppsignalCLICommand):
         self._report_information()
         print()
 
-        if(self.send_report or (not self.no_send_report and self._report_prompt())):
+        if self.send_report or (not self.no_send_report and self._report_prompt()):
             self._send_diagnose_report()
 
     def _header(self):
@@ -71,8 +71,8 @@ class DiagnoseCommand(AppsignalCLICommand):
     def _library_information(self):
         print("AppSignal library")
         print("  Language: Python")
-        print(f"  Package version: \"{__version__}\"")
-        print(f"  Agent version: \"91f1a7c\"")
+        print(f'  Package version: "{__version__}"')
+        print('  Agent version: "91f1a7c"')
         print(f"  Extension loaded: {self.agent_report['boot']['started']['result']}")
 
     def _installation_information(self):
@@ -91,35 +91,37 @@ class DiagnoseCommand(AppsignalCLICommand):
         print("Agent diagnostics")
 
     def _configuration_information(self):
-      print(f"Configuration")
+        print("Configuration")
 
     def _validation_information(self):
-      print(f"Validation")
+        print("Validation")
 
     def _paths_information(self):
-      print(f"Paths")
+        print("Paths")
 
     def _report_information(self):
-      print(f"Diagnostics report")
+        print("Diagnostics report")
 
     def _report_prompt(self):
-      match input("  Send diagnostics report to AppSignal? (Y/n):"):
-        case "y" | "yes" | "":
-            return True
-        case "n" | "no" :
-            return False
-        case _:
-            report_prompt()
+        match input("  Send diagnostics report to AppSignal? (Y/n):"):
+            case "y" | "yes" | "":
+                return True
+            case "n" | "no":
+                return False
+            case _:
+                report_prompt()
 
     def _send_diagnose_report(self):
-        params = urllib.parse.urlencode({
-            'api_key': self.config.option("push_api_key"),
-            'name': self.config.option("name"),
-            'environment': self.config.option("environment"),
-            'hostname': self.config.option("hostname") or ''
-        })
+        params = urllib.parse.urlencode(
+            {
+                "api_key": self.config.option("push_api_key"),
+                "name": self.config.option("name"),
+                "environment": self.config.option("environment"),
+                "hostname": self.config.option("hostname") or "",
+            }
+        )
 
         endpoint = self.config.option("diagnose_endpoint")
         url = f"{endpoint}?{params}"
 
-        response = requests.post(url, json={'diagnose': self.report})
+        requests.post(url, json={"diagnose": self.report})
