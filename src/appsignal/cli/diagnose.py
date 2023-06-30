@@ -1,16 +1,14 @@
+import json
 import os
 import platform
 import urllib
 from argparse import ArgumentParser
-import requests
-import json
-
 from pathlib import Path
 
 import requests
 
-from appsignal.config import Config
 from appsignal.agent import Agent
+from appsignal.config import Config
 
 from ..__about__ import __version__
 from .command import AppsignalCLICommand
@@ -36,14 +34,14 @@ class DiagnoseCommand(AppsignalCLICommand):
         self.send_report = self.args.send_report
         self.no_send_report = self.args.no_send_report
         self.report = {
-                'agent': None,
-                'config': None,
-                'host': None,
-                'installation': None,
-                'library': {},
-                'paths': None,
-                'process': None,
-                'validation': None,
+            "agent": None,
+            "config": None,
+            "host": None,
+            "installation": None,
+            "library": {},
+            "paths": None,
+            "process": None,
+            "validation": None,
         }
         self.agent_report = json.loads(agent.diagnose())
 
@@ -73,7 +71,7 @@ class DiagnoseCommand(AppsignalCLICommand):
         self._report_information()
         print()
 
-        if(self.send_report or (not self.no_send_report and self._report_prompt())):
+        if self.send_report or (not self.no_send_report and self._report_prompt()):
             self._send_diagnose_report()
 
     def _header(self):
@@ -108,25 +106,25 @@ class DiagnoseCommand(AppsignalCLICommand):
         print("Agent diagnostics")
 
     def _configuration_information(self):
-        print(f"Configuration")
+        print("Configuration")
 
     def _validation_information(self):
-        print(f"Validation")
+        print("Validation")
 
     def _paths_information(self):
-        print(f"Paths")
+        print("Paths")
 
     def _report_information(self):
-        print(f"Diagnostics report")
+        print("Diagnostics report")
 
     def _report_prompt(self):
-      match input("  Send diagnostics report to AppSignal? (Y/n):"):
-        case "y" | "yes" | "":
-            return True
-        case "n" | "no" :
-            return False
-        case _:
-            report_prompt()
+        match input("  Send diagnostics report to AppSignal? (Y/n):"):
+            case "y" | "yes" | "":
+                return True
+            case "n" | "no":
+                return False
+            case _:
+                report_prompt()
 
     def _send_diagnose_report(self):
         params = urllib.parse.urlencode(
@@ -141,4 +139,4 @@ class DiagnoseCommand(AppsignalCLICommand):
         endpoint = self.config.option("diagnose_endpoint")
         url = f"{endpoint}?{params}"
 
-        response = requests.post(url, json={'diagnose': self.report})
+        requests.post(url, json={"diagnose": self.report})
