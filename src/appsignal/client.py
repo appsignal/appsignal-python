@@ -5,7 +5,7 @@ import sys
 from logging import DEBUG, ERROR, INFO, WARNING, Logger
 from typing import TYPE_CHECKING
 
-from .agent import start_agent
+from .agent import agent
 from .config import Config, Options
 from .opentelemetry import start_opentelemetry
 
@@ -30,7 +30,7 @@ class Client:
     def start(self) -> None:
         if self._config.option("active"):
             self._logger.info("Starting AppSignal")
-            start_agent(self._config)
+            agent.start(self._config)
             start_opentelemetry(self._config)
 
     def start_logger(self) -> None:
