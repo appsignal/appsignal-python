@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from docopt import docopt
 
 from ..__about__ import __version__

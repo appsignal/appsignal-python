@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 
 import requests
@@ -103,7 +105,7 @@ class InstallCommand(AppsignalCLICommand):
                     return file
         return None
 
-    def _search_dependency(self, dependency_name):
+    def _search_dependency(self, dependency_name: str):
         requirement_file = self._requirements_file()
         if requirement_file:
             with open(requirement_file, "r") as f:
@@ -156,7 +158,7 @@ class InstallCommand(AppsignalCLICommand):
         print("You can check a list of the supported integrations here:")
         print("https://docs.appsignal.com/python/instrumentations")
 
-    def _add_dependency(self, dependency_name) -> None:
+    def _add_dependency(self, dependency_name: str) -> None:
         requirement_file = self._requirements_file()
         if requirement_file:
             with open(requirement_file, "a") as f:
