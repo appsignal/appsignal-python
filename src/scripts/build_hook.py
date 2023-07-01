@@ -8,7 +8,7 @@ import subprocess
 import sysconfig
 import tarfile
 from runpy import run_path
-from typing import Any, Dict
+from typing import Any
 
 import requests
 from hatchling.builders.hooks.plugin.interface import BuildHookInterface
@@ -79,7 +79,7 @@ class DownloadError(Exception):
 
 
 class CustomBuildHook(BuildHookInterface):
-    def initialize(self, _version: str, build_data: Dict[str, Any]) -> None:
+    def initialize(self, _version: str, build_data: dict[str, Any]) -> None:
         """
         This occurs immediately before each build.
 

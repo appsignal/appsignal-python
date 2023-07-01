@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Optional
 
 
 class AppsignalCLICommand(ABC):
@@ -9,8 +8,8 @@ class AppsignalCLICommand(ABC):
     def run(self) -> int:
         raise NotImplementedError
 
-    _push_api_key: Optional[str]
-    _name: Optional[str]
+    _push_api_key: str | None
+    _name: str | None
 
     def _input_push_api_key(self) -> None:
         key = input("Please enter your Push API key: ")
