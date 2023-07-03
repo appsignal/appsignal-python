@@ -82,11 +82,11 @@ class DiagnoseCommand(AppsignalCLICommand):
             "agent": None,
             "config": None,
             "host": {
-                "architecture": platform.platform(),
+                "architecture": platform.machine(),
                 "heroku": os.environ.get("DYNO") is not None,
                 "language_version": platform.python_version(),
                 "os": platform.system().lower(),
-                "os_distribution": "",
+                "os_distribution": self._os_distribution(),
                 "root": False,
                 "running_in_container": self.config.option("running_in_container")
                 is not None,
@@ -103,6 +103,7 @@ class DiagnoseCommand(AppsignalCLICommand):
         }
 
         self._header()
+        print()
 
         self._library_information()
         print()
@@ -157,23 +158,23 @@ class DiagnoseCommand(AppsignalCLICommand):
     def _agent_information(self):
         print("Agent diagnostics")
         print("  Extension tests")
-        print(f"    Configuration: {self.agent_report.configuration_valid}")
+        print(f"    Configuration: {self.agent_report.configuration_valid()}")
         print("  Agent tests")
-        print(f"    Started: {self.agent_report.started}")
-        print(f"    Process user id: {self.agent_report.user_id}")
-        print(f"    Process user group id: {self.agent_report.group_id}")
-        print(f"    Configuration: {self.agent_report.configuration_valid}")
-        print(f"    Logger: {self.agent_report.logger_started}")
+        print(f"    Started: {self.agent_report.started()}")
+        print(f"    Process user id: {self.agent_report.user_id()}")
+        print(f"    Process user group id: {self.agent_report.group_id()}")
+        print(f"    Configuration: {self.agent_report.configuration_valid()}")
+        print(f"    Logger: {self.agent_report.logger_started()}")
         print(
-            f"    Working directory user id: {self.agent_report.working_directory_user_id}"
+            f"    Working directory user id: {self.agent_report.working_directory_user_id()}"
         )
         print(
-            f"    Working directory user group id: {self.agent_report.working_directory_group_id}"
+            f"    Working directory user group id: {self.agent_report.working_directory_group_id()}"
         )
         print(
-            f"    Working directory permissions: {self.agent_report.working_directory_permissions}"
+            f"    Working directory permissions: {self.agent_report.working_directory_permissions()}"
         )
-        print(f"    Lock path: {self.agent_report.lock_path}")
+        print(f"    Lock path: {self.agent_report.lock_path()}")
 
     def _configuration_information(self):
         print("Configuration")
@@ -210,3 +211,9 @@ class DiagnoseCommand(AppsignalCLICommand):
         url = f"{endpoint}?{params}"
 
         requests.post(url, json={"diagnose": self.report})
+
+    def _os_distribution(self):
+        try:
+            return platform.freedesktop_os_release()
+        except OSError:
+            return ""
