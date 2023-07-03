@@ -37,6 +37,6 @@ def stop_agent():
     tmp_path = "/tmp" if platform.system() == "Darwin" else tempfile.gettempdir()
     working_dir = os.path.join(tmp_path, "appsignal")
     if os.path.isdir(working_dir):
-        os.system(r"rm -rf {working_dir}")
+        os.system(f"rm -rf {working_dir}")
 
     yield
