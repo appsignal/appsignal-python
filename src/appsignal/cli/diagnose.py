@@ -55,7 +55,10 @@ class AgentReport:
         return self.report["working_directory_stat"]["mode"]["result"]
 
     def lock_path(self):
-        return self.report["lock_path"]["created"]["result"]
+        if self.report["lock_path"]["created"]["result"]:
+            return "writable"
+        else:
+            return "not writable"
 
 
 class DiagnoseCommand(AppsignalCLICommand):
