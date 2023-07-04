@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Any
+
 from docopt import docopt
 
 from ..__about__ import __version__
@@ -24,7 +26,7 @@ Options:
 """
 
 
-def run():
+def run() -> int:
     try:
         version = f"AppSignal for Python v{__version__}"
 
@@ -35,7 +37,7 @@ def run():
         return 0
 
 
-def command_for(arguments) -> AppsignalCLICommand:
+def command_for(arguments: dict[str, Any]) -> AppsignalCLICommand:
     if arguments["install"]:
         return InstallCommand(push_api_key=arguments["--push-api-key"])
     if arguments["demo"]:

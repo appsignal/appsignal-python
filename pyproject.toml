@@ -81,14 +81,17 @@ dependencies = [
   "mypy>=1.0.0",
   "isort",
   "ruff>=0.0.243",
-  "hatchling", # needed for type checking
+  "docopt",
+
   "opentelemetry-api",
   "opentelemetry-sdk",
   "opentelemetry-exporter-otlp-proto-http",
-  "docopt",
+
+  "hatchling",
   "types-deprecated",
   "types-docopt",
   "types-requests",
+  "django-stubs",
 ]
 
 [tool.hatch.envs.lint.scripts]
@@ -148,7 +151,13 @@ line_length = 88
 [tool.mypy]
 files = ["src", "tests"]
 check_untyped_defs = true
+show_error_codes = true
+disallow_untyped_defs = true
 
 [[tool.mypy.overrides]]
 module = "opentelemetry.instrumentation.*"
 ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+disallow_untyped_defs = false
