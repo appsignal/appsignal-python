@@ -7,7 +7,7 @@ import tempfile
 
 import pytest
 
-from appsignal.agent import _reset_agent_active
+from appsignal.agent import agent
 
 
 @pytest.fixture(scope="function", autouse=True)
@@ -31,7 +31,7 @@ def remove_logging_handlers_after_tests():
 
 @pytest.fixture(scope="function", autouse=True)
 def reset_agent_active_state():
-    _reset_agent_active()
+    agent.active = False
 
 
 @pytest.fixture(scope="function", autouse=True)
