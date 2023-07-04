@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 import os
-from typing import Callable, Dict
+from typing import TYPE_CHECKING, Callable, Mapping
 
 from opentelemetry import trace
 from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
@@ -10,6 +10,10 @@ from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
 
 from .config import Config, list_to_env_str
+
+
+if TYPE_CHECKING:
+    from opentelemetry.trace.span import Span
 
 
 def add_celery_instrumentation() -> None:
@@ -21,9 +25,11 @@ def add_celery_instrumentation() -> None:
 def add_django_instrumentation() -> None:
     import json
 
+    from django.http.request import HttpRequest
+    from django.http.response import HttpResponse
     from opentelemetry.instrumentation.django import DjangoInstrumentor
 
-    def response_hook(span, request, response) -> None:
+    def response_hook(span: Span, request: HttpRequest, response: HttpResponse) -> None:
         span.set_attribute(
             "appsignal.request.parameters",
             json.dumps({"GET": request.GET, "POST": request.POST}),
@@ -38,7 +44,7 @@ def add_flask_instrumentation() -> None:
 
     from opentelemetry.instrumentation.flask import FlaskInstrumentor
 
-    def request_hook(span, environ) -> None:
+    def request_hook(span: Span, environ: dict[str, str]) -> None:
         if span and span.is_recording():
             query_params = parse_qs(environ.get("QUERY_STRING", ""))
             span.set_attribute(
@@ -73,11 +79,8 @@ def add_requests_instrumentation() -> None:
 
 
 DefaultInstrumentationAdder = Callable[[], None]
-DefaultInstrumentationAdders = Dict[
-    Config.DefaultInstrumentation, DefaultInstrumentationAdder
-]
 
-DEFAULT_INSTRUMENTATION_ADDERS: DefaultInstrumentationAdders = {
+DEFAULT_INSTRUMENTATION_ADDERS = {
     "opentelemetry.instrumentation.celery": add_celery_instrumentation,
     "opentelemetry.instrumentation.django": add_django_instrumentation,
     "opentelemetry.instrumentation.flask": add_flask_instrumentation,
@@ -107,7 +110,8 @@ def start_opentelemetry(config: Config) -> None:
 
 
 def add_instrumentations(
-    config: Config, default_instrumentation_adders=DEFAULT_INSTRUMENTATION_ADDERS
+    config: Config,
+    adders: Mapping[str, DefaultInstrumentationAdder] = DEFAULT_INSTRUMENTATION_ADDERS,
 ) -> None:
     logger = logging.getLogger("appsignal")
     disable_list = config.options.get("disable_default_instrumentations") or []
@@ -115,7 +119,7 @@ def add_instrumentations(
     if disable_list is True:
         return
 
-    for name, adder in default_instrumentation_adders.items():
+    for name, adder in adders.items():
         if name not in disable_list:
             try:
                 logger.info(f"Instrumenting {name}")
