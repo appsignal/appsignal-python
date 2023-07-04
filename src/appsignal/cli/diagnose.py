@@ -182,6 +182,13 @@ class DiagnoseCommand(AppsignalCLICommand):
     def _configuration_information(self):
         print("Configuration")
 
+        for key in self.config.options:
+            print(f'  {key}: {repr(self.config.options[key])}')
+
+        print()
+        print("Read more about how the diagnose config output is rendered")
+        print("https://docs.appsignal.com/python/command-line/diagnose.html")
+
     def _validation_information(self):
         print("Validation")
 
