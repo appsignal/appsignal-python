@@ -111,7 +111,7 @@ def start_opentelemetry(config: Config) -> None:
 
 def add_instrumentations(
     config: Config,
-    adders: Mapping[str, DefaultInstrumentationAdder] = DEFAULT_INSTRUMENTATION_ADDERS,
+    _adders: Mapping[str, DefaultInstrumentationAdder] = DEFAULT_INSTRUMENTATION_ADDERS,
 ) -> None:
     logger = logging.getLogger("appsignal")
     disable_list = config.options.get("disable_default_instrumentations") or []
@@ -119,7 +119,7 @@ def add_instrumentations(
     if disable_list is True:
         return
 
-    for name, adder in adders.items():
+    for name, adder in _adders.items():
         if name not in disable_list:
             try:
                 logger.info(f"Instrumenting {name}")
