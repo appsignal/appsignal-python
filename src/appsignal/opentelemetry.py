@@ -98,7 +98,7 @@ def start_opentelemetry(config: Config) -> None:
 
     provider = TracerProvider()
 
-    otlp_exporter = OTLPSpanExporter(endpoint="http://localhost:8099")
+    otlp_exporter = OTLPSpanExporter(endpoint="http://localhost:8099/v1/traces")
     exporter_processor = BatchSpanProcessor(otlp_exporter)
     provider.add_span_processor(exporter_processor)
     trace.set_tracer_provider(provider)
