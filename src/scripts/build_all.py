@@ -11,7 +11,7 @@ def run_relative(filename: str) -> dict[str, Any]:
 
 TRIPLE_PLATFORM_TAG = run_relative("platform.py")["TRIPLE_PLATFORM_TAG"]
 
-for triple in TRIPLE_PLATFORM_TAG.keys():
+for triple in TRIPLE_PLATFORM_TAG:
     result = os.system(f"_APPSIGNAL_BUILD_TRIPLE={triple} hatch build -t wheel")
     if result != 0:
         break

@@ -7,7 +7,7 @@ from appsignal.opentelemetry import add_instrumentations
 
 
 def raise_module_not_found_error():
-    raise ModuleNotFoundError()
+    raise ModuleNotFoundError
 
 
 def mock_adders() -> dict[str, Mock]:
