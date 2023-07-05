@@ -131,8 +131,9 @@ select = [
   "RUF",  # ruff
 ]
 ignore = [
-  "SIM117", # allow nested `with`
-  "SIM105", # allow try-except-pass
+  "SIM117",   # allow nested `with`
+  "SIM105",   # allow try-except-pass
+  "PERF203",  # allow try-except inside of loops
 ]
 
 [tool.hatch.envs.build.scripts]
