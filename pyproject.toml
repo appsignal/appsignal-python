@@ -29,7 +29,6 @@ dependencies = [
   "opentelemetry-api",
   "opentelemetry-sdk",
   "opentelemetry-exporter-otlp-proto-http",
-  "docopt",
 ]
 dynamic = ["version"]
 
@@ -81,7 +80,6 @@ dependencies = [
   "mypy>=1.0.0",
   "isort",
   "ruff>=0.0.243",
-  "docopt",
 
   "opentelemetry-api",
   "opentelemetry-sdk",
@@ -89,7 +87,6 @@ dependencies = [
 
   "hatchling",
   "types-deprecated",
-  "types-docopt",
   "types-requests",
   "django-stubs",
 ]
