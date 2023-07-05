@@ -72,8 +72,7 @@ class InstallCommand(AppsignalCLICommand):
     def _should_write_file(self) -> bool:
         if os.path.exists(INSTALL_FILE_NAME):
             return self._input_should_overwrite_file()
-        else:
-            return True
+        return True
 
     def _input_should_overwrite_file(self) -> bool:
         response = input(
@@ -82,11 +81,10 @@ class InstallCommand(AppsignalCLICommand):
         )
         if len(response) == 0 or response[0].lower() == "n":
             return False
-        elif response[0].lower() == "y":
+        if response[0].lower() == "y":
             return True
-        else:
-            print('Please answer "y" (yes) or "n" (no)')
-            return self._input_should_overwrite_file()
+        print('Please answer "y" (yes) or "n" (no)')
+        return self._input_should_overwrite_file()
 
     def _write_file(self) -> None:
         with open(INSTALL_FILE_NAME, "w") as f:
@@ -108,7 +106,7 @@ class InstallCommand(AppsignalCLICommand):
     def _search_dependency(self, dependency_name: str) -> bool:
         requirement_file = self._requirements_file()
         if requirement_file:
-            with open(requirement_file, "r") as f:
+            with open(requirement_file) as f:
                 for line in f.readlines():
                     return line.startswith(dependency_name)
 
