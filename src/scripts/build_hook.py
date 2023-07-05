@@ -14,7 +14,7 @@ import requests
 from hatchling.builders.hooks.plugin.interface import BuildHookInterface
 
 
-def run_relative(filename):
+def run_relative(filename: str) -> dict[str, Any]:
     return run_path(os.path.join(os.path.dirname(os.path.abspath(__file__)), filename))
 
 
@@ -22,15 +22,15 @@ APPSIGNAL_AGENT_CONFIG = run_relative("agent.py")["APPSIGNAL_AGENT_CONFIG"]
 TRIPLE_PLATFORM_TAG = run_relative("platform.py")["TRIPLE_PLATFORM_TAG"]
 
 
-def triple_filename(triple: str):
+def triple_filename(triple: str) -> str:
     return APPSIGNAL_AGENT_CONFIG["triples"][triple]["static"]["filename"]
 
 
-def triple_checksum(triple: str):
+def triple_checksum(triple: str) -> str:
     return APPSIGNAL_AGENT_CONFIG["triples"][triple]["static"]["checksum"]
 
 
-def triple_urls(triple: str):
+def triple_urls(triple: str) -> list[str]:
     mirrors = APPSIGNAL_AGENT_CONFIG["mirrors"]
     version = APPSIGNAL_AGENT_CONFIG["version"]
     filename = triple_filename(triple)

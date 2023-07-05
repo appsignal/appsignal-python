@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 import platform
 import tempfile
-from typing import TYPE_CHECKING, List, Literal, TypedDict, cast, get_args
+from typing import TYPE_CHECKING, Any, List, Literal, TypedDict, cast, get_args
 
 from .__about__ import __version__
 
@@ -112,7 +112,7 @@ class Config:
         final_options.update(self.sources["initial"])
         self.options = final_options
 
-    def option(self, option: str):
+    def option(self, option: str) -> Any:
         return self.options.get(option)
 
     @classmethod
@@ -298,14 +298,14 @@ def parse_disable_default_instrumentations(
     )
 
 
-def bool_to_env_str(value: bool | None):
+def bool_to_env_str(value: bool | None) -> str | None:
     if value is None:
         return None
 
     return str(value).lower()
 
 
-def list_to_env_str(value: list[str] | None):
+def list_to_env_str(value: list[str] | None) -> str | None:
     if value is None:
         return None
 
