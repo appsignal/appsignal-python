@@ -7,6 +7,8 @@ from .command import AppsignalCLICommand
 
 
 class VersionCommand(AppsignalCLICommand):
+    """Show the SDK version and exit."""
+
     @staticmethod
     def init_parser(parser: ArgumentParser) -> None:
         pass
