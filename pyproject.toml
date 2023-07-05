@@ -151,8 +151,13 @@ line_length = 88
 [tool.mypy]
 files = ["src", "tests"]
 check_untyped_defs = true
-show_error_codes = true
 disallow_untyped_defs = true
+no_implicit_optional = true
+show_error_codes = true
+strict_equality = true
+warn_redundant_casts = true
+warn_unreachable = true
+warn_unused_ignores = true
 
 [[tool.mypy.overrides]]
 module = "opentelemetry.instrumentation.*"
