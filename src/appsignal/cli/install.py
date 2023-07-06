@@ -8,6 +8,7 @@ from appsignal.config import Config
 
 from .command import AppsignalCLICommand
 from .demo import DemoCommand
+from .push_api_key_validator import PushApiKeyValidator
 
 
 INSTALL_FILE_TEMPLATE = """from appsignal import Appsignal
@@ -162,15 +163,5 @@ class InstallCommand(AppsignalCLICommand):
             with open(requirement_file, "a") as f:
                 f.write(f"{dependency_name}\n")
 
-    def _validate_push_api_key(self) -> bool:
-        endpoint = self._config.option("endpoint")
-        url = f"{endpoint}/1/auth?api_key={self._push_api_key}"
-        proxies = {}
-        if self._config.option("http_proxy"):
-            proxies["http"] = self._config.option("http_proxy")
-            proxies["https"] = self._config.option("http_proxy")
-
-        cert = self._config.option("ca_file_path")
-
-        response = requests.get(url, proxies=proxies, verify=cert)
-        return response.status_code == 200
+    def _validate_push_api_key(self):
+        return PushApiKeyValidator.validate(self._config) == "valid"
