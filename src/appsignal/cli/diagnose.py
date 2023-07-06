@@ -146,9 +146,7 @@ class DiagnoseCommand(AppsignalCLICommand):
         print()
 
         if self.send_report or (not self.no_send_report and self._report_prompt()):
-            token = self._send_diagnose_report()
-            print(f'  Your support token: {token}')
-            print(f'  View this report:   https://appsignal.com/diagnose/{token}')
+            self._send_diagnose_report()
 
         if self.no_send_report:
             print("Not sending report. (Specified with the --no-send-report option.)")
@@ -244,7 +242,16 @@ class DiagnoseCommand(AppsignalCLICommand):
         url = f"{endpoint}?{params}"
 
         response = requests.post(url, json={"diagnose": self.report})
-        return response.json()["token"]
+
+        status = response.status_code
+        if status == 200:
+            token = response.json()["token"]
+            print(f'  Your support token: {token}')
+            print(f'  View this report:   https://appsignal.com/diagnose/{token}')
+        else:
+            print("  Error: Something went wrong while submitting the report to AppSignal.")
+            print(f'  Response code: {status}')
+            print(f'  Response body: {response.text}')
 
     def _os_distribution(self):
         try:
