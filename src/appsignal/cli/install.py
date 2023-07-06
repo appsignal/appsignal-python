@@ -4,6 +4,9 @@ import os
 
 import requests
 
+from appsignal.config import Config
+from appsignal.push_api_key_validator import PushApiKeyValidator
+
 from .command import AppsignalCLICommand
 from .demo import DemoCommand
 
