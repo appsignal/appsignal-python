@@ -1,3 +1,5 @@
+import urllib
+
 import requests
 
 from appsignal.config import Config
@@ -7,7 +9,16 @@ class PushApiKeyValidator:
     @staticmethod
     def validate(config: Config):
         endpoint = config.option("endpoint")
-        url = f"{endpoint}/1/auth?api_key={config.option('push_api_key')}"
+        params = urllib.parse.urlencode(
+            {
+                "api_key": config.option("push_api_key"),
+                "name": config.option("name"),
+                "environment": config.option("environment"),
+                "hostname": config.option("hostname") or "",
+            }
+        )
+
+        url = f"{endpoint}/1/auth?{params}"
         proxies = {}
         if config.option("http_proxy"):
             proxies["http"] = config.option("http_proxy")
