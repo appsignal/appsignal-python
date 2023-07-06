@@ -36,22 +36,22 @@ class AgentReport:
     return self.report["host"]["gid"]["result"]
 
   def logger_started(self):
-    if self.report["logger"]["started"]["result"]:
+    if "logger" in self.report and self.report["logger"]["started"]["result"]:
         return "started"
     else:
         return "not started"
 
   def working_directory_user_id(self):
-    return self.report["working_directory_stat"]["uid"]["result"]
+    return "working_directory_stat" in self.report and self.report["working_directory_stat"]["uid"]["result"]
 
   def working_directory_group_id(self):
-    return self.report["working_directory_stat"]["gid"]["result"]
+    return "working_directory_stat" in self.report and self.report["working_directory_stat"]["gid"]["result"]
 
   def working_directory_permissions(self):
-    return self.report["working_directory_stat"]["mode"]["result"]
+    return "working_directory_stat" in self.report and self.report["working_directory_stat"]["mode"]["result"]
 
   def lock_path(self):
-    if self.report["lock_path"]["created"]["result"]:
+    if "lock_path" in self.report and self.report["lock_path"]["created"]["result"]:
         return "writable"
     else:
         return "not writable"
