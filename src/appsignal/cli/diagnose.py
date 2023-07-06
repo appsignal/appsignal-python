@@ -143,7 +143,6 @@ class DiagnoseCommand(AppsignalCLICommand):
         print()
 
         self._report_information()
-        print()
 
         if self.send_report or (not self.no_send_report and self._report_prompt()):
             self._send_diagnose_report()
@@ -220,10 +219,19 @@ class DiagnoseCommand(AppsignalCLICommand):
         print("Diagnostics report")
 
     def _report_prompt(self):
-        match input("  Send diagnostics report to AppSignal? (Y/n):"):
+        print("  Do you want to send this diagnostics report to AppSignal?")
+        print("  If you share this report you will be given a link to")
+        print("  AppSignal.com to validate the report.")
+        print("  You can also contact us at support@appsignal.com")
+        print("  with your support token.")
+        print()
+
+        match input("  Send diagnostics report to AppSignal? (Y/n):   "):
             case "y" | "yes" | "":
+                print("Transmitting diagnostics report")
                 return True
             case "n" | "no":
+                print("Not sending diagnostics information to AppSignal.")
                 return False
             case _:
                 report_prompt()
@@ -246,6 +254,7 @@ class DiagnoseCommand(AppsignalCLICommand):
         status = response.status_code
         if status == 200:
             token = response.json()["token"]
+            print()
             print(f'  Your support token: {token}')
             print(f'  View this report:   https://appsignal.com/diagnose/{token}')
         else:
