@@ -148,6 +148,9 @@ class DiagnoseCommand(AppsignalCLICommand):
         if self.send_report or (not self.no_send_report and self._report_prompt()):
             self._send_diagnose_report()
 
+        if self.no_send_report:
+            print("Not sending report. (Specified with the --no-send-report option.)")
+
     def _header(self):
         print("AppSignal diagnose")
         print("=" * 80)
