@@ -7,6 +7,7 @@ import json
 from .command import AppsignalCLICommand
 from appsignal.config import Config
 from appsignal.agent import diagnose
+from appsignal.push_api_key_validator import PushApiKeyValidator
 
 from ..__about__ import __version__
 
@@ -86,7 +87,9 @@ class DiagnoseCommand(AppsignalCLICommand):
             },
             "paths": None,
             "process": None,
-            "validation": None,
+            "validation": {
+                "push_api_key": self._validate_push_api_key()
+            },
         }
 
     def run(self):
@@ -169,7 +172,9 @@ class DiagnoseCommand(AppsignalCLICommand):
         print("https://docs.appsignal.com/python/command-line/diagnose.html")
 
     def _validation_information(self):
+        validation_report = self.report["validation"]
         print("Validation")
+        print(f'  Validating Push API key: {validation_report["push_api_key"]}')
 
     def _paths_information(self):
         print("Paths")
@@ -207,3 +212,11 @@ class DiagnoseCommand(AppsignalCLICommand):
       except OSError:
           return ""
 
+    def _validate_push_api_key(self):
+        match PushApiKeyValidator.validate(self.config):
+            case 'valid':
+                return 'valid'
+            case 'invalid':
+                return 'invalid'
+            case value:
+                return f'Failed to validate: {value}'
