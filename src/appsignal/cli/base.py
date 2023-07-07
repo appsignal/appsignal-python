@@ -24,16 +24,9 @@ def run() -> NoReturn:
 
 def main(argv: list[str]) -> int:
     parser = ArgumentParser("appsignal", description="AppSignal for Python CLI.")
-    subparsers = parser.add_subparsers()
-    parser.set_defaults(cmd=None)
-
-    cmd_class: type[AppsignalCLICommand]
-    for name, cmd_class in COMMANDS.items():
-        subparser = subparsers.add_parser(name=name, help=cmd_class.__doc__)
-        subparser.set_defaults(cmd=cmd_class)
-        cmd_class.init_parser(subparser)
+    _register_commands(parser)
     args = parser.parse_args(argv)
-
+    cmd_class: type[AppsignalCLICommand] | None
     cmd_class = args.cmd
     if cmd_class is None:
         parser.print_help()
@@ -43,3 +36,13 @@ def main(argv: list[str]) -> int:
         return cmd.run()
     except KeyboardInterrupt:
         return 0
+
+
+def _register_commands(parser: ArgumentParser) -> None:
+    subparsers = parser.add_subparsers()
+    parser.set_defaults(cmd=None)
+    cmd_class: type[AppsignalCLICommand]
+    for name, cmd_class in COMMANDS.items():
+        subparser = subparsers.add_parser(name=name, help=cmd_class.__doc__)
+        subparser.set_defaults(cmd=cmd_class)
+        cmd_class.init_parser(subparser)
