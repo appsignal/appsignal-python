@@ -124,7 +124,9 @@ def test_install_command_when_file_exists_no_overwrite(mocker):
     ):
         main(["install"])
 
-    # assert [] == cast(MagicMock, builtins.open).mock_calls
+    from appsignal.cli import install
+
+    assert install.open.mock_calls == []  # type: ignore[attr-defined]
 
 
 def test_install_comand_when_api_key_is_not_valid(mocker):
