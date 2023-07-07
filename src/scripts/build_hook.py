@@ -52,7 +52,7 @@ def should_download(agent_path: str, version_path: str) -> bool:
     if not os.path.exists(version_path):
         return True
 
-    with open(version_path, "r") as version:
+    with open(version_path) as version:
         return version.read() != APPSIGNAL_AGENT_CONFIG["version"]
 
 
