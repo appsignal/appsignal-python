@@ -25,8 +25,8 @@ class InstallCommand(AppsignalCLICommand):
 
     def run(self) -> int:
         # Make sure to show input prompts before the welcome text.
-        self._name
-        self._push_api_key
+        self._name  # noqa: B018
+        self._push_api_key  # noqa: B018
 
         print("👋 Welcome to the AppSignal for Python installer!")
         print()
