@@ -1,48 +1,48 @@
 from __future__ import annotations
 
-from typing import Any
+import sys
+from argparse import ArgumentParser
+from typing import Mapping, NoReturn
 
-from docopt import docopt
-
-from ..__about__ import __version__
 from .command import AppsignalCLICommand
 from .demo import DemoCommand
 from .install import InstallCommand
+from .version import VersionCommand
 
 
-DOC = """AppSignal for Python CLI.
-
-Usage:
-  appsignal install [--push-api-key=<key>]
-  appsignal demo [--application=<app>] [--push-api-key=<key>]
-  appsignal (-h | --help)
-  appsignal --version
-
-Options:
-  -h --help             Show this screen and exit.
-  --version             Show version number and exit.
-  --push-api-key=<key>  Push API Key to use for the installation and the demo.
-  --application=<app>   Application name to use for the demo.
-"""
+COMMANDS: Mapping[str, type[AppsignalCLICommand]] = {
+    "demo": DemoCommand,
+    "install": InstallCommand,
+    "version": VersionCommand,
+}
 
 
-def run() -> int:
+def run() -> NoReturn:
+    """The entry point for CLI."""
+    sys.exit(main(sys.argv[1:]))
+
+
+def main(argv: list[str]) -> int:
+    parser = ArgumentParser("appsignal", description="AppSignal for Python CLI.")
+    _register_commands(parser)
+    args = parser.parse_args(argv)
+    cmd_class: type[AppsignalCLICommand] | None
+    cmd_class = args.cmd
+    if cmd_class is None:
+        parser.print_help()
+        return 1
+    cmd = cmd_class(args=args)
     try:
-        version = f"AppSignal for Python v{__version__}"
-
-        arguments = docopt(DOC, version=version)
-
-        return command_for(arguments).run()
+        return cmd.run()
     except KeyboardInterrupt:
         return 0
 
 
-def command_for(arguments: dict[str, Any]) -> AppsignalCLICommand:
-    if arguments["install"]:
-        return InstallCommand(push_api_key=arguments["--push-api-key"])
-    if arguments["demo"]:
-        return DemoCommand(
-            push_api_key=arguments["--push-api-key"],
-            application=arguments["--application"],
-        )
-    raise NotImplementedError
+def _register_commands(parser: ArgumentParser) -> None:
+    subparsers = parser.add_subparsers()
+    parser.set_defaults(cmd=None)
+    cmd_class: type[AppsignalCLICommand]
+    for name, cmd_class in COMMANDS.items():
+        subparser = subparsers.add_parser(name=name, help=cmd_class.__doc__)
+        subparser.set_defaults(cmd=cmd_class)
+        cmd_class.init_parser(subparser)
