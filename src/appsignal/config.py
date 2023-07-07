@@ -3,7 +3,16 @@ from __future__ import annotations
 import os
 import platform
 import tempfile
-from typing import TYPE_CHECKING, Any, List, Literal, TypedDict, cast, get_args
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    ClassVar,
+    List,
+    Literal,
+    TypedDict,
+    cast,
+    get_args,
+)
 
 from .__about__ import __version__
 
@@ -116,11 +125,11 @@ class Config:
         return self.options.get(option)
 
     @classmethod
-    def load_from_system(_cls) -> Options:
+    def load_from_system(cls) -> Options:
         return Options(app_path=os.getcwd())
 
     @classmethod
-    def load_from_environment(_cls) -> Options:
+    def load_from_environment(cls) -> Options:
         options = Options(
             active=parse_bool(os.environ.get("APPSIGNAL_ACTIVE")),
             ca_file_path=os.environ.get("APPSIGNAL_CA_FILE_PATH"),
@@ -173,7 +182,7 @@ class Config:
 
         return options
 
-    CONSTANT_PRIVATE_ENVIRON = {
+    CONSTANT_PRIVATE_ENVIRON: ClassVar[dict[str, str]] = {
         "_APPSIGNAL_LANGUAGE_INTEGRATION_VERSION": f"python-{__version__}",
         "_APPSIGNAL_ENABLE_OPENTELEMETRY_HTTP": "true",
     }
