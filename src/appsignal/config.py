@@ -124,12 +124,12 @@ class Config:
     def option(self, option: str) -> Any:
         return self.options.get(option)
 
-    @classmethod
-    def load_from_system(cls) -> Options:
+    @staticmethod
+    def load_from_system() -> Options:
         return Options(app_path=os.getcwd())
 
-    @classmethod
-    def load_from_environment(cls) -> Options:
+    @staticmethod
+    def load_from_environment() -> Options:
         options = Options(
             active=parse_bool(os.environ.get("APPSIGNAL_ACTIVE")),
             ca_file_path=os.environ.get("APPSIGNAL_CA_FILE_PATH"),
