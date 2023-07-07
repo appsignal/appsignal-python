@@ -4,8 +4,6 @@ import os
 
 import requests
 
-from appsignal.config import Config
-
 from .command import AppsignalCLICommand
 from .demo import DemoCommand
 
@@ -23,22 +21,18 @@ INSTALL_FILE_NAME = "__appsignal__.py"
 
 
 class InstallCommand(AppsignalCLICommand):
-    def __init__(self, push_api_key: str | None = None) -> None:
-        self._push_api_key = push_api_key
-        self._name = None
-        self._config = Config()
+    """Generate Appsignal client integration code."""
 
     def run(self) -> int:
+        # Make sure to show input prompts before the welcome text.
+        self._name  # noqa: B018
+        self._push_api_key  # noqa: B018
+
         print("👋 Welcome to the AppSignal for Python installer!")
         print()
         print("Reach us at support@appsignal.com for support")
         print("Documentation available at https://docs.appsignal.com/python")
         print()
-
-        self._input_name()
-
-        if self._push_api_key is None:
-            self._input_push_api_key()
 
         print()
 
@@ -56,7 +50,10 @@ class InstallCommand(AppsignalCLICommand):
             self._write_file()
             print()
 
-            DemoCommand(push_api_key=self._push_api_key, application=self._name).run()
+            demo = DemoCommand(args=self.args)
+            demo._name = self._name
+            demo._push_api_key = self._push_api_key
+            demo.run()
 
             if self._search_dependency("django"):
                 self._django_installation()
