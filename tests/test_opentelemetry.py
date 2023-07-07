@@ -10,7 +10,7 @@ def raise_module_not_found_error():
     raise ModuleNotFoundError
 
 
-def mock_adders() -> dict[str, Mock]:
+def mock_adders() -> dict[Config.DefaultInstrumentation, Mock]:
     return {
         "opentelemetry.instrumentation.celery": Mock(),
         "opentelemetry.instrumentation.jinja2": Mock(

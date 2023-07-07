@@ -80,7 +80,9 @@ def add_requests_instrumentation() -> None:
 
 DefaultInstrumentationAdder = Callable[[], None]
 
-DEFAULT_INSTRUMENTATION_ADDERS = {
+DEFAULT_INSTRUMENTATION_ADDERS: Mapping[
+    Config.DefaultInstrumentation, DefaultInstrumentationAdder
+] = {
     "opentelemetry.instrumentation.celery": add_celery_instrumentation,
     "opentelemetry.instrumentation.django": add_django_instrumentation,
     "opentelemetry.instrumentation.flask": add_flask_instrumentation,
@@ -111,7 +113,9 @@ def start_opentelemetry(config: Config) -> None:
 
 def add_instrumentations(
     config: Config,
-    _adders: Mapping[str, DefaultInstrumentationAdder] = DEFAULT_INSTRUMENTATION_ADDERS,
+    _adders: Mapping[
+        Config.DefaultInstrumentation, DefaultInstrumentationAdder
+    ] = DEFAULT_INSTRUMENTATION_ADDERS,
 ) -> None:
     logger = logging.getLogger("appsignal")
     disable_list = config.options.get("disable_default_instrumentations") or []
