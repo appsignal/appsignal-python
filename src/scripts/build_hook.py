@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import hashlib
 import os
 import shutil
@@ -6,13 +8,13 @@ import subprocess
 import sysconfig
 import tarfile
 from runpy import run_path
-from typing import Any, Dict
+from typing import Any
 
 import requests
 from hatchling.builders.hooks.plugin.interface import BuildHookInterface
 
 
-def run_relative(filename):
+def run_relative(filename: str) -> dict[str, Any]:
     return run_path(os.path.join(os.path.dirname(os.path.abspath(__file__)), filename))
 
 
@@ -20,15 +22,15 @@ APPSIGNAL_AGENT_CONFIG = run_relative("agent.py")["APPSIGNAL_AGENT_CONFIG"]
 TRIPLE_PLATFORM_TAG = run_relative("platform.py")["TRIPLE_PLATFORM_TAG"]
 
 
-def triple_filename(triple: str):
+def triple_filename(triple: str) -> str:
     return APPSIGNAL_AGENT_CONFIG["triples"][triple]["static"]["filename"]
 
 
-def triple_checksum(triple: str):
+def triple_checksum(triple: str) -> str:
     return APPSIGNAL_AGENT_CONFIG["triples"][triple]["static"]["checksum"]
 
 
-def triple_urls(triple: str):
+def triple_urls(triple: str) -> list[str]:
     mirrors = APPSIGNAL_AGENT_CONFIG["mirrors"]
     version = APPSIGNAL_AGENT_CONFIG["version"]
     filename = triple_filename(triple)
@@ -50,7 +52,7 @@ def should_download(agent_path: str, version_path: str) -> bool:
     if not os.path.exists(version_path):
         return True
 
-    with open(version_path, "r") as version:
+    with open(version_path) as version:
         return version.read() != APPSIGNAL_AGENT_CONFIG["version"]
 
 
@@ -77,7 +79,7 @@ class DownloadError(Exception):
 
 
 class CustomBuildHook(BuildHookInterface):
-    def initialize(self, _version: str, build_data: Dict[str, Any]) -> None:
+    def initialize(self, _version: str, build_data: dict[str, Any]) -> None:
         """
         This occurs immediately before each build.
 

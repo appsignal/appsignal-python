@@ -1,4 +1,5 @@
-from typing import Dict
+from __future__ import annotations
+
 from unittest.mock import Mock
 
 from appsignal.config import Config, Options
@@ -6,10 +7,10 @@ from appsignal.opentelemetry import add_instrumentations
 
 
 def raise_module_not_found_error():
-    raise ModuleNotFoundError()
+    raise ModuleNotFoundError
 
 
-def mock_adders() -> Dict[Config.DefaultInstrumentation, Mock]:
+def mock_adders() -> dict[Config.DefaultInstrumentation, Mock]:
     return {
         "opentelemetry.instrumentation.celery": Mock(),
         "opentelemetry.instrumentation.jinja2": Mock(
@@ -22,7 +23,7 @@ def test_add_instrumentations():
     adders = mock_adders()
     config = Config()
 
-    add_instrumentations(config, default_instrumentation_adders=adders)
+    add_instrumentations(config, _adders=adders)
 
     for adder in adders.values():
         adder.assert_called_once()
@@ -36,7 +37,7 @@ def test_add_instrumentations_disable_some_default_instrumentations():
         )
     )
 
-    add_instrumentations(config, default_instrumentation_adders=adders)
+    add_instrumentations(config, _adders=adders)
 
     adders["opentelemetry.instrumentation.celery"].assert_not_called()
     adders["opentelemetry.instrumentation.jinja2"].assert_called_once()
@@ -46,7 +47,7 @@ def test_add_instrumentations_disable_all_default_instrumentations():
     adders = mock_adders()
     config = Config(Options(disable_default_instrumentations=True))
 
-    add_instrumentations(config, default_instrumentation_adders=adders)
+    add_instrumentations(config, _adders=adders)
 
     for adder in adders.values():
         adder.assert_not_called()

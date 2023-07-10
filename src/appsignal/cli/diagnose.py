@@ -1,62 +1,72 @@
-import platform
-import os
-import urllib
-import requests
 import json
+import os
+import platform
+import urllib
 
-from .command import AppsignalCLICommand
-from appsignal.config import Config
+import requests
+
 from appsignal.agent import diagnose
+from appsignal.config import Config
 from appsignal.push_api_key_validator import PushApiKeyValidator
 
 from ..__about__ import __version__
+from .command import AppsignalCLICommand
+
 
 class AgentReport:
-  def __init__(self, report):
-      self.report = report
+    def __init__(self, report):
+        self.report = report
 
-  def extension_loaded(self):
-    return self.report["boot"]["started"]["result"]
+    def extension_loaded(self):
+        return self.report["boot"]["started"]["result"]
 
-  def configuration_valid(self):
-    if self.report["config"]["valid"]["result"]:
-        return "valid"
-    else:
-        return "invalid"
+    def configuration_valid(self):
+        if self.report["config"]["valid"]["result"]:
+            return "valid"
+        else:
+            return "invalid"
 
-  def started(self):
-    if self.report["boot"]["started"]["result"]:
-        return "started"
-    else:
-        return "not started"
+    def started(self):
+        if self.report["boot"]["started"]["result"]:
+            return "started"
+        else:
+            return "not started"
 
-  def user_id(self):
-    return self.report["host"]["uid"]["result"]
+    def user_id(self):
+        return self.report["host"]["uid"]["result"]
 
-  def group_id(self):
-    return self.report["host"]["gid"]["result"]
+    def group_id(self):
+        return self.report["host"]["gid"]["result"]
 
-  def logger_started(self):
-    if "logger" in self.report and self.report["logger"]["started"]["result"]:
-        return "started"
-    else:
-        return "not started"
+    def logger_started(self):
+        if "logger" in self.report and self.report["logger"]["started"]["result"]:
+            return "started"
+        else:
+            return "not started"
 
-  def working_directory_user_id(self):
-    return "working_directory_stat" in self.report and self.report["working_directory_stat"]["uid"]["result"]
+    def working_directory_user_id(self):
+        return (
+            "working_directory_stat" in self.report
+            and self.report["working_directory_stat"]["uid"]["result"]
+        )
 
-  def working_directory_group_id(self):
-    return "working_directory_stat" in self.report and self.report["working_directory_stat"]["gid"]["result"]
+    def working_directory_group_id(self):
+        return (
+            "working_directory_stat" in self.report
+            and self.report["working_directory_stat"]["gid"]["result"]
+        )
 
-  def working_directory_permissions(self):
-    return "working_directory_stat" in self.report and self.report["working_directory_stat"]["mode"]["result"]
+    def working_directory_permissions(self):
+        return (
+            "working_directory_stat" in self.report
+            and self.report["working_directory_stat"]["mode"]["result"]
+        )
 
-  def lock_path(self):
-    if "lock_path" in self.report and self.report["lock_path"]["created"]["result"]:
-        return "writable"
-    else:
-        return "not writable"
-
+    def lock_path(self):
+        if "lock_path" in self.report and self.report["lock_path"]["created"]["result"]:
+            return "writable"
+        else:
+            return "not writable"
 
 
 class DiagnoseCommand(AppsignalCLICommand):
@@ -87,9 +97,7 @@ class DiagnoseCommand(AppsignalCLICommand):
             },
             "paths": None,
             "process": None,
-            "validation": {
-                "push_api_key": self._validate_push_api_key()
-            },
+            "validation": {"push_api_key": self._validate_push_api_key()},
         }
 
     def run(self):
@@ -151,23 +159,29 @@ class DiagnoseCommand(AppsignalCLICommand):
     def _agent_information(self):
         print("Agent diagnostics")
         print("  Extension tests")
-        print(f'    Configuration: {self.agent_report.configuration_valid()}')
+        print(f"    Configuration: {self.agent_report.configuration_valid()}")
         print("  Agent tests")
-        print(f'    Started: {self.agent_report.started()}')
-        print(f'    Process user id: {self.agent_report.user_id()}')
-        print(f'    Process user group id: {self.agent_report.group_id()}')
-        print(f'    Configuration: {self.agent_report.configuration_valid()}')
-        print(f'    Logger: {self.agent_report.logger_started()}')
-        print(f'    Working directory user id: {self.agent_report.working_directory_user_id()}')
-        print(f'    Working directory user group id: {self.agent_report.working_directory_group_id()}')
-        print(f'    Working directory permissions: {self.agent_report.working_directory_permissions()}')
-        print(f'    Lock path: {self.agent_report.lock_path()}')
+        print(f"    Started: {self.agent_report.started()}")
+        print(f"    Process user id: {self.agent_report.user_id()}")
+        print(f"    Process user group id: {self.agent_report.group_id()}")
+        print(f"    Configuration: {self.agent_report.configuration_valid()}")
+        print(f"    Logger: {self.agent_report.logger_started()}")
+        print(
+            f"    Working directory user id: {self.agent_report.working_directory_user_id()}"
+        )
+        print(
+            f"    Working directory user group id: {self.agent_report.working_directory_group_id()}"
+        )
+        print(
+            f"    Working directory permissions: {self.agent_report.working_directory_permissions()}"
+        )
+        print(f"    Lock path: {self.agent_report.lock_path()}")
 
     def _configuration_information(self):
         print("Configuration")
 
         for key in self.config.options:
-            print(f'  {key}: {repr(self.config.options[key])}')
+            print(f"  {key}: {repr(self.config.options[key])}")
 
         print()
         print("Read more about how the diagnose config output is rendered")
@@ -221,24 +235,26 @@ class DiagnoseCommand(AppsignalCLICommand):
         if status == 200:
             token = response.json()["token"]
             print()
-            print(f'  Your support token: {token}')
-            print(f'  View this report:   https://appsignal.com/diagnose/{token}')
+            print(f"  Your support token: {token}")
+            print(f"  View this report:   https://appsignal.com/diagnose/{token}")
         else:
-            print("  Error: Something went wrong while submitting the report to AppSignal.")
-            print(f'  Response code: {status}')
-            print(f'  Response body: {response.text}')
+            print(
+                "  Error: Something went wrong while submitting the report to AppSignal."
+            )
+            print(f"  Response code: {status}")
+            print(f"  Response body: {response.text}")
 
     def _os_distribution(self):
-      try:
-          return platform.freedesktop_os_release()
-      except OSError:
-          return ""
+        try:
+            return platform.freedesktop_os_release()
+        except OSError:
+            return ""
 
     def _validate_push_api_key(self):
         match PushApiKeyValidator.validate(self.config):
-            case 'valid':
-                return 'valid'
-            case 'invalid':
-                return 'invalid'
+            case "valid":
+                return "valid"
+            case "invalid":
+                return "invalid"
             case value:
-                return f'Failed to validate: {value}'
+                return f"Failed to validate: {value}"

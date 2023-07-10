@@ -1,10 +1,14 @@
+from __future__ import annotations
+
+from typing import Any
+
 from docopt import docopt
 
 from ..__about__ import __version__
 from .command import AppsignalCLICommand
 from .demo import DemoCommand
-from .install import InstallCommand
 from .diagnose import DiagnoseCommand
+from .install import InstallCommand
 
 
 DOC = """AppSignal for Python CLI.
@@ -24,7 +28,7 @@ Options:
 """
 
 
-def run():
+def run() -> int:
     try:
         version = f"AppSignal for Python v{__version__}"
 
@@ -35,7 +39,7 @@ def run():
         return 0
 
 
-def command_for(arguments) -> AppsignalCLICommand:
+def command_for(arguments: dict[str, Any]) -> AppsignalCLICommand:
     if arguments["install"]:
         return InstallCommand(push_api_key=arguments["--push-api-key"])
     if arguments["demo"]:

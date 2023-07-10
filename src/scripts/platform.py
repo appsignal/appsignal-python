@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+
 TRIPLE_PLATFORM_TAG = {
     # MacOS builds
     "x86_64-darwin": "macosx_10_9_x86_64",

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import builtins
 from contextlib import contextmanager
 from typing import cast

@@ -5,11 +5,11 @@ import platform
 import tempfile
 from typing import (
     TYPE_CHECKING,
+    Any,
+    ClassVar,
     List,
     Literal,
-    Optional,
     TypedDict,
-    Union,
     cast,
     get_args,
 )
@@ -22,39 +22,39 @@ if TYPE_CHECKING:
 
 
 class Options(TypedDict, total=False):
-    active: Optional[bool]
-    app_path: Optional[str]
-    ca_file_path: Optional[str]
-    diagnose_endpoint: Optional[str]
-    disable_default_instrumentations: Optional[
-        Union[list[Config.DefaultInstrumentation], bool]
-    ]
-    dns_servers: Optional[list[str]]
-    enable_host_metrics: Optional[bool]
-    enable_nginx_metrics: Optional[bool]
-    enable_statsd: Optional[bool]
-    endpoint: Optional[str]
-    environment: Optional[str]
-    files_world_accessible: Optional[bool]
-    filter_parameters: Optional[list[str]]
-    filter_session_data: Optional[list[str]]
-    hostname: Optional[str]
-    http_proxy: Optional[str]
-    ignore_actions: Optional[list[str]]
-    ignore_errors: Optional[list[str]]
-    ignore_namespaces: Optional[list[str]]
-    log: Optional[str]
-    log_level: Optional[str]
-    log_path: Optional[str]
-    name: Optional[str]
-    push_api_key: Optional[str]
-    revision: Optional[str]
-    request_headers: Optional[list[str]]
-    running_in_container: Optional[bool]
-    send_environment_metadata: Optional[bool]
-    send_params: Optional[bool]
-    send_session_data: Optional[bool]
-    working_directory_path: Optional[str]
+    active: bool | None
+    app_path: str | None
+    ca_file_path: str | None
+    diagnose_endpoint: str | None
+    disable_default_instrumentations: None | (
+        list[Config.DefaultInstrumentation] | bool
+    )
+    dns_servers: list[str] | None
+    enable_host_metrics: bool | None
+    enable_nginx_metrics: bool | None
+    enable_statsd: bool | None
+    endpoint: str | None
+    environment: str | None
+    files_world_accessible: bool | None
+    filter_parameters: list[str] | None
+    filter_session_data: list[str] | None
+    hostname: str | None
+    http_proxy: str | None
+    ignore_actions: list[str] | None
+    ignore_errors: list[str] | None
+    ignore_namespaces: list[str] | None
+    log: str | None
+    log_level: str | None
+    log_path: str | None
+    name: str | None
+    push_api_key: str | None
+    revision: str | None
+    request_headers: list[str] | None
+    running_in_container: bool | None
+    send_environment_metadata: bool | None
+    send_params: bool | None
+    send_session_data: bool | None
+    working_directory_path: str | None
 
 
 class Sources(TypedDict):
@@ -109,7 +109,7 @@ class Config:
         List[DefaultInstrumentation], list(get_args(DefaultInstrumentation))
     )
 
-    def __init__(self, options: Optional[Options] = None) -> None:
+    def __init__(self, options: Options | None = None) -> None:
         self.sources = Sources(
             default=self.DEFAULT_CONFIG,
             system=Config.load_from_system(),
@@ -123,15 +123,15 @@ class Config:
         final_options.update(self.sources["initial"])
         self.options = final_options
 
-    def option(self, option: str):
+    def option(self, option: str) -> Any:
         return self.options.get(option)
 
-    @classmethod
-    def load_from_system(_cls) -> Options:
+    @staticmethod
+    def load_from_system() -> Options:
         return Options(app_path=os.getcwd())
 
-    @classmethod
-    def load_from_environment(_cls) -> Options:
+    @staticmethod
+    def load_from_environment() -> Options:
         options = Options(
             active=parse_bool(os.environ.get("APPSIGNAL_ACTIVE")),
             ca_file_path=os.environ.get("APPSIGNAL_CA_FILE_PATH"),
@@ -185,7 +185,7 @@ class Config:
 
         return options
 
-    CONSTANT_PRIVATE_ENVIRON = {
+    CONSTANT_PRIVATE_ENVIRON: ClassVar[dict[str, str]] = {
         "_APPSIGNAL_LANGUAGE_INTEGRATION_VERSION": f"python-{__version__}",
         "_APPSIGNAL_ENABLE_OPENTELEMETRY_HTTP": "true",
     }
@@ -247,7 +247,7 @@ class Config:
             if value is not None:
                 os.environ[var] = str(value)
 
-    def log_file_path(self) -> Optional[str]:
+    def log_file_path(self) -> str | None:
         path = self.options.get("log_path")
 
         if path:
@@ -274,7 +274,7 @@ class Config:
         return os.path.join(path, "appsignal.log")
 
 
-def parse_bool(value: Optional[str]) -> Optional[bool]:
+def parse_bool(value: str | None) -> bool | None:
     if value is None:
         return None
 
@@ -287,7 +287,7 @@ def parse_bool(value: Optional[str]) -> Optional[bool]:
     return None
 
 
-def parse_list(value: Optional[str]) -> Optional[list[str]]:
+def parse_list(value: str | None) -> list[str] | None:
     if value is None:
         return None
 
@@ -295,8 +295,8 @@ def parse_list(value: Optional[str]) -> Optional[list[str]]:
 
 
 def parse_disable_default_instrumentations(
-    value: Optional[str],
-) -> Optional[Union[list[Config.DefaultInstrumentation], bool]]:
+    value: str | None,
+) -> list[Config.DefaultInstrumentation] | bool | None:
     if value is None:
         return None
 
@@ -311,14 +311,14 @@ def parse_disable_default_instrumentations(
     )
 
 
-def bool_to_env_str(value: Optional[bool]):
+def bool_to_env_str(value: bool | None) -> str | None:
     if value is None:
         return None
 
     return str(value).lower()
 
 
-def list_to_env_str(value: Optional[list[str]]):
+def list_to_env_str(value: list[str] | None) -> str | None:
     if value is None:
         return None
 

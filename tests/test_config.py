@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 
 from appsignal.__about__ import __version__

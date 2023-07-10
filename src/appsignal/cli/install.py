@@ -1,14 +1,15 @@
+from __future__ import annotations
+
 import os
 
 import requests
 
 from appsignal.config import Config
+from appsignal.push_api_key_validator import PushApiKeyValidator
 
 from .command import AppsignalCLICommand
 from .demo import DemoCommand
 
-from appsignal.config import Config
-from appsignal.push_api_key_validator import PushApiKeyValidator
 
 INSTALL_FILE_TEMPLATE = """from appsignal import Appsignal
 
@@ -23,7 +24,7 @@ INSTALL_FILE_NAME = "__appsignal__.py"
 
 
 class InstallCommand(AppsignalCLICommand):
-    def __init__(self, push_api_key=None) -> None:
+    def __init__(self, push_api_key: str | None = None) -> None:
         self._push_api_key = push_api_key
         self._name = None
         self._config = Config()
@@ -69,24 +70,22 @@ class InstallCommand(AppsignalCLICommand):
 
         return 0
 
-    def _should_write_file(self):
+    def _should_write_file(self) -> bool:
         if os.path.exists(INSTALL_FILE_NAME):
             return self._input_should_overwrite_file()
-        else:
-            return True
+        return True
 
-    def _input_should_overwrite_file(self):
+    def _input_should_overwrite_file(self) -> bool:
         response = input(
             f"The {INSTALL_FILE_NAME} file already exists."
             " Should it be overwritten? (y/N): "
         )
         if len(response) == 0 or response[0].lower() == "n":
             return False
-        elif response[0].lower() == "y":
+        if response[0].lower() == "y":
             return True
-        else:
-            print('Please answer "y" (yes) or "n" (no)')
-            return self._input_should_overwrite_file()
+        print('Please answer "y" (yes) or "n" (no)')
+        return self._input_should_overwrite_file()
 
     def _write_file(self) -> None:
         with open(INSTALL_FILE_NAME, "w") as f:
@@ -97,7 +96,7 @@ class InstallCommand(AppsignalCLICommand):
 
             f.write(file_contents)
 
-    def _requirements_file(self):
+    def _requirements_file(self) -> str | None:
         current_dir = os.getcwd()
         for _root, _dirs, files in os.walk(current_dir):
             for file in files:
@@ -105,10 +104,10 @@ class InstallCommand(AppsignalCLICommand):
                     return file
         return None
 
-    def _search_dependency(self, dependency_name):
+    def _search_dependency(self, dependency_name: str) -> bool:
         requirement_file = self._requirements_file()
         if requirement_file:
-            with open(requirement_file, "r") as f:
+            with open(requirement_file) as f:
                 for line in f.readlines():
                     return line.startswith(dependency_name)
 
@@ -158,11 +157,21 @@ class InstallCommand(AppsignalCLICommand):
         print("You can check a list of the supported integrations here:")
         print("https://docs.appsignal.com/python/instrumentations")
 
-    def _add_dependency(self, dependency_name) -> None:
+    def _add_dependency(self, dependency_name: str) -> None:
         requirement_file = self._requirements_file()
         if requirement_file:
             with open(requirement_file, "a") as f:
                 f.write(f"{dependency_name}\n")
 
-    def _validate_push_api_key(self):
-        return PushApiKeyValidator.validate(self._config) == 'valid'
+    def _validate_push_api_key(self) -> bool:
+        endpoint = self._config.option("endpoint")
+        url = f"{endpoint}/1/auth?api_key={self._push_api_key}"
+        proxies = {}
+        if self._config.option("http_proxy"):
+            proxies["http"] = self._config.option("http_proxy")
+            proxies["https"] = self._config.option("http_proxy")
+
+        cert = self._config.option("ca_file_path")
+
+        response = requests.get(url, proxies=proxies, verify=cert)
+        return response.status_code == 200
