@@ -91,7 +91,18 @@ class DiagnoseCommand(AppsignalCLICommand):
         self.no_send_report = self.args.no_send_report
         self.agent_report = AgentReport(json.loads(agent.diagnose()))
         self.report = {
-            "agent": None,
+            "agent": {
+                "agent": {
+                    "boot": agent_json["boot"],
+                    "config": {
+                        "valid": agent_json["config"]["valid"],
+                    },
+                    "host": agent_json["host"],
+                    "lock_path": agent_json["lock_path"],
+                    "logger": agent_json["logger"],
+                    "working_directory_stat": agent_json["working_directory_stat"],
+                }
+            },
             "config": None,
             "host": {
                 "architecture": platform.machine(),
