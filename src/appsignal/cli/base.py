@@ -52,5 +52,4 @@ def command_for(arguments: dict[str, Any]) -> AppsignalCLICommand:
             send_report=arguments["--send-report"],
             no_send_report=arguments["--no-send-report"],
         )
-    else:
-        raise NotImplementedError
+    raise NotImplementedError

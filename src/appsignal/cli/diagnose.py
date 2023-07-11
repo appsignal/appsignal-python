@@ -1,11 +1,14 @@
+# ruff: noqa: E501
+
 import json
 import os
 import platform
 import urllib
+from typing import Any, Optional
 
 import requests
 
-from appsignal.agent import diagnose
+from appsignal.agent import Agent
 from appsignal.config import Config
 from appsignal.push_api_key_validator import PushApiKeyValidator
 
@@ -14,67 +17,66 @@ from .command import AppsignalCLICommand
 
 
 class AgentReport:
-    def __init__(self, report):
+    def __init__(self, report: dict) -> None:
         self.report = report
 
-    def extension_loaded(self):
+    def extension_loaded(self) -> str:
         return self.report["boot"]["started"]["result"]
 
-    def configuration_valid(self):
+    def configuration_valid(self) -> str:
         if self.report["config"]["valid"]["result"]:
             return "valid"
-        else:
-            return "invalid"
+        return "invalid"
 
-    def started(self):
+    def started(self) -> str:
         if self.report["boot"]["started"]["result"]:
             return "started"
-        else:
-            return "not started"
+        return "not started"
 
-    def user_id(self):
+    def user_id(self) -> str:
         return self.report["host"]["uid"]["result"]
 
-    def group_id(self):
+    def group_id(self) -> str:
         return self.report["host"]["gid"]["result"]
 
-    def logger_started(self):
+    def logger_started(self) -> str:
         if "logger" in self.report and self.report["logger"]["started"]["result"]:
             return "started"
-        else:
-            return "not started"
+        return "not started"
 
-    def working_directory_user_id(self):
+    def working_directory_user_id(self) -> bool:
         return (
             "working_directory_stat" in self.report
             and self.report["working_directory_stat"]["uid"]["result"]
         )
 
-    def working_directory_group_id(self):
+    def working_directory_group_id(self) -> bool:
         return (
             "working_directory_stat" in self.report
             and self.report["working_directory_stat"]["gid"]["result"]
         )
 
-    def working_directory_permissions(self):
+    def working_directory_permissions(self) -> bool:
         return (
             "working_directory_stat" in self.report
             and self.report["working_directory_stat"]["mode"]["result"]
         )
 
-    def lock_path(self):
+    def lock_path(self) -> str:
         if "lock_path" in self.report and self.report["lock_path"]["created"]["result"]:
             return "writable"
-        else:
-            return "not writable"
+        return "not writable"
 
 
 class DiagnoseCommand(AppsignalCLICommand):
-    def __init__(self, send_report=None, no_send_report=None):
+    def __init__(
+        self, send_report: Optional[bool] = None, no_send_report: Optional[bool] = None
+    ) -> None:
+        agent = Agent()
         self.config = Config()
         self.send_report = send_report
         self.no_send_report = no_send_report
-        self.agent_report = AgentReport(json.loads(diagnose()))
+        self.agent_report = AgentReport(json.loads(agent.diagnose()))
 
         self.report = {
             "agent": None,
@@ -100,7 +102,7 @@ class DiagnoseCommand(AppsignalCLICommand):
             "validation": {"push_api_key": self._validate_push_api_key()},
         }
 
-    def run(self):
+    def run(self) -> int:
         self._header()
         print()
 
@@ -130,7 +132,9 @@ class DiagnoseCommand(AppsignalCLICommand):
         if self.no_send_report:
             print("Not sending report. (Specified with the --no-send-report option.)")
 
-    def _header(self):
+        return 0
+
+    def _header(self) -> None:
         print("AppSignal diagnose")
         print("=" * 80)
         print("Use this information to debug your configuration.")
@@ -139,16 +143,16 @@ class DiagnoseCommand(AppsignalCLICommand):
         print("Send this output to support@appsignal.com if you need help.")
         print("=" * 80)
 
-    def _library_information(self):
-        library_report = self.report["library"]
+    def _library_information(self) -> None:
+        library_report: Any = self.report["library"]
         print("AppSignal library")
         print("  Language: Python")
         print(f'  Package version: "{library_report["package_version"]}"')
         print(f'  Agent version: "{library_report["agent_version"]}"')
         print(f'  Extension loaded: {library_report["extension_loaded"]}')
 
-    def _host_information(self):
-        host_report = self.report["host"]
+    def _host_information(self) -> None:
+        host_report: Any = self.report["host"]
         print("Host information")
         print(f'  Architecture: "{host_report["architecture"]}"')
         print(f'  Operating System: "{host_report["os"]}"')
@@ -156,7 +160,7 @@ class DiagnoseCommand(AppsignalCLICommand):
         print(f'  Root user: {host_report["root"]}')
         print(f'  Running in container: {host_report["running_in_container"]}')
 
-    def _agent_information(self):
+    def _agent_information(self) -> None:
         print("Agent diagnostics")
         print("  Extension tests")
         print(f"    Configuration: {self.agent_report.configuration_valid()}")
@@ -177,28 +181,28 @@ class DiagnoseCommand(AppsignalCLICommand):
         )
         print(f"    Lock path: {self.agent_report.lock_path()}")
 
-    def _configuration_information(self):
+    def _configuration_information(self) -> None:
         print("Configuration")
 
         for key in self.config.options:
-            print(f"  {key}: {repr(self.config.options[key])}")
+            print(f"  {key}: {self.config.options[key]!r}")  # type: ignore
 
         print()
         print("Read more about how the diagnose config output is rendered")
         print("https://docs.appsignal.com/python/command-line/diagnose.html")
 
-    def _validation_information(self):
-        validation_report = self.report["validation"]
+    def _validation_information(self) -> None:
+        validation_report: Any = self.report["validation"]
         print("Validation")
         print(f'  Validating Push API key: {validation_report["push_api_key"]}')
 
-    def _paths_information(self):
+    def _paths_information(self) -> None:
         print("Paths")
 
-    def _report_information(self):
+    def _report_information(self) -> None:
         print("Diagnostics report")
 
-    def _report_prompt(self):
+    def _report_prompt(self) -> bool | None:
         print("  Do you want to send this diagnostics report to AppSignal?")
         print("  If you share this report you will be given a link to")
         print("  AppSignal.com to validate the report.")
@@ -214,9 +218,10 @@ class DiagnoseCommand(AppsignalCLICommand):
                 print("Not sending diagnostics information to AppSignal.")
                 return False
             case _:
-                report_prompt()
+                self._report_prompt()
+                return None
 
-    def _send_diagnose_report(self):
+    def _send_diagnose_report(self) -> None:
         params = urllib.parse.urlencode(
             {
                 "api_key": self.config.option("push_api_key"),
@@ -244,13 +249,13 @@ class DiagnoseCommand(AppsignalCLICommand):
             print(f"  Response code: {status}")
             print(f"  Response body: {response.text}")
 
-    def _os_distribution(self):
+    def _os_distribution(self) -> str:
         try:
-            return platform.freedesktop_os_release()
+            return platform.freedesktop_os_release()["NAME"]
         except OSError:
             return ""
 
-    def _validate_push_api_key(self):
+    def _validate_push_api_key(self) -> str:
         match PushApiKeyValidator.validate(self.config):
             case "valid":
                 return "valid"

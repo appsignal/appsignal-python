@@ -27,4 +27,4 @@ def test_push_api_key_validator_error(mocker):
     mock_request = mocker.patch("requests.post")
     mock_request.return_value = MagicMock(status_code=500)
 
-    assert PushApiKeyValidator.validate(Config(Options(push_api_key="500"))) == 500
+    assert PushApiKeyValidator.validate(Config(Options(push_api_key="500"))) == "500"
