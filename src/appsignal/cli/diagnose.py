@@ -103,7 +103,10 @@ class DiagnoseCommand(AppsignalCLICommand):
                     "working_directory_stat": agent_json["working_directory_stat"],
                 }
             },
-            "config": None,
+            "config": {
+               "options": self.config.options,
+               "sources": self.config.sources,
+            },
             "host": {
                 "architecture": platform.machine(),
                 "heroku": os.environ.get("DYNO") is not None,
