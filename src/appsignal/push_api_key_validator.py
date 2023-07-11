@@ -7,7 +7,7 @@ from appsignal.config import Config
 
 class PushApiKeyValidator:
     @staticmethod
-    def validate(config: Config):
+    def validate(config: Config) -> str:
         endpoint = config.option("endpoint")
         params = urllib.parse.urlencode(
             {
@@ -29,7 +29,6 @@ class PushApiKeyValidator:
 
         if response.status_code == 200:
             return "valid"
-        elif response.status_code == 401:
+        if response.status_code == 401:
             return "invalid"
-        else:
-            return response.status_code
+        return str(response.status_code)

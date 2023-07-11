@@ -26,7 +26,7 @@ class Options(TypedDict, total=False):
     app_path: str | None
     bind_address: str | None
     ca_file_path: str | None
-    diagnose_endpoint: Optional[str]
+    diagnose_endpoint: str | None
     disable_default_instrumentations: None | (
         list[Config.DefaultInstrumentation] | bool
     )
