@@ -31,6 +31,15 @@ blocks:
   dependencies: []
   task:
     jobs:
+    - name: Diagnose tests
+      env_vars:
+        - name: LANGUAGE
+          value: python
+      commands:
+        - "sem-version python 3.11"
+        - git submodule init
+        - git submodule update
+        - ./tests/diagnose/bin/test
     - name: Python 3.8
       commands:
       - "sem-version python 3.8"

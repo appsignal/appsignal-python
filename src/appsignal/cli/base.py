@@ -7,6 +7,7 @@ from docopt import docopt
 from ..__about__ import __version__
 from .command import AppsignalCLICommand
 from .demo import DemoCommand
+from .diagnose import DiagnoseCommand
 from .install import InstallCommand
 
 
@@ -15,6 +16,7 @@ DOC = """AppSignal for Python CLI.
 Usage:
   appsignal install [--push-api-key=<key>]
   appsignal demo [--application=<app>] [--push-api-key=<key>]
+  appsignal diagnose [--send-report] [--no-send-report]
   appsignal (-h | --help)
   appsignal --version
 
@@ -44,5 +46,10 @@ def command_for(arguments: dict[str, Any]) -> AppsignalCLICommand:
         return DemoCommand(
             push_api_key=arguments["--push-api-key"],
             application=arguments["--application"],
+        )
+    if arguments["diagnose"]:
+        return DiagnoseCommand(
+            send_report=arguments["--send-report"],
+            no_send_report=arguments["--no-send-report"],
         )
     raise NotImplementedError
