@@ -1,10 +1,12 @@
 # ruff: noqa: E501
 
+from __future__ import annotations
+
 import json
 import os
 import platform
 import urllib
-from typing import Any, Optional
+from typing import Any
 
 import requests
 
@@ -27,6 +29,11 @@ class AgentReport:
         if self.report["config"]["valid"]["result"]:
             return "valid"
         return "invalid"
+
+    def configuration_error(self) -> str | None:
+        if self.configuration_valid() == "invalid":
+            return self.report["config"]["valid"]["error"]
+        return None
 
     def started(self) -> str:
         if self.report["boot"]["started"]["result"]:
@@ -70,7 +77,7 @@ class AgentReport:
 
 class DiagnoseCommand(AppsignalCLICommand):
     def __init__(
-        self, send_report: Optional[bool] = None, no_send_report: Optional[bool] = None
+        self, send_report: bool | None = None, no_send_report: bool | None = None
     ) -> None:
         agent = Agent()
         agent_json = json.loads(agent.diagnose())
@@ -87,9 +94,9 @@ class DiagnoseCommand(AppsignalCLICommand):
                         "valid": agent_json["config"]["valid"],
                     },
                     "host": agent_json["host"],
-                    "lock_path": agent_json["lock_path"],
-                    "logger": agent_json["logger"],
-                    "working_directory_stat": agent_json["working_directory_stat"],
+                    "lock_path": agent_json.get("lock_path"),
+                    "logger": agent_json.get("logger"),
+                    "working_directory_stat": agent_json.get("working_directory_stat"),
                 }
             },
             "config": {
@@ -179,6 +186,8 @@ class DiagnoseCommand(AppsignalCLICommand):
         print("Agent diagnostics")
         print("  Extension tests")
         print(f"    Configuration: {self.agent_report.configuration_valid()}")
+        if self.agent_report.configuration_error():
+            print(f"     Error: {self.agent_report.configuration_error()}")
         print("  Agent tests")
         print(f"    Started: {self.agent_report.started()}")
         print(f"    Process user id: {self.agent_report.user_id()}")
