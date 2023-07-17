@@ -104,8 +104,8 @@ class DiagnoseCommand(AppsignalCLICommand):
                 }
             },
             "config": {
-               "options": self.config.options,
-               "sources": self.config.sources,
+                "options": self.config.options,
+                "sources": self.config.sources,
             },
             "host": {
                 "architecture": platform.machine(),
@@ -123,7 +123,7 @@ class DiagnoseCommand(AppsignalCLICommand):
                 "agent_version": "91f1a7c",
                 "extension_loaded": self.agent_report.extension_loaded(),
             },
-            "paths": None,
+            "paths": self._paths_data(),
             "process": None,
             "validation": {"push_api_key": self._validate_push_api_key()},
         }
@@ -222,7 +222,29 @@ class DiagnoseCommand(AppsignalCLICommand):
         print(f'  Validating Push API key: {validation_report["push_api_key"]}')
 
     def _paths_information(self) -> None:
+        log_file_path = self.config.log_file_path() or ""
+        log_path = self.config.option("log_path") or os.path.dirname(log_file_path)
+
+        try:
+            with open(log_file_path) as log_file:
+                lines = log_file.readlines()
+                log_file_contents = lines[-10:]
+        except FileNotFoundError:
+            log_file_contents = [""]
+
         print("Paths")
+        print("  Current working directory")
+        print(f"    Path: '{os.getcwd()}'")
+        print()
+        print("  Log directory")
+        print(f"    Path: '{log_path}'")
+        print()
+        print("  AppSignal log")
+        print(f"    Path: '{log_file_path}'")
+
+        print("    Contents (last 10 lines):")
+        for line in log_file_contents:
+            print(line.strip())
 
     def _report_information(self) -> None:
         print("Diagnostics report")
@@ -273,6 +295,74 @@ class DiagnoseCommand(AppsignalCLICommand):
             )
             print(f"  Response code: {status}")
             print(f"  Response body: {response.text}")
+
+    def _paths_data(self) -> dict:
+        working_dir = os.getcwd() or ""
+        log_file_path = self.config.log_file_path() or ""
+        log_path = self.config.option("log_path") or os.path.dirname(log_file_path)
+
+        try:
+            with open(log_file_path) as log_file:
+                lines = log_file.readlines()
+                log_file_contents = lines[-10:]
+                log_file_contents = [line.strip() for line in log_file_contents]
+        except FileNotFoundError:
+            log_file_contents = [""]
+
+        return {
+            "appsignal.log": {
+                "content": log_file_contents,
+                "exists": self._file_exists(log_file_path),
+                "mode": self._file_stat(log_file_path).get("mode"),
+                "ownership": self._file_stat(log_file_path).get("ownership"),
+                "path": log_file_path,
+                "type": self._file_type(log_file_path),
+                "writable": self._file_is_writable(log_file_path),
+            },
+            "log_dir_path": {
+                "exists": self._file_exists(log_path),
+                "mode": self._file_stat(log_path).get("mode"),
+                "ownership": self._file_stat(log_path).get("ownership"),
+                "path": log_path,
+                "type": self._file_type(log_path),
+                "writable": self._file_is_writable(log_path),
+            },
+            "working_dir": {
+                "exists": self._file_exists(working_dir),
+                "mode": self._file_stat(working_dir).get("mode"),
+                "ownership": self._file_stat(working_dir).get("ownership"),
+                "path": working_dir,
+                "type": self._file_type(working_dir),
+                "writable": self._file_is_writable(working_dir),
+            },
+        }
+
+    def _file_exists(self, path: str) -> bool:
+        return os.path.isfile(path) or os.path.isdir(path)
+
+    def _file_stat(self, path: str) -> dict:
+        try:
+            file_stat = os.stat(path)
+            return {
+                "mode": str(file_stat.st_mode),
+                "ownership": {
+                    "gid": file_stat.st_gid,
+                    "uid": file_stat.st_uid,
+                },
+            }
+        except FileNotFoundError:
+            return {}
+
+    def _file_type(self, path: str) -> str:
+        if os.path.exists(path):
+            if os.path.isfile(path):
+                return "file"
+            if os.path.isdir(path):
+                return "directory"
+        return "Path does not exist"
+
+    def _file_is_writable(self, path: str) -> bool:
+        return os.access(path, os.W_OK)
 
     def _os_distribution(self) -> str:
         try:
