@@ -24,6 +24,7 @@ if TYPE_CHECKING:
 class Options(TypedDict, total=False):
     active: bool | None
     app_path: str | None
+    bind_address: str | None
     ca_file_path: str | None
     disable_default_instrumentations: None | (
         list[Config.DefaultInstrumentation] | bool
@@ -132,6 +133,7 @@ class Config:
     def load_from_environment() -> Options:
         options = Options(
             active=parse_bool(os.environ.get("APPSIGNAL_ACTIVE")),
+            bind_address=os.environ.get("APPSIGNAL_BIND_ADDRESS"),
             ca_file_path=os.environ.get("APPSIGNAL_CA_FILE_PATH"),
             disable_default_instrumentations=parse_disable_default_instrumentations(
                 os.environ.get("APPSIGNAL_DISABLE_DEFAULT_INSTRUMENTATIONS")
@@ -194,6 +196,7 @@ class Config:
             "_APPSIGNAL_APP_ENV": options.get("environment"),
             "_APPSIGNAL_APP_NAME": options.get("name"),
             "_APPSIGNAL_APP_PATH": options.get("app_path"),
+            "_APPSIGNAL_BIND_ADDRESS": options.get("bind_address"),
             "_APPSIGNAL_CA_FILE_PATH": options.get("ca_file_path"),
             "_APPSIGNAL_DNS_SERVERS": list_to_env_str(options.get("dns_servers")),
             "_APPSIGNAL_ENABLE_HOST_METRICS": bool_to_env_str(
