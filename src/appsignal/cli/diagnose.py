@@ -266,16 +266,16 @@ class DiagnoseCommand(AppsignalCLICommand):
         print("  with your support token.")
         print()
 
-        match input("  Send diagnostics report to AppSignal? (Y/n):   "):
-            case "y" | "yes" | "":
-                print("Transmitting diagnostics report")
-                return True
-            case "n" | "no":
-                print("Not sending diagnostics information to AppSignal.")
-                return False
-            case _:
-                self._report_prompt()
-                return None
+        send_report = input("  Send diagnostics report to AppSignal? (Y/n):   ")
+
+        if send_report in ["y", "yes", ""]:
+            print("Transmitting diagnostics report")
+            return True
+        if send_report in ["n", "no"]:
+            print("Not sending diagnostics information to AppSignal.")
+            return False
+        self._report_prompt()
+        return None
 
     def _send_diagnose_report(self) -> None:
         params = urllib.parse.urlencode(
@@ -380,10 +380,10 @@ class DiagnoseCommand(AppsignalCLICommand):
             return ""
 
     def _validate_push_api_key(self) -> str:
-        match PushApiKeyValidator.validate(self.config):
-            case "valid":
-                return "valid"
-            case "invalid":
-                return "invalid"
-            case value:
-                return f"Failed to validate: {value}"
+        api_key_validation = PushApiKeyValidator.validate(self.config)
+
+        if api_key_validation == "valid":
+            return "valid"
+        if api_key_validation == "invalid":
+            return "invalid"
+        return f"Failed to validate: {api_key_validation}"

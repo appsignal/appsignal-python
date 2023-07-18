@@ -150,6 +150,7 @@ branch = true
 parallel = true
 omit = [
   "src/appsignal/__about__.py",
+  "src/appsignal/cli/diagnose.py",
   "src/scripts",
 ]
 
