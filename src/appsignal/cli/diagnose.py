@@ -6,6 +6,7 @@ import json
 import os
 import platform
 import urllib
+from argparse import ArgumentParser
 from typing import Any
 
 import requests
@@ -76,14 +77,25 @@ class AgentReport:
 
 
 class DiagnoseCommand(AppsignalCLICommand):
-    def __init__(
-        self, send_report: bool | None = None, no_send_report: bool | None = None
-    ) -> None:
+    @staticmethod
+    def init_parser(parser: ArgumentParser) -> None:
+        parser.add_argument(
+            "--send-report",
+            action="store_true",
+            help="Send the report to AppSignal",
+        )
+        parser.add_argument(
+            "--no-send-report",
+            action="store_true",
+            help="Do not send the report to AppSignal",
+        )
+
+    def run(self) -> int:
         agent = Agent()
         agent_json = json.loads(agent.diagnose())
         self.config = Config()
-        self.send_report = send_report
-        self.no_send_report = no_send_report
+        self.send_report = self.args.send_report
+        self.no_send_report = self.args.no_send_report
         self.agent_report = AgentReport(agent_json)
 
         self.report = {
@@ -124,7 +136,6 @@ class DiagnoseCommand(AppsignalCLICommand):
             "validation": {"push_api_key": self._validate_push_api_key()},
         }
 
-    def run(self) -> int:
         self._header()
         print()
 
