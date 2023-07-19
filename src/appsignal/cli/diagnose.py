@@ -89,11 +89,18 @@ class DiagnoseCommand(AppsignalCLICommand):
         )
 
     def run(self) -> int:
-        agent = Agent()
-        self.config = Config()
         self.send_report = self.args.send_report
         self.no_send_report = self.args.no_send_report
-        self.agent_report = AgentReport(json.loads(agent.diagnose()))
+
+        if self.send_report and self.no_send_report:
+            print("Error: Cannot use --send-report and --no-send-report together.")
+            return 1
+
+        agent = Agent()
+        agent_json = json.loads(agent.diagnose())
+        self.config = Config()
+        self.agent_report = AgentReport(agent_json)
+
         self.report = {
             "agent": {
                 "agent": {
@@ -158,8 +165,7 @@ class DiagnoseCommand(AppsignalCLICommand):
 
         if self.send_report or (not self.no_send_report and self._report_prompt()):
             self._send_diagnose_report()
-
-        if self.no_send_report:
+        elif self.no_send_report:
             print("Not sending report. (Specified with the --no-send-report option.)")
 
         return 0
