@@ -31,5 +31,10 @@ class Agent:
     def diagnose(self) -> bytes:
         return subprocess.run([self.path, "diagnose"], capture_output=True).stdout
 
+    def version(self) -> bytes:
+        return subprocess.run(
+            [self.path, "--version"], capture_output=True
+        ).stdout.split()[-1]
+
 
 agent = Agent()
