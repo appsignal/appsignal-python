@@ -374,7 +374,10 @@ class DiagnoseCommand(AppsignalCLICommand):
     def _os_distribution(self) -> str:
         try:
             return platform.freedesktop_os_release()["NAME"]
-        except OSError:
+        # The platform.freedesktop_os_release is not available in all Python
+        # versions that we support. That's why we catch AttributeError along with
+        # OSError which is thrown when the host OS doesn't comply with freedesktop.
+        except (OSError, AttributeError):
             return ""
 
     def _validate_push_api_key(self) -> str:
