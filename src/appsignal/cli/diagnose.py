@@ -316,7 +316,7 @@ class DiagnoseCommand(AppsignalCLICommand):
         return {
             "appsignal.log": {
                 "content": log_file_contents,
-                "exists": self._file_exists(log_file_path),
+                "exists": os.path.exists(log_file_path),
                 "mode": self._file_stat(log_file_path).get("mode"),
                 "ownership": self._file_stat(log_file_path).get("ownership"),
                 "path": log_file_path,
@@ -324,7 +324,7 @@ class DiagnoseCommand(AppsignalCLICommand):
                 "writable": self._file_is_writable(log_file_path),
             },
             "log_dir_path": {
-                "exists": self._file_exists(log_path),
+                "exists": os.path.exists(log_path),
                 "mode": self._file_stat(log_path).get("mode"),
                 "ownership": self._file_stat(log_path).get("ownership"),
                 "path": log_path,
@@ -332,7 +332,7 @@ class DiagnoseCommand(AppsignalCLICommand):
                 "writable": self._file_is_writable(log_path),
             },
             "working_dir": {
-                "exists": self._file_exists(working_dir),
+                "exists": os.path.exists(working_dir),
                 "mode": self._file_stat(working_dir).get("mode"),
                 "ownership": self._file_stat(working_dir).get("ownership"),
                 "path": working_dir,
@@ -340,9 +340,6 @@ class DiagnoseCommand(AppsignalCLICommand):
                 "writable": self._file_is_writable(working_dir),
             },
         }
-
-    def _file_exists(self, path: str) -> bool:
-        return os.path.isfile(path) or os.path.isdir(path)
 
     def _file_stat(self, path: str) -> dict:
         try:
