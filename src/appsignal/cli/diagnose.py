@@ -131,7 +131,7 @@ class DiagnoseCommand(AppsignalCLICommand):
             "library": {
                 "language": "python",
                 "package_version": __version__,
-                "agent_version": "91f1a7c",
+                "agent_version": str(agent.version(), "utf-8"),
             },
             "paths": self._paths_data(),
             "process": {
