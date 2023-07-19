@@ -24,9 +24,6 @@ class AgentReport:
     def __init__(self, report: dict) -> None:
         self.report = report
 
-    def extension_loaded(self) -> str:
-        return self.report["boot"]["started"]["result"]
-
     def configuration_valid(self) -> str:
         if self.report["config"]["valid"]["result"]:
             return "valid"
@@ -128,7 +125,6 @@ class DiagnoseCommand(AppsignalCLICommand):
                 "language": "python",
                 "package_version": __version__,
                 "agent_version": "91f1a7c",
-                "extension_loaded": self.agent_report.extension_loaded(),
             },
             "paths": self._paths_data(),
             "process": None,
@@ -181,7 +177,6 @@ class DiagnoseCommand(AppsignalCLICommand):
         print("  Language: Python")
         print(f'  Package version: "{library_report["package_version"]}"')
         print(f'  Agent version: "{library_report["agent_version"]}"')
-        print(f'  Extension loaded: {library_report["extension_loaded"]}')
 
     def _host_information(self) -> None:
         host_report: Any = self.report["host"]
@@ -194,15 +189,13 @@ class DiagnoseCommand(AppsignalCLICommand):
 
     def _agent_information(self) -> None:
         print("Agent diagnostics")
-        print("  Extension tests")
-        print(f"    Configuration: {self.agent_report.configuration_valid()}")
-        if self.agent_report.configuration_error():
-            print(f"     Error: {self.agent_report.configuration_error()}")
         print("  Agent tests")
         print(f"    Started: {self.agent_report.started()}")
         print(f"    Process user id: {self.agent_report.user_id()}")
         print(f"    Process user group id: {self.agent_report.group_id()}")
         print(f"    Configuration: {self.agent_report.configuration_valid()}")
+        if self.agent_report.configuration_error():
+            print(f"        Error: {self.agent_report.configuration_error()}")
         print(f"    Logger: {self.agent_report.logger_started()}")
         print(
             f"    Working directory user id: {self.agent_report.working_directory_user_id()}"
