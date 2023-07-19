@@ -127,7 +127,9 @@ class DiagnoseCommand(AppsignalCLICommand):
                 "agent_version": "91f1a7c",
             },
             "paths": self._paths_data(),
-            "process": None,
+            "process": {
+                "pid": os.getpid(),
+            },
             "validation": {"push_api_key": self._validate_push_api_key()},
         }
 
