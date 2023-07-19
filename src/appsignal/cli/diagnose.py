@@ -363,7 +363,7 @@ class DiagnoseCommand(AppsignalCLICommand):
                 return "file"
             if os.path.isdir(path):
                 return "directory"
-        return "Path does not exist"
+        return ""
 
     def _file_is_writable(self, path: str) -> bool:
         return os.access(path, os.W_OK)
