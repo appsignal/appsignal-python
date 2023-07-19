@@ -117,7 +117,7 @@ class DiagnoseCommand(AppsignalCLICommand):
                 "language_version": platform.python_version(),
                 "os": platform.system().lower(),
                 "os_distribution": self._os_distribution(),
-                "root": False,
+                "root": os.getuid() == 0,
                 "running_in_container": self.config.option("running_in_container")
                 is not None,
             },
