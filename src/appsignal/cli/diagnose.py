@@ -259,7 +259,7 @@ class DiagnoseCommand(AppsignalCLICommand):
         print("  with your support token.")
         print()
 
-        send_report = input("  Send diagnostics report to AppSignal? (Y/n):   ")
+        send_report = input("  Send diagnostics report to AppSignal? (Y/n):   ").lower()
 
         if send_report in ["y", "yes", ""]:
             print("Transmitting diagnostics report")
