@@ -128,7 +128,7 @@ class DiagnoseCommand(AppsignalCLICommand):
             },
             "paths": self._paths_data(),
             "process": {
-                "pid": os.getpid(),
+                "uid": os.getuid(),
             },
             "validation": {"push_api_key": self._validate_push_api_key()},
         }
