@@ -125,8 +125,6 @@ class DiagnoseCommand(AppsignalCLICommand):
                 "os": platform.system().lower(),
                 "os_distribution": self._os_distribution(),
                 "root": os.getuid() == 0,
-                "running_in_container": self.config.option("running_in_container")
-                is not None,
             },
             "library": {
                 "language": "python",
@@ -193,7 +191,6 @@ class DiagnoseCommand(AppsignalCLICommand):
         print(f'  Operating System: "{host_report["os"]}"')
         print(f'  Python version: "{host_report["language_version"]}"')
         print(f'  Root user: {host_report["root"]}')
-        print(f'  Running in container: {host_report["running_in_container"]}')
 
     def _agent_information(self) -> None:
         print("Agent diagnostics")
