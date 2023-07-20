@@ -234,13 +234,7 @@ class DiagnoseCommand(AppsignalCLICommand):
     def _paths_information(self) -> None:
         log_file_path = self.config.log_file_path() or ""
         log_path = self.config.option("log_path") or os.path.dirname(log_file_path)
-
-        try:
-            with open(log_file_path) as log_file:
-                lines = log_file.readlines()
-                log_file_contents = lines[-10:]
-        except FileNotFoundError:
-            log_file_contents = [""]
+        log_file_lines = self._last_ten_lines(log_file_path)
 
         print("Paths")
         print("  Current working directory")
@@ -253,7 +247,7 @@ class DiagnoseCommand(AppsignalCLICommand):
         print(f"    Path: '{log_file_path}'")
 
         print("    Contents (last 10 lines):")
-        for line in log_file_contents:
+        for line in log_file_lines:
             print(line.strip())
 
     def _report_information(self) -> None:
@@ -310,18 +304,11 @@ class DiagnoseCommand(AppsignalCLICommand):
         working_dir = os.getcwd() or ""
         log_file_path = self.config.log_file_path() or ""
         log_path = self.config.option("log_path") or os.path.dirname(log_file_path)
-
-        try:
-            with open(log_file_path) as log_file:
-                lines = log_file.readlines()
-                log_file_contents = lines[-10:]
-                log_file_contents = [line.strip() for line in log_file_contents]
-        except FileNotFoundError:
-            log_file_contents = [""]
+        log_file_lines = self._read_last_two_mib(log_file_path)
 
         return {
             "appsignal.log": {
-                "content": log_file_contents,
+                "content": log_file_lines,
                 "exists": os.path.exists(log_file_path),
                 "mode": self._file_stat(log_file_path).get("mode"),
                 "ownership": self._file_stat(log_file_path).get("ownership"),
@@ -388,3 +375,21 @@ class DiagnoseCommand(AppsignalCLICommand):
         if api_key_validation == "invalid":
             return "invalid"
         return f"Failed to validate: {api_key_validation}"
+
+    def _last_ten_lines(self, file_path: str) -> list[str]:
+        try:
+            file_contents = self._read_last_two_mib(file_path)
+            lines = file_contents.splitlines()
+            file_lines = lines[-10:] if len(lines) > 10 else lines
+            file_lines = [line.strip() for line in file_lines]
+        except FileNotFoundError:
+            file_lines = [""]
+        return file_lines
+
+    def _read_last_two_mib(self, path: str) -> str:
+        two_mib = 2 * 1024 * 1024
+        file_size = os.path.getsize(path)
+        with open(path, "rb") as file:
+            bytes_to_read = two_mib if two_mib < file_size else file_size
+            file.seek(-bytes_to_read, os.SEEK_END)
+            return file.read().decode("utf-8")
