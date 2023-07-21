@@ -46,32 +46,33 @@ class AgentReport:
         return self.report["host"]["gid"]["result"]
 
     def logger_started(self) -> str:
-        if "logger" in self.report and self.report["logger"]["started"]["result"]:
-            return "started"
-        return "not started"
+        if "logger" in self.report:
+            if self.report["logger"]["started"]["result"]:
+                return "started"
+            return "not started"
+        return "-"
 
-    def working_directory_user_id(self) -> bool:
-        return (
-            "working_directory_stat" in self.report
-            and self.report["working_directory_stat"]["uid"]["result"]
-        )
+    def working_directory_user_id(self) -> str:
+        if "working_directory_stat" in self.report:
+            return self.report["working_directory_stat"]["uid"]["result"]
+        return "-"
 
-    def working_directory_group_id(self) -> bool:
-        return (
-            "working_directory_stat" in self.report
-            and self.report["working_directory_stat"]["gid"]["result"]
-        )
+    def working_directory_group_id(self) -> str:
+        if "working_directory_stat" in self.report:
+            return self.report["working_directory_stat"]["gid"]["result"]
+        return "-"
 
-    def working_directory_permissions(self) -> bool:
-        return (
-            "working_directory_stat" in self.report
-            and self.report["working_directory_stat"]["mode"]["result"]
-        )
+    def working_directory_permissions(self) -> str:
+        if "working_directory_stat" in self.report:
+            return self.report["working_directory_stat"]["mode"]["result"]
+        return "-"
 
     def lock_path(self) -> str:
-        if "lock_path" in self.report and self.report["lock_path"]["created"]["result"]:
-            return "writable"
-        return "not writable"
+        if "lock_path" in self.report:
+            if self.report["lock_path"]["created"]["result"]:
+                return "writable"
+            return "not writable"
+        return "-"
 
 
 class DiagnoseCommand(AppsignalCLICommand):
