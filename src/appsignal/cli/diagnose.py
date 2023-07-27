@@ -70,12 +70,6 @@ class AgentReport:
         else:
             return "not writable"
 
-    def lock_path(self):
-        if self.report["lock_path"]["created"]["result"]:
-            return "writable"
-        else:
-            return "not writable"
-
 
 class DiagnoseCommand(AppsignalCLICommand):
     @staticmethod
@@ -255,12 +249,14 @@ class DiagnoseCommand(AppsignalCLICommand):
         if status == 200:
             token = response.json()["token"]
             print()
-            print(f'  Your support token: {token}')
-            print(f'  View this report:   https://appsignal.com/diagnose/{token}')
+            print(f"  Your support token: {token}")
+            print(f"  View this report:   https://appsignal.com/diagnose/{token}")
         else:
-            print("  Error: Something went wrong while submitting the report to AppSignal.")
-            print(f'  Response code: {status}')
-            print(f'  Response body: {response.text}')
+            print(
+                "  Error: Something went wrong while submitting the report to AppSignal."
+            )
+            print(f"  Response code: {status}")
+            print(f"  Response body: {response.text}")
 
     def _os_distribution(self):
         try:
