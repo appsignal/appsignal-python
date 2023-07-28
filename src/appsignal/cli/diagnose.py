@@ -7,7 +7,6 @@ import os
 import platform
 import urllib
 from argparse import ArgumentParser
-from pathlib import Path
 from typing import Any
 
 import requests

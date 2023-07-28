@@ -4,8 +4,6 @@ import os
 
 import requests
 
-from appsignal.config import Config
-
 from .command import AppsignalCLICommand
 from .demo import DemoCommand
 
