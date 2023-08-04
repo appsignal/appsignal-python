@@ -1,0 +1,31 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "appsignal-beta"
+description = 'The AppSignal integration for the Python programming language'
+readme = "README.md"
+requires-python = ">=3.8"
+keywords = []
+authors = [
+  { name = "Noemi Lapresta", email = "noemi@appsignal.com" },
+]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: Implementation :: CPython",
+]
+dependencies = [
+  "appsignal"
+]
+version = "0.2.0"
+
+[project.urls]
+Documentation = "https://github.com/appsignal/appsignal-python#readme"
+Issues = "https://github.com/appsignal/appsignal-python/issues"
+Source = "https://github.com/appsignal/appsignal-python"
