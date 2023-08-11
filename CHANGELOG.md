@@ -1,5 +1,24 @@
 # AppSignal for Python Changelog
 
+## 0.2.0
+
+### Added
+
+- [6b164d2](https://github.com/appsignal/appsignal-python/commit/6b164d2811540d1cd9ebdae5767935142674a5c3) patch - Use `RENDER_GIT_COMMIT` environment variable as revision if no revision is specified.
+- [74a961e](https://github.com/appsignal/appsignal-python/commit/74a961e344929c486c345c32f5c7d784d311213d) patch - Allow configuration of the agent's TCP and UDP servers using the `bind_address` config option. This is by default set to `127.0.0.1`, which only makes it accessible from the same host. If you want it to be accessible from other machines, use `0.0.0.0` or a specific IP address.
+- [0d1de38](https://github.com/appsignal/appsignal-python/commit/0d1de38237fc1863e31c9626e6cac81c7d2f6b7d) patch - Report total CPU usage host metric for VMs. This change adds another `state` tag value on the `cpu` metric called `total_usage`, which reports the VM's total CPU usage in percentages.
+- [c186236](https://github.com/appsignal/appsignal-python/commit/c1862362f217600d80e568a562d4af81ce34230c) patch - Add diagnose command
+
+### Changed
+
+- [ebdcdec](https://github.com/appsignal/appsignal-python/commit/ebdcdec6d2ac064b4dbcb1d2da3f402b409b654e) minor - Rename package from `appsignal-beta` to `appsignal`. Please update your dependencies (for example, in `requirements.txt`) accordingly.
+- [6c8dc88](https://github.com/appsignal/appsignal-python/commit/6c8dc8803e0662bf2e8eae9f29bca7c2636f0e38) patch - Bump agent to 32590eb.
+  
+  - Only ignore disk metrics that start with "loop", not all mounted disks that end with a number to report metrics for more disks.
+- [61c3537](https://github.com/appsignal/appsignal-python/commit/61c3537a9f338be480a2a4ef0d378f01e379be76) patch - Bump agent to 6bec691.
+  
+  - Upgrade `sql_lexer` to v0.9.5. It adds sanitization support for the `THEN` and `ELSE` logical operators.
+
 ## 0.1.4
 
 ### Added
