@@ -8,8 +8,8 @@ has any issues.
 - [Documentation][python docs]
 - [Support][contact]
 
-[![PyPI - Version](https://img.shields.io/pypi/v/appsignal-beta.svg)](https://pypi.org/project/appsignal-beta)
-[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/appsignal-beta.svg)](https://pypi.org/project/appsignal-beta)
+[![PyPI - Version](https://img.shields.io/pypi/v/appsignal.svg)](https://pypi.org/project/appsignal)
+[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/appsignal.svg)](https://pypi.org/project/appsignal)
 
 ## Description
 
