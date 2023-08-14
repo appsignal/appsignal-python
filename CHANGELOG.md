@@ -1,5 +1,11 @@
 # AppSignal for Python Changelog
 
+## 0.2.1
+
+### Changed
+
+- [bb0d90b](https://github.com/appsignal/appsignal-python/commit/bb0d90b10af9184fe56c1ed23ff2795a488bf915) patch - Warn if the appsignal-beta package is present in the dependencies list to nudge people into switching to the new `appsignal` package.
+
 ## 0.2.0
 
 ### Added
