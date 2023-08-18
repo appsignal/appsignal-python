@@ -69,6 +69,7 @@ def test_environ_source():
     os.environ["APPSIGNAL_SEND_ENVIRONMENT_METADATA"] = "true"
     os.environ["APPSIGNAL_SEND_PARAMS"] = "true"
     os.environ["APPSIGNAL_SEND_SESSION_DATA"] = "true"
+    os.environ["APPSIGNAL_STATSD_PORT"] = "9001"
     os.environ["APPSIGNAL_WORKING_DIRECTORY_PATH"] = "/path/to/working/dir"
     os.environ["APP_REVISION"] = "abc123"
 
@@ -102,6 +103,7 @@ def test_environ_source():
         send_environment_metadata=True,
         send_params=True,
         send_session_data=True,
+        statsd_port="9001",
         working_directory_path="/path/to/working/dir",
     )
     assert config.sources["environment"] == env_options
@@ -195,6 +197,7 @@ def test_set_private_environ():
             send_environment_metadata=True,
             send_params=True,
             send_session_data=True,
+            statsd_port=9001,
             working_directory_path="/path/to/working/dir",
         )
     )
@@ -230,6 +233,7 @@ def test_set_private_environ():
     assert os.environ["_APPSIGNAL_SEND_ENVIRONMENT_METADATA"] == "true"
     assert os.environ["_APPSIGNAL_SEND_PARAMS"] == "true"
     assert os.environ["_APPSIGNAL_SEND_SESSION_DATA"] == "true"
+    assert os.environ["_APPSIGNAL_STATSD_PORT"] == "9001"
     assert os.environ["_APPSIGNAL_WORKING_DIRECTORY_PATH"] == "/path/to/working/dir"
     assert os.environ["_APP_REVISION"] == "abc123"
 
@@ -256,6 +260,14 @@ def test_set_private_environ_invalid_log_path():
     config.set_private_environ()
 
     assert os.environ["_APPSIGNAL_LOG_FILE_PATH"] == "/tmp/appsignal.log"
+
+
+def test_set_private_environ_str_is_none():
+    config = Config(Options(statsd_port=None))
+
+    config.set_private_environ()
+
+    assert os.environ.get("_APPSIGNAL_STATSD_PORT") is None
 
 
 def test_set_private_environ_bool_is_none():
