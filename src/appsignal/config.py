@@ -84,6 +84,7 @@ class Config:
         files_world_accessible=True,
         log="file",
         log_level="info",
+        opentelemetry_port=8099,
         send_environment_metadata=True,
         send_params=True,
         send_session_data=True,
