@@ -62,6 +62,7 @@ def test_environ_source():
     os.environ["APPSIGNAL_IGNORE_NAMESPACES"] = "namespace1,namespace2"
     os.environ["APPSIGNAL_LOG_LEVEL"] = "trace"
     os.environ["APPSIGNAL_LOG_PATH"] = "/path/to/log_dir"
+    os.environ["APPSIGNAL_OPENTELEMETRY_PORT"] = "9002"
     os.environ["APPSIGNAL_PUSH_API_KEY"] = "some-api-key"
     os.environ["APPSIGNAL_PUSH_API_ENDPOINT"] = "https://push.appsignal.com"
     os.environ["APPSIGNAL_REQUEST_HEADERS"] = "accept,x-custom-header"
@@ -95,6 +96,7 @@ def test_environ_source():
         ignore_namespaces=["namespace1", "namespace2"],
         log_level="trace",
         log_path="/path/to/log_dir",
+        opentelemetry_port="9002",
         name="MyApp",
         push_api_key="some-api-key",
         revision="abc123",
@@ -190,6 +192,7 @@ def test_set_private_environ():
             ignore_namespaces=["namespace1", "namespace2"],
             log_level="trace",
             log_path=cwdir,
+            opentelemetry_port=9002,
             name="MyApp",
             push_api_key="some-api-key",
             revision="abc123",
@@ -224,6 +227,7 @@ def test_set_private_environ():
     assert os.environ["_APPSIGNAL_IGNORE_NAMESPACES"] == "namespace1,namespace2"
     assert os.environ["_APPSIGNAL_LOG_LEVEL"] == "trace"
     assert os.environ["_APPSIGNAL_LOG_FILE_PATH"] == f"{cwdir}/appsignal.log"
+    assert os.environ["_APPSIGNAL_OPENTELEMETRY_PORT"] == "9002"
     assert os.environ["_APPSIGNAL_PUSH_API_KEY"] == "some-api-key"
     assert os.environ["_APPSIGNAL_PUSH_API_ENDPOINT"] == "https://push.appsignal.com"
     assert (
