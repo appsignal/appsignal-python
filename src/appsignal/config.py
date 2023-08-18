@@ -47,6 +47,7 @@ class Options(TypedDict, total=False):
     log: str | None
     log_level: str | None
     log_path: str | None
+    opentelemetry_port: str | int | None
     name: str | None
     push_api_key: str | None
     revision: str | None
@@ -167,6 +168,7 @@ class Config:
             log=os.environ.get("APPSIGNAL_LOG"),
             log_level=os.environ.get("APPSIGNAL_LOG_LEVEL"),
             log_path=os.environ.get("APPSIGNAL_LOG_PATH"),
+            opentelemetry_port=os.environ.get("APPSIGNAL_OPENTELEMETRY_PORT"),
             name=os.environ.get("APPSIGNAL_APP_NAME"),
             push_api_key=os.environ.get("APPSIGNAL_PUSH_API_KEY"),
             revision=os.environ.get("APP_REVISION"),
@@ -231,6 +233,7 @@ class Config:
             "_APPSIGNAL_LOG": options.get("log"),
             "_APPSIGNAL_LOG_LEVEL": options.get("log_level"),
             "_APPSIGNAL_LOG_FILE_PATH": self.log_file_path(),
+            "_APPSIGNAL_OPENTELEMETRY_PORT": options.get("opentelemetry_port"),
             "_APPSIGNAL_PUSH_API_KEY": options.get("push_api_key"),
             "_APPSIGNAL_PUSH_API_ENDPOINT": options.get("endpoint"),
             "_APPSIGNAL_RUNNING_IN_CONTAINER": bool_to_env_str(
