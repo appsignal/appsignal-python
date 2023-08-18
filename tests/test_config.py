@@ -56,6 +56,7 @@ def test_environ_source():
     os.environ["APPSIGNAL_FILTER_PARAMETERS"] = "password,secret"
     os.environ["APPSIGNAL_FILTER_SESSION_DATA"] = "key1,key2"
     os.environ["APPSIGNAL_HOSTNAME"] = "Test hostname"
+    os.environ["APPSIGNAL_HOST_ROLE"] = "a role"
     os.environ["APPSIGNAL_HTTP_PROXY"] = "http://proxy.local:9999"
     os.environ["APPSIGNAL_IGNORE_ACTIONS"] = "action1,action2"
     os.environ["APPSIGNAL_IGNORE_ERRORS"] = "error1,error2"
@@ -90,6 +91,7 @@ def test_environ_source():
         filter_parameters=["password", "secret"],
         filter_session_data=["key1", "key2"],
         hostname="Test hostname",
+        host_role="a role",
         http_proxy="http://proxy.local:9999",
         ignore_actions=["action1", "action2"],
         ignore_errors=["error1", "error2"],
@@ -186,6 +188,7 @@ def test_set_private_environ():
             filter_parameters=["password", "secret"],
             filter_session_data=["key1", "key2"],
             hostname="Test hostname",
+            host_role="a role",
             http_proxy="http://proxy.local:9999",
             ignore_actions=["action1", "action2"],
             ignore_errors=["error1", "error2"],
@@ -221,6 +224,7 @@ def test_set_private_environ():
     assert os.environ["_APPSIGNAL_FILTER_PARAMETERS"] == "password,secret"
     assert os.environ["_APPSIGNAL_FILTER_SESSION_DATA"] == "key1,key2"
     assert os.environ["_APPSIGNAL_HOSTNAME"] == "Test hostname"
+    assert os.environ["_APPSIGNAL_HOST_ROLE"] == "a role"
     assert os.environ["_APPSIGNAL_HTTP_PROXY"] == "http://proxy.local:9999"
     assert os.environ["_APPSIGNAL_IGNORE_ACTIONS"] == "action1,action2"
     assert os.environ["_APPSIGNAL_IGNORE_ERRORS"] == "error1,error2"
@@ -267,11 +271,12 @@ def test_set_private_environ_invalid_log_path():
 
 
 def test_set_private_environ_str_is_none():
-    config = Config(Options(statsd_port=None))
+    config = Config(Options(statsd_port=None, host_role=None))
 
     config.set_private_environ()
 
     assert os.environ.get("_APPSIGNAL_STATSD_PORT") is None
+    assert os.environ.get("_APPSIGNAL_HOST_ROLE") is None
 
 
 def test_set_private_environ_bool_is_none():
