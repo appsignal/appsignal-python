@@ -40,6 +40,7 @@ class Options(TypedDict, total=False):
     filter_parameters: list[str] | None
     filter_session_data: list[str] | None
     hostname: str | None
+    host_role: str | None
     http_proxy: str | None
     ignore_actions: list[str] | None
     ignore_errors: list[str] | None
@@ -162,6 +163,7 @@ class Config:
                 os.environ.get("APPSIGNAL_FILTER_SESSION_DATA")
             ),
             hostname=os.environ.get("APPSIGNAL_HOSTNAME"),
+            host_role=os.environ.get("APPSIGNAL_HOST_ROLE"),
             http_proxy=os.environ.get("APPSIGNAL_HTTP_PROXY"),
             ignore_actions=parse_list(os.environ.get("APPSIGNAL_IGNORE_ACTIONS")),
             ignore_errors=parse_list(os.environ.get("APPSIGNAL_IGNORE_ERRORS")),
@@ -225,6 +227,7 @@ class Config:
                 options.get("filter_session_data")
             ),
             "_APPSIGNAL_HOSTNAME": options.get("hostname"),
+            "_APPSIGNAL_HOST_ROLE": options.get("host_role"),
             "_APPSIGNAL_HTTP_PROXY": options.get("http_proxy"),
             "_APPSIGNAL_IGNORE_ACTIONS": list_to_env_str(options.get("ignore_actions")),
             "_APPSIGNAL_IGNORE_ERRORS": list_to_env_str(options.get("ignore_errors")),
