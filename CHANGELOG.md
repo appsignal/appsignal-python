@@ -1,5 +1,19 @@
 # AppSignal for Python Changelog
 
+## 0.2.2
+
+### Added
+
+- [381638e](https://github.com/appsignal/appsignal-python/commit/381638e08a67cd15e86c6cec81beec9a0cf03cb4) patch - Add the `statsd_port` config option to change the StatsD UDP server port of the appsignal-agent process. By default the port is set to 8125.
+- [7f5c848](https://github.com/appsignal/appsignal-python/commit/7f5c848631e818073620e0f43de7fbba85ec0a11) patch - Add the `host_role` config option. This config option can be set per host to generate some metrics automatically per host and possibly do things like grouping in the future.
+- [c2e0e2c](https://github.com/appsignal/appsignal-python/commit/c2e0e2c17ae1692eb35410bdccfe74536e52d9ea) patch - Add the OpenTelemetry HTTP server port config option (`opentelemetry_port`) to configure on which port the `appsignal-agent` server process will listen for OpenTelemetry data from the HTTP exporter. This can be used to configure two apps on the same machine to use different ports so it's possible to run two AppSignal apps on the same machine. See our [Running multiple applications on one host docs page](https://docs.appsignal.com/guides/application/multiple-applications-on-one-host.html) for more information.
+
+### Changed
+
+- [5a0cfa9](https://github.com/appsignal/appsignal-python/commit/5a0cfa95e7b4207aa8010eea3693459b89afa29f) patch - Bump agent to version d789895.
+  
+  - Increase short data truncation from 2000 to 10000 characters.
+
 ## 0.2.1
 
 ### Changed
