@@ -7,8 +7,19 @@ from typing import TYPE_CHECKING, Callable, Mapping
 from opentelemetry import metrics, trace
 from opentelemetry.exporter.otlp.proto.http.metric_exporter import OTLPMetricExporter
 from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
-from opentelemetry.sdk.metrics import MeterProvider
-from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
+from opentelemetry.sdk.metrics import (
+    Counter,
+    MeterProvider,
+    ObservableCounter,
+    ObservableGauge,
+    ObservableUpDownCounter,
+    UpDownCounter,
+)
+from opentelemetry.sdk.metrics.export import (
+    AggregationTemporality,
+    PeriodicExportingMetricReader,
+)
+from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
 
@@ -123,11 +134,19 @@ def _start_opentelemetry_tracer(opentelemetry_port: str | int) -> None:
 
 def _start_opentelemetry_metrics(opentelemetry_port: str | int) -> None:
     metric_exporter = OTLPMetricExporter(
-        endpoint=f"http://localhost:{opentelemetry_port}/v1/metrics"
+        endpoint=f"http://localhost:{opentelemetry_port}/v1/metrics",
+        preferred_temporality={
+            Counter: AggregationTemporality.DELTA,
+            UpDownCounter: AggregationTemporality.DELTA,
+            ObservableCounter: AggregationTemporality.DELTA,
+            ObservableGauge: AggregationTemporality.CUMULATIVE,
+            ObservableUpDownCounter: AggregationTemporality.DELTA,
+        },
     )
     metric_reader = PeriodicExportingMetricReader(metric_exporter)
 
-    provider = MeterProvider(metric_readers=[metric_reader])
+    resource = Resource(attributes={"appsignal.service.process_id": os.getpid()})
+    provider = MeterProvider(resource=resource, metric_readers=[metric_reader])
     metrics.set_meter_provider(provider)
 
 
