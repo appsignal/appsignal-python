@@ -4,8 +4,7 @@ import json
 
 from opentelemetry import trace
 
-from appsignal.client import Client
-
+from ..client import Client
 from .command import AppsignalCLICommand
 
 

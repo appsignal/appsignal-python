@@ -11,11 +11,10 @@ from typing import Any
 
 import requests
 
-from appsignal.agent import Agent
-from appsignal.config import Config
-from appsignal.push_api_key_validator import PushApiKeyValidator
-
 from ..__about__ import __version__
+from ..agent import Agent
+from ..config import Config
+from ..push_api_key_validator import PushApiKeyValidator
 from .command import AppsignalCLICommand
 
 

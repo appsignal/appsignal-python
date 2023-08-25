@@ -6,7 +6,7 @@ from argparse import ArgumentParser, Namespace
 from dataclasses import dataclass
 from functools import cached_property
 
-from appsignal.config import Config
+from ..config import Config
 
 
 @dataclass(frozen=True)
