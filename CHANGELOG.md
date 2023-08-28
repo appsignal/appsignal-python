@@ -1,5 +1,11 @@
 # AppSignal for Python Changelog
 
+## 0.2.3
+
+### Fixed
+
+- [1a52190](https://github.com/appsignal/appsignal-python/commit/1a52190c11f1f83f1421b28a0f9f448aa4326fe0) patch - Fix CLI using `python -m appsignal`. It would error with a `ModuleNotFoundError`.
+
 ## 0.2.2
 
 ### Added
