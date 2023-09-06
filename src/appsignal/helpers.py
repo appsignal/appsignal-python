@@ -2,9 +2,11 @@ from __future__ import annotations
 
 import json
 import logging
-from typing import TYPE_CHECKING, Any
+from contextlib import contextmanager
+from typing import TYPE_CHECKING, Any, Iterator
 
 from opentelemetry import trace
+from opentelemetry.trace import Status, StatusCode
 
 
 if TYPE_CHECKING:
@@ -77,3 +79,27 @@ def set_namespace(namespace: str, span: Span | None = None) -> None:
 
 def set_root_name(root_name: str, span: Span | None = None) -> None:
     set_attribute("appsignal.root_name", root_name, span)
+
+
+def set_error(error: Exception, span: Span | None = None) -> None:
+    span = span or trace.get_current_span()
+    span.set_status(Status(StatusCode.ERROR))
+    span.record_exception(error)
+
+
+def send_error(error: Exception) -> None:
+    with send_error_with_context(error):
+        pass
+
+
+_send_error_tracer = trace.get_tracer("Appsignal.send_error")
+
+
+@contextmanager
+def send_error_with_context(error: Exception) -> Iterator[Span]:
+    name = error.__class__.__name__
+
+    # TODO: this needs to always be a root span somehow!!!!
+    with _send_error_tracer.start_as_current_span(name) as span:
+        set_error(error, span)
+        yield span

@@ -1,8 +1,11 @@
 from .client import Client as Appsignal
 from .helpers import (
+    send_error,
+    send_error_with_context,
     set_body,
     set_category,
     set_custom_data,
+    set_error,
     set_header,
     set_name,
     set_namespace,
@@ -25,6 +28,9 @@ __all__ = [
     "set_root_name",
     "set_session_data",
     "set_tag",
+    "set_error",
+    "send_error",
+    "send_error_with_context",
 ]
 
 
