@@ -132,16 +132,19 @@ def _start_opentelemetry_tracer(opentelemetry_port: str | int) -> None:
     trace.set_tracer_provider(provider)
 
 
+METRICS_PREFERRED_TEMPORALITY: dict[type, AggregationTemporality] = {
+    Counter: AggregationTemporality.DELTA,
+    UpDownCounter: AggregationTemporality.DELTA,
+    ObservableCounter: AggregationTemporality.DELTA,
+    ObservableGauge: AggregationTemporality.CUMULATIVE,
+    ObservableUpDownCounter: AggregationTemporality.DELTA,
+}
+
+
 def _start_opentelemetry_metrics(opentelemetry_port: str | int) -> None:
     metric_exporter = OTLPMetricExporter(
         endpoint=f"http://localhost:{opentelemetry_port}/v1/metrics",
-        preferred_temporality={
-            Counter: AggregationTemporality.DELTA,
-            UpDownCounter: AggregationTemporality.DELTA,
-            ObservableCounter: AggregationTemporality.DELTA,
-            ObservableGauge: AggregationTemporality.CUMULATIVE,
-            ObservableUpDownCounter: AggregationTemporality.DELTA,
-        },
+        preferred_temporality=METRICS_PREFERRED_TEMPORALITY,
     )
     metric_reader = PeriodicExportingMetricReader(metric_exporter)
 

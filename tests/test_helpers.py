@@ -23,178 +23,170 @@ from appsignal import (
 tracer = trace.get_tracer("appsignal/tests")
 
 
-def test_set_attributes(mocker):
-    with tracer.start_as_current_span("current span name") as current_span:
-        current_spy = mocker.spy(current_span, "set_attribute")
+class FooError(Exception):
+    pass
 
+
+def raised_error():
+    try:
+        raise FooError("Whoops!")
+    except FooError as error:
+        return error
+
+
+def test_set_attributes(spans):
+    with tracer.start_as_current_span("span"):
         set_body("SELECT * FROM users")
-        current_spy.assert_called_with("appsignal.body", "SELECT * FROM users")
-
         set_category("some.query")
-        current_spy.assert_called_with("appsignal.category", "some.query")
-
         set_name("Some query")
-        current_spy.assert_called_with("appsignal.name", "Some query")
-
         set_custom_data({"chunky": "bacon"})
-        current_spy.assert_called_with("appsignal.custom_data", '{"chunky": "bacon"}')
-
         set_params({"id": 123})
-        current_spy.assert_called_with("appsignal.request.parameters", '{"id": 123}')
-
         set_session_data({"admin": True})
-        current_spy.assert_called_with(
-            "appsignal.request.session_data", '{"admin": true}'
-        )
-
         set_header("content-type", "application/json")
-        current_spy.assert_called_with(
-            "appsignal.request.headers.content-type", "application/json"
-        )
-
         set_tag("something", True)
-        current_spy.assert_called_with("appsignal.tag.something", True)
-
         set_namespace("web")
-        current_spy.assert_called_with("appsignal.namespace", "web")
-
         set_root_name("Root name")
-        current_spy.assert_called_with("appsignal.root_name", "Root name")
+
+    assert dict(spans()[0].attributes) == {
+        "appsignal.body": "SELECT * FROM users",
+        "appsignal.category": "some.query",
+        "appsignal.name": "Some query",
+        "appsignal.custom_data": '{"chunky": "bacon"}',
+        "appsignal.request.parameters": '{"id": 123}',
+        "appsignal.request.session_data": '{"admin": true}',
+        "appsignal.request.headers.content-type": "application/json",
+        "appsignal.tag.something": True,
+        "appsignal.namespace": "web",
+        "appsignal.root_name": "Root name",
+    }
 
 
-def test_set_attributes_on_span(mocker):
-    with tracer.start_as_current_span("other span name") as other_span:
-        other_spy = mocker.spy(other_span, "set_attribute")
+def test_set_attributes_on_span(spans):
+    with tracer.start_as_current_span("parent span") as span:
+        with tracer.start_as_current_span("child span"):
+            set_body("SELECT * FROM users", span)
+            set_category("some.query", span)
+            set_name("Some query", span)
+            set_custom_data({"chunky": "bacon"}, span)
+            set_params({"id": 123}, span)
+            set_session_data({"admin": True}, span)
+            set_header("content-type", "application/json", span)
+            set_tag("something", True, span)
+            set_namespace("web", span)
+            set_root_name("Root name", span)
 
-        with tracer.start_as_current_span("current span name") as current_span:
-            current_spy = mocker.spy(current_span, "set_attribute")
+    spans = spans()
+    assert len(spans) == 2
 
-            set_body("SELECT * FROM users", other_span)
-            other_spy.assert_called_with("appsignal.body", "SELECT * FROM users")
+    parent_span = next(span for span in spans if span.name == "parent span")
+    assert dict(parent_span.attributes) == {
+        "appsignal.body": "SELECT * FROM users",
+        "appsignal.category": "some.query",
+        "appsignal.name": "Some query",
+        "appsignal.custom_data": '{"chunky": "bacon"}',
+        "appsignal.request.parameters": '{"id": 123}',
+        "appsignal.request.session_data": '{"admin": true}',
+        "appsignal.request.headers.content-type": "application/json",
+        "appsignal.tag.something": True,
+        "appsignal.namespace": "web",
+        "appsignal.root_name": "Root name",
+    }
 
-            set_category("some.query", other_span)
-            other_spy.assert_called_with("appsignal.category", "some.query")
-
-            set_name("Some query", other_span)
-            other_spy.assert_called_with("appsignal.name", "Some query")
-
-            set_custom_data({"chunky": "bacon"}, other_span)
-            other_spy.assert_called_with("appsignal.custom_data", '{"chunky": "bacon"}')
-
-            set_params({"id": 123}, other_span)
-            other_spy.assert_called_with("appsignal.request.parameters", '{"id": 123}')
-
-            set_session_data({"admin": True}, other_span)
-            other_spy.assert_called_with(
-                "appsignal.request.session_data", '{"admin": true}'
-            )
-
-            set_header("content-type", "application/json", other_span)
-            other_spy.assert_called_with(
-                "appsignal.request.headers.content-type", "application/json"
-            )
-
-            set_tag("something", True, other_span)
-            other_spy.assert_called_with("appsignal.tag.something", True)
-
-            set_namespace("web", other_span)
-            other_spy.assert_called_with("appsignal.namespace", "web")
-
-            set_root_name("Root name", other_span)
-            other_spy.assert_called_with("appsignal.root_name", "Root name")
-
-            current_spy.assert_not_called()
+    child_span = next(span for span in spans if span.name == "child span")
+    assert dict(child_span.attributes) == {}
 
 
-def test_set_error(mocker):
-    with tracer.start_as_current_span("current span name") as current_span:
-        current_set_status_spy = mocker.spy(current_span, "set_status")
-        current_record_exception_spy = mocker.spy(current_span, "record_exception")
+def test_set_error(spans):
+    with tracer.start_as_current_span("current span name"):
+        set_error(raised_error())
 
-        error = Exception("Whoops!")
-
-        set_error(error)
-
-        current_set_status_spy.assert_called_once()
-        assert current_set_status_spy.call_args.args[0].status_code == StatusCode.ERROR
-        current_record_exception_spy.assert_called_with(error)
+    span = spans()[0]
+    assert span.status.status_code == StatusCode.ERROR
+    event = span.events[0]
+    assert event.name == "exception"
+    assert event.attributes["exception.type"] == "FooError"
+    assert event.attributes["exception.message"] == "Whoops!"
 
 
-def test_set_error_on_span(mocker):
-    with tracer.start_as_current_span("other span name") as other_span:
-        other_set_status_spy = mocker.spy(other_span, "set_status")
-        other_record_exception_spy = mocker.spy(other_span, "record_exception")
+def test_set_error_on_span(spans):
+    with tracer.start_as_current_span("parent span") as span:
+        with tracer.start_as_current_span("child span"):
+            set_error(raised_error(), span)
 
-        with tracer.start_as_current_span("current span name") as current_span:
-            current_set_status_spy = mocker.spy(current_span, "set_status")
-            current_record_exception_spy = mocker.spy(current_span, "record_exception")
+    spans = spans()
+    assert len(spans) == 2
 
-            error = Exception("Whoops!")
+    parent_span = next(span for span in spans if span.name == "parent span")
+    assert parent_span.status.status_code == StatusCode.ERROR
 
-            set_error(error, other_span)
+    event = parent_span.events[0]
+    assert event.name == "exception"
+    assert event.attributes["exception.type"] == "FooError"
+    assert event.attributes["exception.message"] == "Whoops!"
 
-            other_set_status_spy.assert_called_once()
-            assert (
-                other_set_status_spy.call_args.args[0].status_code == StatusCode.ERROR
-            )
-            other_record_exception_spy.assert_called_once_with(error)
-
-            current_set_status_spy.assert_not_called()
-            current_record_exception_spy.assert_not_called()
+    child_span = next(span for span in spans if span.name == "child span")
+    assert len(child_span.events) == 0
 
 
-def test_send_error(mocker):
-    class FooError(Exception):
-        pass
+def test_send_error(spans):
+    send_error(raised_error())
 
-    error = FooError("Whoops!")
+    span = spans()[0]
+    assert span.name == "FooError"
+    assert span.status.status_code == StatusCode.ERROR
 
-    span_mock = mocker.Mock()
-    span_mock.set_status = mocker.Mock()
-    span_mock.record_exception = mocker.Mock()
-    context_manager_mock = mocker.Mock()
-    context_manager_mock.__enter__ = mocker.Mock(return_value=span_mock)
-    context_manager_mock.__exit__ = mocker.Mock()
-    start_as_current_span_mock = mocker.Mock(return_value=context_manager_mock)
+    event = span.events[0]
+    assert event.name == "exception"
+    assert event.attributes["exception.type"] == "FooError"
+    assert event.attributes["exception.message"] == "Whoops!"
 
-    mocker.patch(
-        "appsignal.helpers._send_error_tracer.start_as_current_span",
-        new=start_as_current_span_mock,
+
+def test_send_error_with_current_span(spans):
+    with tracer.start_as_current_span("current span"):
+        send_error(raised_error())
+
+    spans = spans()
+    assert len(spans) == 2
+
+    current_span = next(span for span in spans if span.name == "current span")
+    assert current_span.status.status_code != StatusCode.ERROR
+    assert len(current_span.events) == 0
+
+    error_span = next(span for span in spans if span.name == "FooError")
+    assert error_span.status.status_code == StatusCode.ERROR
+
+    event = error_span.events[0]
+    assert event.name == "exception"
+    assert event.attributes["exception.type"] == "FooError"
+    assert event.attributes["exception.message"] == "Whoops!"
+
+    assert current_span.parent is None
+    assert (
+        current_span.get_span_context().trace_id
+        != error_span.get_span_context().trace_id
     )
 
-    send_error(error)
 
-    start_as_current_span_mock.assert_called_once_with("FooError")
-    assert span_mock.set_status.call_args.args[0].status_code == StatusCode.ERROR
-    span_mock.record_exception.assert_called_once_with(error)
+def test_send_error_with_context(spans):
+    # Using implicit current span
+    with send_error_with_context(raised_error()):
+        set_params({"foo": "bar"})
 
+    # Using explicit `with` block span
+    with send_error_with_context(raised_error()) as current_span:
+        set_params({"foo": "bar"}, current_span)
 
-def test_send_error_with_context(mocker):
-    class FooError(Exception):
-        pass
+    spans = spans()
+    assert len(spans) == 2
 
-    error = FooError("Whoops!")
+    for span in spans:
+        assert span.name == "FooError"
+        assert span.status.status_code == StatusCode.ERROR
+        assert dict(span.attributes) == {
+            "appsignal.request.parameters": '{"foo": "bar"}'
+        }
 
-    span_mock = mocker.Mock()
-    span_mock.set_status = mocker.Mock()
-    span_mock.record_exception = mocker.Mock()
-    span_mock.set_attribute = mocker.Mock()
-    context_manager_mock = mocker.Mock()
-    context_manager_mock.__enter__ = mocker.Mock(return_value=span_mock)
-    context_manager_mock.__exit__ = mocker.Mock()
-    start_as_current_span_mock = mocker.Mock(return_value=context_manager_mock)
-
-    mocker.patch(
-        "appsignal.helpers._send_error_tracer.start_as_current_span",
-        new=start_as_current_span_mock,
-    )
-
-    with send_error_with_context(error) as span:
-        set_params({"foo": "bar"}, span)
-
-    start_as_current_span_mock.assert_called_once_with("FooError")
-    assert span_mock.set_status.call_args.args[0].status_code == StatusCode.ERROR
-    span_mock.record_exception.assert_called_once_with(error)
-    span_mock.set_attribute.assert_called_once_with(
-        "appsignal.request.parameters", '{"foo": "bar"}'
-    )
+        event = span.events[0]
+        assert event.name == "exception"
+        assert event.attributes["exception.type"] == "FooError"
+        assert event.attributes["exception.message"] == "Whoops!"
