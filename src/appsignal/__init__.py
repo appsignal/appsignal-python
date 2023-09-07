@@ -1,5 +1,5 @@
 from .client import Client as Appsignal
-from .helpers import (
+from .tracing import (
     send_error,
     send_error_with_context,
     set_body,
