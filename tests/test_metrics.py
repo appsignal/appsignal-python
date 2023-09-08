@@ -4,7 +4,8 @@ from typing import Any
 
 from opentelemetry.metrics import CallbackOptions, UpDownCounter
 
-from appsignal.metrics import _counters, _gauges, _meter, increment_counter, set_gauge
+from appsignal import increment_counter, set_gauge
+from appsignal.metrics import _counters, _gauges, _meter
 
 
 def test_increment_counter_creates_new_counter():
