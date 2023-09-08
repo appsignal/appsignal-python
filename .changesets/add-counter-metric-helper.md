@@ -6,7 +6,7 @@ type: "add"
 Add helper for reporting counter metrics to AppSignal using OpenTelemetry. Use these helpers to simplify sending counter metrics as supported by AppSignal.
 
 ```python
-from appsignal.metrics import increment_counter
+from appsignal import increment_counter
 
 # Report a counter increasing
 increment_counter("counter_name", 1)

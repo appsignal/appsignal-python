@@ -6,7 +6,7 @@ type: "add"
 Add helper for reporting gauge metrics to AppSignal using OpenTelemetry. Use these helpers to simplify sending gauge metrics as supported by AppSignal.
 
 ```python
-from appsignal.metrics import set_gauge
+from appsignal import set_gauge
 
 # Report a gauge value
 set_gauge("gauge_name", 10)
