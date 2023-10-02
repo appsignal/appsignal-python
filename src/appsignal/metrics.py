@@ -6,7 +6,7 @@ from opentelemetry.metrics import CallbackOptions, Observation, UpDownCounter, g
 
 
 if TYPE_CHECKING:
-    Tags = dict[str, str] | None
+    Tags = dict[str, str | int | float | bool] | None
     TagsKey = frozenset[Any] | None
 
 _meter = get_meter("appsignal-helpers")
