@@ -1,5 +1,71 @@
 # AppSignal for Python Changelog
 
+## 0.3.0
+
+### Added
+
+- [9e4d6ef](https://github.com/appsignal/appsignal-python/commit/9e4d6ef326ddb495755707312b64fc9a7cbaf938) minor - Support OpenTelemetry metrics through its metrics exporter. We enable the metrics exporter by default so it can be used to collect data from instrumentations and manually by using an OpenTelemetry metrics meter. Not all metric types are supported at this time, only sums and gauges.
+- [073b3c2](https://github.com/appsignal/appsignal-python/commit/073b3c2958b21d0347461b2aca7841f8d0e897a9) patch - Add error helpers. These helpers simplify reporting errors to AppSignal that are not handled automatically by your framework, alongside the current instrumented context or separately. For example, to report an error from an `except` clause as a separate sample:
+  
+  ```python
+  from appsignal import send_error
+  
+  def index():
+    cookies = put_hand_in_cookie_jar()
+    except HandStuckError as error:
+      send_error(error)
+  ```
+  
+  More information about [error helpers](https://docs.appsignal.com/python/custom-instrumentation/exception-handling.html) is available in our documentation.
+- [073b3c2](https://github.com/appsignal/appsignal-python/commit/073b3c2958b21d0347461b2aca7841f8d0e897a9) patch - Add sample data helpers. These helpers simplify adding properties to OpenTelemetry spans that display specific data in the AppSignal sample UI. For example, to add custom data to the current sample:
+  
+  ```python
+  from appsignal import set_custom_data
+  
+  # Must be used in an instrumented context -- e.g. a Flask handler
+  @app.get("/")
+  def index():
+    set_custom_data({"hello": "there"})
+  ```
+  
+  The full list of sample data helpers is available in our documentation as part of the [tagging and sample data guides](https://docs.appsignal.com/guides/custom-data.html) and [namespace guide](https://docs.appsignal.com/guides/namespaces.html).
+- [61988e5](https://github.com/appsignal/appsignal-python/commit/61988e5010c4710121af1f0ce8e4b6797171651a) patch - Add helper for reporting counter metrics to AppSignal using OpenTelemetry. Use these helpers to simplify sending counter metrics as supported by AppSignal.
+  
+  ```python
+  from appsignal import increment_counter
+  
+  # Report a counter increasing
+  increment_counter("counter_name", 1)
+  # Report a counter decreasing
+  increment_counter("counter_name", -1)
+  
+  # Add tags to counter
+  increment_counter("counter_with_tags", 1, {"tag1": "value1"})
+  ```
+  
+  Consult our documentation for more information about AppSignal's [custom metrics](https://docs.appsignal.com/metrics/custom.html).
+- [61988e5](https://github.com/appsignal/appsignal-python/commit/61988e5010c4710121af1f0ce8e4b6797171651a) patch - Add helper for reporting gauge metrics to AppSignal using OpenTelemetry. Use these helpers to simplify sending gauge metrics as supported by AppSignal.
+  
+  ```python
+  from appsignal import set_gauge
+  
+  # Report a gauge value
+  set_gauge("gauge_name", 10)
+  
+  # Add tags to metrics
+  set_gauge("gauge_with_tags", 10, {"tag1": "value1"})
+  ```
+  
+  Consult our documentation for more information about AppSignal's [custom metrics](https://docs.appsignal.com/metrics/custom.html).
+
+### Changed
+
+- [1d72ea7](https://github.com/appsignal/appsignal-python/commit/1d72ea74a7709135660ccd2f826a5400d1511e11) patch - Bump agent to 6133900.
+  
+  - Fix `disk_inode_usage` metric name format to not be interpreted as a JSON object.
+  - Convert all OpenTelemetry sum metrics to AppSignal non-monotonic counters.
+  - Rename standalone agent's `role` option to `host_role` so it's consistent with the integrations naming.
+
 ## 0.2.3
 
 ### Fixed
