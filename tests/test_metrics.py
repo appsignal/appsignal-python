@@ -30,9 +30,16 @@ def test_increment_counter_with_tags(mocker):
 
     counter_spy = mocker.spy(_counters["metric_name"], "add")
 
-    increment_counter("metric_name", 1, {"tag1": "value1"})
+    increment_counter(
+        "metric_name",
+        1,
+        {"tag1": "value1", "int": 123, "float": 123.456, "true": True, "false": False},
+    )
 
-    counter_spy.assert_called_once_with(1, {"tag1": "value1"})
+    counter_spy.assert_called_once_with(
+        1,
+        {"tag1": "value1", "int": 123, "float": 123.456, "true": True, "false": False},
+    )
 
 
 def test_set_gauge_creates_new_gauge(mocker):
