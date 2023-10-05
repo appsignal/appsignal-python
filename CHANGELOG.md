@@ -16,7 +16,7 @@
       send_error(error)
   ```
   
-  More information about [error helpers](https://docs.appsignal.com/python/custom-instrumentation/exception-handling.html) is available in our documentation.
+  More information about [error helpers](https://docs.appsignal.com/python/instrumentation/exception-handling.html) is available in our documentation.
 - [073b3c2](https://github.com/appsignal/appsignal-python/commit/073b3c2958b21d0347461b2aca7841f8d0e897a9) patch - Add sample data helpers. These helpers simplify adding properties to OpenTelemetry spans that display specific data in the AppSignal sample UI. For example, to add custom data to the current sample:
   
   ```python
