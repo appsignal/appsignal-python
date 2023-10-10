@@ -1,4 +1,4 @@
-# AppSignal Python
+# AppSignal for Python
 
 AppSignal solves all your Python monitoring needs in a single tool. You and
 your team can focus on writing code and we'll provide the alerts if your app
@@ -13,7 +13,7 @@ has any issues.
 
 ## Description
 
-The AppSignal package collects exceptions and performance data from your Ruby
+The AppSignal package collects exceptions and performance data from your Python
 applications and sends it to AppSignal for analysis. Get alerted when an error
 occurs or an endpoint is responding very slowly.
 
