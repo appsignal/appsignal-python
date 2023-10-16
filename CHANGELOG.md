@@ -1,5 +1,16 @@
 # AppSignal for Python Changelog
 
+## 0.3.1
+
+### Changed
+
+- [4b94772](https://github.com/appsignal/appsignal-python/commit/4b947723346ad8f3b538caa85e5cf4d8d383d1f9) patch - Bump agent to e8207c1.
+  
+  - Add `memory_in_percentages` and `swap_in_percentages` host metrics that represents metrics in percentages.
+  - Ignore `/snap/` disk mountpoints.
+  - Fix issue with the open span count in logs being logged as a negative number.
+  - Fix agent's TCP server getting stuck when two requests are made within the same fraction of a second.
+
 ## 0.3.0
 
 ### Added
