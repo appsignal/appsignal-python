@@ -34,6 +34,14 @@ class AppsignalCLICommand(ABC):
             help="Application name",
         )
 
+    @staticmethod
+    def _environment_argument(parser: ArgumentParser) -> None:
+        parser.add_argument(
+            "--environment",
+            default=os.environ.get("APPSIGNAL_APP_ENV"),
+            help="App environment",
+        )
+
     @abstractmethod
     def run(self) -> int:
         raise NotImplementedError
@@ -51,6 +59,15 @@ class AppsignalCLICommand(ABC):
         while not name:
             name = input("Please enter the name of your application: ")
         return name
+
+    @cached_property
+    def _environment(self) -> str | None:
+        environment = self.args.environment
+        while not environment:
+            environment = input(
+                "Please enter the application environment (development/production): "
+            )
+        return environment
 
     @cached_property
     def _config(self) -> Config:

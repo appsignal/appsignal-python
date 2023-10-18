@@ -5,6 +5,7 @@ from argparse import ArgumentParser
 
 import requests
 
+from ..config import Config
 from .command import AppsignalCLICommand
 from .demo import DemoCommand
 
@@ -58,6 +59,7 @@ class InstallCommand(AppsignalCLICommand):
 
             demo = DemoCommand(args=self.args)
             demo._name = self._name
+            demo._environment = Config.DEFAULT_ENVIRONMENT
             demo._push_api_key = self._push_api_key
             print()
             demo.run()

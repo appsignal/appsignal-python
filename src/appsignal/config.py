@@ -75,13 +75,14 @@ class Config:
     CA_FILE_PATH = os.path.join(
         os.path.dirname(os.path.abspath(__file__)), "resources", "cacert.pem"
     )
+    DEFAULT_ENVIRONMENT = "development"
     DEFAULT_CONFIG = Options(
         ca_file_path=CA_FILE_PATH,
         diagnose_endpoint="https://appsignal.com/diag",
         enable_host_metrics=True,
         enable_nginx_metrics=False,
         enable_statsd=False,
-        environment="development",
+        environment=DEFAULT_ENVIRONMENT,
         endpoint="https://push.appsignal.com",
         files_world_accessible=True,
         log="file",
