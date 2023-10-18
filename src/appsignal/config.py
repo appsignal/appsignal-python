@@ -300,8 +300,6 @@ class Config:
         push_api_key = self.option("push_api_key") or ""
         if len(push_api_key.strip()) > 0:
             self.valid = True
-        else:
-            print("appsignal: Push API key not set after loading config. Not starting.")
 
 
 def parse_bool(value: str | None) -> bool | None:
