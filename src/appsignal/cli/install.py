@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+from argparse import ArgumentParser
 
 import requests
 
@@ -22,6 +23,11 @@ INSTALL_FILE_NAME = "__appsignal__.py"
 
 class InstallCommand(AppsignalCLICommand):
     """Generate Appsignal client integration code."""
+
+    @staticmethod
+    def init_parser(parser: ArgumentParser) -> None:
+        AppsignalCLICommand._application_argument(parser)
+        AppsignalCLICommand._push_api_key_argument(parser)
 
     def run(self) -> int:
         # Make sure to show input prompts before the welcome text.

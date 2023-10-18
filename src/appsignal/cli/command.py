@@ -14,12 +14,20 @@ class AppsignalCLICommand(ABC):
     args: Namespace
 
     @staticmethod
+    @abstractmethod
     def init_parser(parser: ArgumentParser) -> None:
+        pass
+
+    @staticmethod
+    def _push_api_key_argument(parser: ArgumentParser) -> None:
         parser.add_argument(
             "--push-api-key",
             default=os.environ.get("APPSIGNAL_PUSH_API_KEY"),
             help="Push API Key",
         )
+
+    @staticmethod
+    def _application_argument(parser: ArgumentParser) -> None:
         parser.add_argument(
             "--application",
             default=os.environ.get("APPSIGNAL_APP_NAME"),
