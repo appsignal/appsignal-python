@@ -1,10 +1,9 @@
 from __future__ import annotations
 
-import json
-
 from opentelemetry import trace
 
 from ..client import Client
+from ..tracing import set_params
 from .command import AppsignalCLICommand
 
 
@@ -30,10 +29,7 @@ class DemoCommand(AppsignalCLICommand):
         # Performance sample
         with tracer.start_as_current_span("GET /demo") as span:
             span.set_attribute("http.method", "GET")
-            span.set_attribute(
-                "appsignal.request.parameters",
-                json.dumps({"GET": {"id": 1}, "POST": {}}),
-            )
+            set_params({"GET": {"id": 1}, "POST": {}}, span)
             span.set_attribute(
                 "otel.instrumentation_library.name",
                 "opentelemetry.instrumentation.wsgi",
@@ -46,10 +42,7 @@ class DemoCommand(AppsignalCLICommand):
         # Error sample
         with tracer.start_as_current_span("GET /demo") as span:
             span.set_attribute("http.method", "GET")
-            span.set_attribute(
-                "appsignal.request.parameters",
-                json.dumps({"GET": {"id": 1}, "POST": {}}),
-            )
+            set_params({"GET": {"id": 1}, "POST": {}}, span)
             span.set_attribute(
                 "demo_sample",
                 True,
