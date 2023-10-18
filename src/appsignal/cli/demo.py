@@ -19,6 +19,9 @@ class DemoCommand(AppsignalCLICommand):
             push_api_key=self._push_api_key,
         )
 
+        if not client._config.is_active():
+            return 1
+
         print("Sending example data to AppSignal...")
         print(f"Starting AppSignal client for {self._name}...")
         client.start()
