@@ -17,7 +17,6 @@ class DemoCommand(AppsignalCLICommand):
             active=True,
             name=self._name,
             push_api_key=self._push_api_key,
-            log_level="trace",
         )
 
         print("Sending example data to AppSignal...")
