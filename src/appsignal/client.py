@@ -30,11 +30,11 @@ class Client:
         self._config = Config(options)
         self.start_logger()
 
-        if not self._config.option("active"):
+        if not self._config.is_active():
             self._logger.info("AppSignal not starting: no active config found")
 
     def start(self) -> None:
-        if self._config.option("active"):
+        if self._config.is_active():
             self._logger.info("Starting AppSignal")
             agent.start(self._config)
             start_opentelemetry(self._config)

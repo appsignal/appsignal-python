@@ -293,3 +293,27 @@ def test_set_private_environ_list_is_none():
     config.set_private_environ()
 
     assert os.environ.get("_APPSIGNAL_DNS_SERVERS") is None
+
+
+def test_is_active_valid_push_api_key():
+    config = Config(Options(active=False, push_api_key="abc"))
+    assert config.is_active() is False
+
+    config = Config(Options(active=True, push_api_key="abc"))
+    assert config.is_active() is True
+
+
+def test_is_active_invalid_push_api_key(capfd):
+    config = Config(Options(active=True, push_api_key=None))
+    assert config.is_active() is False
+
+    out, err = capfd.readouterr()
+    assert (
+        out == "appsignal: Push API key not set after loading config. Not starting.\n"
+    )
+
+    config = Config(Options(active=True, push_api_key=""))
+    assert config.is_active() is False
+
+    config = Config(Options(active=True, push_api_key="  "))
+    assert config.is_active() is False

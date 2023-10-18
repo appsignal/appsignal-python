@@ -17,21 +17,33 @@ def test_client_options_merge_sources():
 
 
 def test_client_agent_inactive():
-    client = Client(active=True, name="MyApp")
-    assert client._config.options["active"] is True
+    client = Client(active=False, name="MyApp")
+    assert client._config.options["active"] is False
+    assert client._config.is_active() is False
     client.start()
 
-    assert os.environ.get("_APPSIGNAL_ACTIVE") == "true"
+    assert os.environ.get("_APPSIGNAL_ACTIVE") is None
     assert agent.active is False
 
 
 def test_client_agent_active():
     client = Client(active=True, name="MyApp", push_api_key="000")
     assert client._config.options["active"] is True
+    assert client._config.is_active() is True
     client.start()
 
     assert os.environ.get("_APPSIGNAL_ACTIVE") == "true"
     assert agent.active is True
+
+
+def test_client_agent_active_invalid():
+    client = Client(active=True, name="MyApp", push_api_key="")
+    assert client._config.option("active") is True
+    assert client._config.is_active() is False
+    client.start()
+
+    assert os.environ.get("_APPSIGNAL_ACTIVE") is None
+    assert agent.active is False
 
 
 def test_client_active():
@@ -45,6 +57,7 @@ def test_client_active():
     assert client._config.options["name"] == "MyApp"
     assert client._config.options["request_headers"] == ["accept", "x-custom-header"]
     assert client._config.options["push_api_key"] == "0000-0000-0000-0000"
+    assert client._config.is_active() is True
     client.start()
 
     # Sets the private config environment variables
@@ -59,7 +72,7 @@ def test_client_active():
 
 
 def test_client_active_without_request_headers():
-    client = Client(active=True, name="MyApp", request_headers=None)
+    client = Client(active=True, name="MyApp", push_api_key="000", request_headers=None)
     assert client._config.options["active"] is True
     assert client._config.options["name"] == "MyApp"
     assert client._config.options["request_headers"] is None

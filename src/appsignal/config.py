@@ -69,6 +69,7 @@ class Sources(TypedDict):
 
 
 class Config:
+    valid: bool
     sources: Sources
 
     CA_FILE_PATH = os.path.join(
@@ -115,6 +116,7 @@ class Config:
     )
 
     def __init__(self, options: Options | None = None) -> None:
+        self.valid = False
         self.sources = Sources(
             default=self.DEFAULT_CONFIG,
             system=Config.load_from_system(),
@@ -127,6 +129,10 @@ class Config:
         final_options.update(self.sources["environment"])
         final_options.update(self.sources["initial"])
         self.options = final_options
+        self._validate()
+
+    def is_active(self) -> bool:
+        return self.valid and self.option("active")
 
     def option(self, option: str) -> Any:
         return self.options.get(option)
@@ -285,6 +291,17 @@ class Config:
             )
             return None
         return os.path.join(path, "appsignal.log")
+
+    def _validate(self) -> None:
+        if self.option("active") is not True:
+            # Only validate if config is active to avoid unnecessary output
+            return
+
+        push_api_key = self.option("push_api_key") or ""
+        if len(push_api_key.strip()) > 0:
+            self.valid = True
+        else:
+            print("appsignal: Push API key not set after loading config. Not starting.")
 
 
 def parse_bool(value: str | None) -> bool | None:
