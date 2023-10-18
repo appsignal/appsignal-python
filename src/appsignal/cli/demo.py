@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import os
 from argparse import ArgumentParser
+from runpy import run_path
 
 from opentelemetry import trace
 
@@ -19,24 +21,53 @@ class DemoCommand(AppsignalCLICommand):
         AppsignalCLICommand._push_api_key_argument(parser)
 
     def run(self) -> int:
-        # Prompt for all the required config in a sensible order
-        self._name  # noqa: B018
-        self._environment  # noqa: B018
-        self._push_api_key  # noqa: B018
+        cwd = os.getcwd()
+        app_config_path = os.path.join(cwd, "__appsignal__.py")
+        if os.path.exists(app_config_path):
+            try:
+                client = run_path(app_config_path)["appsignal"]
+            except KeyError:
+                print(
+                    "No `appsignal` variable exported by the __appsignal__.py "
+                    "config file."
+                    "Please update the __appsignal__.py file as described in "
+                    "our documentation: "
+                    "https://docs.appsignal.com/python/configuration.html "
+                    "Exiting."
+                )
+                return 1
 
-        client = Client(
-            active=True,
-            environment=self._environment,
-            name=self._name,
-            push_api_key=self._push_api_key,
-        )
+            # For demo CLI purposes, AppSignal is always active
+            client._config.options["active"] = True
+            # Use CLI options if set
+            app_name = self.args.application
+            if app_name:
+                client._config.options["name"] = app_name
+            environment = self.args.environment
+            if environment:
+                client._config.options["environment"] = environment
+            push_api_key = self.args.push_api_key
+            if push_api_key:
+                client._config.options["push_api_key"] = push_api_key
+        else:
+            # Prompt for all the required config in a sensible order
+            self._name  # noqa: B018
+            self._environment  # noqa: B018
+            self._push_api_key  # noqa: B018
+            client = Client(
+                active=True,
+                name=self._name,
+                environment=self._environment,
+                push_api_key=self._push_api_key,
+            )
 
         if not client._config.is_active():
             print("AppSignal not starting: no active config found.")
             return 1
 
+        app_name = client._config.option("name")
         print("Sending example data to AppSignal...")
-        print(f"Starting AppSignal client for {self._name}...")
+        print(f"Starting AppSignal client for {app_name}...")
         client.start()
 
         Demo.transmit()

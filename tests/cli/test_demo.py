@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+import os
+import shutil
 from contextlib import contextmanager
 
 from appsignal.cli.base import main
+from appsignal.cli.install import INSTALL_FILE_TEMPLATE
 
 
 @contextmanager
@@ -61,3 +64,87 @@ def test_demo_with_invalid_config(mocker, capfd):
 
     out, err = capfd.readouterr()
     assert out.find("AppSignal not starting: no active config found.") > -1
+
+
+def test_demo_with_config_file(request, mocker, capfd):
+    test_dir = os.path.join(os.getcwd(), "tmp/dummy_project")
+    if os.path.exists(test_dir):
+        shutil.rmtree(test_dir)
+    os.makedirs(test_dir)
+    # Change to test dir
+    os.chdir(test_dir)
+    # Add client file
+    with open(os.path.join(test_dir, "__appsignal__.py"), "w") as f:
+        file_contents = INSTALL_FILE_TEMPLATE.format(
+            name="My app name",
+            push_api_key="000",
+        )
+        f.write(file_contents)
+
+    assert main(["demo"]) == 0  # Successful run
+
+    # Change back to original dir
+    os.chdir(request.config.invocation_params.dir)
+
+    out, err = capfd.readouterr()
+    assert out.find("Sending example data to AppSignal...") > -1
+    assert out.find("Starting AppSignal client for My app name...") > -1
+
+
+def test_demo_with_config_file_and_cli_options(request, mocker, capfd):
+    test_dir = os.path.join(os.getcwd(), "tmp/dummy_project")
+    if os.path.exists(test_dir):
+        shutil.rmtree(test_dir)
+    os.makedirs(test_dir)
+    # Change to test dir
+    os.chdir(test_dir)
+    # Add client file
+    with open(os.path.join(test_dir, "__appsignal__.py"), "w") as f:
+        file_contents = INSTALL_FILE_TEMPLATE.format(
+            name="My app name",
+            push_api_key="000",
+        )
+        f.write(file_contents)
+
+    assert main(["demo", "--application=CLI app"]) == 0  # Successful run
+
+    # Change back to original dir
+    os.chdir(request.config.invocation_params.dir)
+
+    out, err = capfd.readouterr()
+    assert out.find("Sending example data to AppSignal...") > -1
+    assert out.find("Starting AppSignal client for CLI app...") > -1
+
+
+def test_demo_with_invalid_config_file(request, mocker, capfd):
+    test_dir = os.path.join(os.getcwd(), "tmp/dummy_project")
+    if os.path.exists(test_dir):
+        shutil.rmtree(test_dir)
+    os.makedirs(test_dir)
+    # Change to test dir
+    os.chdir(test_dir)
+    # Add invalid client file that doesn't assign the client to a variable
+    # named `appsignal`
+    with open(os.path.join(test_dir, "__appsignal__.py"), "w") as f:
+        file_contents = """from appsignal import Appsignal
+
+Appsignal(
+    active=True,
+    name="{name}",
+    push_api_key="{push_api_key}",
+)
+"""
+        f.write(file_contents)
+
+    assert main(["demo", "--application=CLI app"]) == 1  # Exit with error
+
+    # Change back to original dir
+    os.chdir(request.config.invocation_params.dir)
+
+    out, err = capfd.readouterr()
+    assert (
+        out.find(
+            "No `appsignal` variable exported by the __appsignal__.py config file."
+        )
+        > -1
+    )
