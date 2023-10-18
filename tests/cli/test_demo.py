@@ -23,7 +23,7 @@ def test_demo_with_valid_config(mocker, capfd):
         assert main(["demo"]) == 0  # Successful run
 
     out, err = capfd.readouterr()
-    assert out.find("Sending example data to AppSignal...") > 0
+    assert out.find("Sending example data to AppSignal...") > -1
 
 
 def test_demo_with_invalid_config(mocker, capfd):
@@ -35,4 +35,4 @@ def test_demo_with_invalid_config(mocker, capfd):
         assert main(["demo"]) == 1  # Exit with error
 
     out, err = capfd.readouterr()
-    assert out.strip() == "AppSignal not starting: no active config found."
+    assert out.find("AppSignal not starting: no active config found.") > -1

@@ -11,7 +11,6 @@ class DemoCommand(AppsignalCLICommand):
     """Run demo application."""
 
     def run(self) -> int:
-        print()
 
         client = Client(
             active=True,

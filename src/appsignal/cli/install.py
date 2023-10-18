@@ -53,6 +53,7 @@ class InstallCommand(AppsignalCLICommand):
             demo = DemoCommand(args=self.args)
             demo._name = self._name
             demo._push_api_key = self._push_api_key
+            print()
             demo.run()
 
             if self._search_dependency("django"):
