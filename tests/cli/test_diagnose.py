@@ -23,6 +23,13 @@ def test_diagnose_with_valid_config(mocker, capfd):
 
     out, err = capfd.readouterr()
     assert out.find("AppSignal diagnose") > -1
+    assert out.find("Agent tests\n    Started: started") > -1
+    # Check if the agent picks up the config. This is the first check that
+    # would fail.
+    assert out.find('RequiredEnvVarNotPresent("_APPSIGNAL_APP_ENV")') == -1
+    # TODO: fix in https://github.com/appsignal/appsignal-python/issues/142
+    # assert out.find("Configuration: invalid") == -1
+    # assert out.find("RequiredEnvVarNotPresent(\"_APPSIGNAL_PUSH_API_KEY\")") == -1
 
 
 def test_diagnose_with_cli_options(mocker, capfd):
@@ -54,3 +61,6 @@ def test_diagnose_with_invalid_config(mocker, capfd):
 
     out, err = capfd.readouterr()
     assert out.find("AppSignal diagnose") > -1
+
+    # Check if the agent tests fail. This is the first check that would fail.
+    assert out.find('RequiredEnvVarNotPresent("_APPSIGNAL_PUSH_API_KEY")') > -1
