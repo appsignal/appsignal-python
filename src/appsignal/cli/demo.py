@@ -39,6 +39,14 @@ class DemoCommand(AppsignalCLICommand):
         print(f"Starting AppSignal client for {self._name}...")
         client.start()
 
+        Demo.transmit()
+
+        return 0
+
+
+class Demo:
+    @staticmethod
+    def transmit() -> None:
         tracer = trace.get_tracer(__name__)
 
         # Performance sample
@@ -66,5 +74,3 @@ class DemoCommand(AppsignalCLICommand):
                 raise ValueError("Something went wrong")
             except ValueError as e:
                 span.record_exception(e)
-
-        return 0
