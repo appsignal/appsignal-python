@@ -95,9 +95,9 @@ class DiagnoseCommand(AppsignalCLICommand):
             print("Error: Cannot use --send-report and --no-send-report together.")
             return 1
 
-        agent = Agent()
-        agent_json = json.loads(agent.diagnose())
         self.config = Config()
+        agent = Agent()
+        agent_json = json.loads(agent.diagnose(self.config))
         self.agent_report = AgentReport(agent_json)
 
         self.report = {

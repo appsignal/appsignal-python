@@ -28,8 +28,11 @@ class Agent:
             out = output.decode("utf-8")
             print(f"AppSignal agent is unable to start ({returncode}): ", out)
 
-    def diagnose(self) -> bytes:
-        return subprocess.run([self.path, "diagnose"], capture_output=True).stdout
+    def diagnose(self, config: Config) -> bytes:
+        config.set_private_environ()
+        return subprocess.run(
+            [self.path, "diagnose", "--private"], capture_output=True
+        ).stdout
 
     def version(self) -> bytes:
         return subprocess.run(
