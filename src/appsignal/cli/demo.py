@@ -20,6 +20,7 @@ class DemoCommand(AppsignalCLICommand):
         )
 
         if not client._config.is_active():
+            print("AppSignal not starting: no active config found.")
             return 1
 
         print("Sending example data to AppSignal...")
