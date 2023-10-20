@@ -77,6 +77,10 @@ def set_body(body: str, span: Span | None = None) -> None:
     _set_attribute("appsignal.body", body, span)
 
 
+def set_sql_body(body: str, span: Span | None = None) -> None:
+    _set_attribute("appsignal.sql_body", body, span)
+
+
 def set_namespace(namespace: str, span: Span | None = None) -> None:
     _set_attribute("appsignal.namespace", namespace, span)
 
