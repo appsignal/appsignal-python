@@ -13,6 +13,7 @@ from .tracing import (
     set_params,
     set_root_name,
     set_session_data,
+    set_sql_body,
     set_tag,
 )
 
@@ -20,6 +21,7 @@ from .tracing import (
 __all__ = [
     "Appsignal",
     "set_body",
+    "set_sql_body",
     "set_category",
     "set_custom_data",
     "set_header",

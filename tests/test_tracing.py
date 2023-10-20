@@ -16,6 +16,7 @@ from appsignal import (
     set_params,
     set_root_name,
     set_session_data,
+    set_sql_body,
     set_tag,
 )
 
@@ -36,7 +37,8 @@ def raised_error():
 
 def test_set_attributes(spans):
     with tracer.start_as_current_span("span"):
-        set_body("SELECT * FROM users")
+        set_body("Span body")
+        set_sql_body("SELECT * FROM users")
         set_category("some.query")
         set_name("Some query")
         set_custom_data({"chunky": "bacon"})
@@ -48,7 +50,8 @@ def test_set_attributes(spans):
         set_root_name("Root name")
 
     assert dict(spans()[0].attributes) == {
-        "appsignal.body": "SELECT * FROM users",
+        "appsignal.body": "Span body",
+        "appsignal.sql_body": "SELECT * FROM users",
         "appsignal.category": "some.query",
         "appsignal.name": "Some query",
         "appsignal.custom_data": '{"chunky": "bacon"}',
@@ -64,7 +67,8 @@ def test_set_attributes(spans):
 def test_set_attributes_on_span(spans):
     with tracer.start_as_current_span("parent span") as span:
         with tracer.start_as_current_span("child span"):
-            set_body("SELECT * FROM users", span)
+            set_body("Span body", span)
+            set_sql_body("SELECT * FROM users", span)
             set_category("some.query", span)
             set_name("Some query", span)
             set_custom_data({"chunky": "bacon"}, span)
@@ -80,7 +84,8 @@ def test_set_attributes_on_span(spans):
 
     parent_span = next(span for span in spans if span.name == "parent span")
     assert dict(parent_span.attributes) == {
-        "appsignal.body": "SELECT * FROM users",
+        "appsignal.body": "Span body",
+        "appsignal.sql_body": "SELECT * FROM users",
         "appsignal.category": "some.query",
         "appsignal.name": "Some query",
         "appsignal.custom_data": '{"chunky": "bacon"}',
