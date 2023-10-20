@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import os
+from argparse import ArgumentParser
 
 import requests
 
+from ..config import Config
 from .command import AppsignalCLICommand
 from .demo import DemoCommand
 
@@ -22,6 +24,11 @@ INSTALL_FILE_NAME = "__appsignal__.py"
 
 class InstallCommand(AppsignalCLICommand):
     """Generate Appsignal client integration code."""
+
+    @staticmethod
+    def init_parser(parser: ArgumentParser) -> None:
+        AppsignalCLICommand._application_argument(parser)
+        AppsignalCLICommand._push_api_key_argument(parser)
 
     def run(self) -> int:
         # Make sure to show input prompts before the welcome text.
@@ -52,7 +59,9 @@ class InstallCommand(AppsignalCLICommand):
 
             demo = DemoCommand(args=self.args)
             demo._name = self._name
+            demo._environment = Config.DEFAULT_ENVIRONMENT
             demo._push_api_key = self._push_api_key
+            print()
             demo.run()
 
             if self._search_dependency("django"):
