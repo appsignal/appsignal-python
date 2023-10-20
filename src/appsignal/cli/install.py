@@ -5,9 +5,9 @@ from argparse import ArgumentParser
 
 import requests
 
-from ..config import Config
+from ..client import Client
 from .command import AppsignalCLICommand
-from .demo import DemoCommand
+from .demo import Demo
 
 
 INSTALL_FILE_TEMPLATE = """from appsignal import Appsignal
@@ -56,13 +56,15 @@ class InstallCommand(AppsignalCLICommand):
             print(f"Writing the {INSTALL_FILE_NAME} configuration file...")
             self._write_file()
             print()
-
-            demo = DemoCommand(args=self.args)
-            demo._name = self._name
-            demo._environment = Config.DEFAULT_ENVIRONMENT
-            demo._push_api_key = self._push_api_key
             print()
-            demo.run()
+
+            client = Client(
+                active=True,
+                name=self._name,
+                push_api_key=self._push_api_key,
+            )
+            client.start()
+            Demo.transmit()
 
             if self._search_dependency("django"):
                 self._django_installation()

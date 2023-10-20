@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+import os
+import shutil
 from contextlib import contextmanager
 from unittest.mock import MagicMock
 
 from appsignal.cli.base import main
+from appsignal.cli.install import INSTALL_FILE_TEMPLATE
 
 
 EXPECTED_FILE_CONTENTS = """from appsignal import Appsignal
@@ -39,6 +42,15 @@ def assert_wrote_file_contents(mocker):
         mocker.call().__enter__().write(EXPECTED_FILE_CONTENTS)
         in builtins_open.mock_calls
     )
+
+
+def assert_wrote_real_file_contents(test_dir, name, push_api_key):
+    with open(os.path.join(test_dir, "__appsignal__.py")) as f:
+        file_contents = INSTALL_FILE_TEMPLATE.format(
+            name=name,
+            push_api_key=push_api_key,
+        )
+        assert f.read() == file_contents
 
 
 def mock_validate_push_api_key_request(mocker, status_code=200):
@@ -89,8 +101,8 @@ def test_install_command_when_push_api_key_given(mocker):
     assert_wrote_file_contents(mocker)
 
 
-def test_install_command_when_file_exists_overwrite(mocker):
-    mock_file_operations(mocker, file_exists=True)
+def test_install_command_when_file_exists_overwrite(mocker, request):
+    test_dir = os.path.join(os.getcwd(), "tmp/dummy_install_project")
     mock_validate_push_api_key_request(mocker)
 
     with mock_input(
@@ -103,9 +115,24 @@ def test_install_command_when_file_exists_overwrite(mocker):
             "y",
         ),
     ):
+        if os.path.exists(test_dir):
+            shutil.rmtree(test_dir)
+        os.makedirs(test_dir)
+        # Add client file
+        with open(os.path.join(test_dir, "__appsignal__.py"), "w") as f:
+            file_contents = INSTALL_FILE_TEMPLATE.format(
+                name="Existing app name",
+                push_api_key="Existing Push API key",
+            )
+            f.write(file_contents)
+        os.chdir(test_dir)
+
         main(["install"])
 
-    assert_wrote_file_contents(mocker)
+        # Change back to original dir
+        os.chdir(request.config.invocation_params.dir)
+
+    assert_wrote_real_file_contents(test_dir, "My app name", "My push API key")
 
 
 def test_install_command_when_file_exists_no_overwrite(mocker):
