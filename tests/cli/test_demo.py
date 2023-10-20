@@ -30,7 +30,7 @@ def test_demo_with_valid_config(mocker, capfd):
         assert main(["demo"]) == 0  # Successful run
 
     out, err = capfd.readouterr()
-    assert out.find("Sending example data to AppSignal...") > -1
+    assert "Sending example data to AppSignal..." in out
 
 
 def test_demo_with_cli_options(mocker, capfd):
@@ -47,7 +47,7 @@ def test_demo_with_cli_options(mocker, capfd):
     )
 
     out, err = capfd.readouterr()
-    assert out.find("Sending example data to AppSignal...") > -1
+    assert "Sending example data to AppSignal..." in out
 
 
 def test_demo_with_invalid_config(mocker, capfd):
@@ -63,7 +63,7 @@ def test_demo_with_invalid_config(mocker, capfd):
         assert main(["demo"]) == 1  # Exit with error
 
     out, err = capfd.readouterr()
-    assert out.find("AppSignal not starting: no active config found.") > -1
+    assert "AppSignal not starting: no active config found." in out
 
 
 def test_demo_with_config_file(request, mocker, capfd):
@@ -87,8 +87,8 @@ def test_demo_with_config_file(request, mocker, capfd):
     os.chdir(request.config.invocation_params.dir)
 
     out, err = capfd.readouterr()
-    assert out.find("Sending example data to AppSignal...") > -1
-    assert out.find("Starting AppSignal client for My app name...") > -1
+    assert "Sending example data to AppSignal..." in out
+    assert "Starting AppSignal client for My app name..." in out
 
 
 def test_demo_with_config_file_and_cli_options(request, mocker, capfd):
@@ -112,8 +112,8 @@ def test_demo_with_config_file_and_cli_options(request, mocker, capfd):
     os.chdir(request.config.invocation_params.dir)
 
     out, err = capfd.readouterr()
-    assert out.find("Sending example data to AppSignal...") > -1
-    assert out.find("Starting AppSignal client for CLI app...") > -1
+    assert "Sending example data to AppSignal..." in out
+    assert "Starting AppSignal client for CLI app..." in out
 
 
 def test_demo_with_invalid_config_file(request, mocker, capfd):
@@ -143,8 +143,5 @@ Appsignal(
 
     out, err = capfd.readouterr()
     assert (
-        out.find(
-            "No `appsignal` variable exported by the __appsignal__.py config file."
-        )
-        > -1
+        "No `appsignal` variable exported by the __appsignal__.py config file." in out
     )
