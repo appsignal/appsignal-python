@@ -54,7 +54,7 @@ def assert_wrote_real_file_contents(test_dir, name, push_api_key):
 
 
 def mock_validate_push_api_key_request(mocker, status_code=200):
-    mock_request = mocker.patch("requests.get")
+    mock_request = mocker.patch("requests.post")
     mock_request.return_value = MagicMock(status_code=status_code)
 
 
