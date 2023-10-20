@@ -143,5 +143,6 @@ Appsignal(
 
     out, err = capfd.readouterr()
     assert (
-        "No `appsignal` variable exported by the __appsignal__.py config file." in out
+        "No `appsignal` variable was exported by the __appsignal__.py config file."
+        in out
     )
