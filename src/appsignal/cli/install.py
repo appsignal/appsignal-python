@@ -3,9 +3,8 @@ from __future__ import annotations
 import os
 from argparse import ArgumentParser
 
-import requests
-
 from ..client import Client
+from ..push_api_key_validator import PushApiKeyValidator
 from .command import AppsignalCLICommand
 from .demo import Demo
 
@@ -45,11 +44,21 @@ class InstallCommand(AppsignalCLICommand):
 
         print("Validating API key")
         print()
-        if self._validate_push_api_key():
+        validation_result = PushApiKeyValidator.validate(self._config)
+        if validation_result == "valid":
             print("API key is valid!")
-        else:
+        elif validation_result == "invalid":
             print(f"API key {self._push_api_key} is not valid ")
             print("please get a new one on https://appsignal.com")
+            return 1
+        else:
+            print(
+                "Error while validating Push API key. HTTP status code: "
+                "{validation_result}"
+            )
+            print(
+                "Reach us at support@appsignal.com for support if this keeps happening."
+            )
             return 1
 
         if self._should_write_file():
@@ -169,16 +178,3 @@ class InstallCommand(AppsignalCLICommand):
         if requirement_file:
             with open(requirement_file, "a") as f:
                 f.write(f"{dependency_name}\n")
-
-    def _validate_push_api_key(self) -> bool:
-        endpoint = self._config.option("endpoint")
-        url = f"{endpoint}/1/auth?api_key={self._push_api_key}"
-        proxies = {}
-        if self._config.option("http_proxy"):
-            proxies["http"] = self._config.option("http_proxy")
-            proxies["https"] = self._config.option("http_proxy")
-
-        cert = self._config.option("ca_file_path")
-
-        response = requests.get(url, proxies=proxies, verify=cert)
-        return response.status_code == 200
