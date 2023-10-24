@@ -13,6 +13,7 @@ import requests
 
 from ..__about__ import __version__
 from ..agent import Agent
+from ..client import Client, InvalidClientFileError
 from ..config import Config
 from ..push_api_key_validator import PushApiKeyValidator
 from .command import AppsignalCLICommand
@@ -95,7 +96,18 @@ class DiagnoseCommand(AppsignalCLICommand):
             print("Error: Cannot use --send-report and --no-send-report together.")
             return 1
 
-        self.config = Config()
+        try:
+            client = Client._load__appsignal__file()
+        except InvalidClientFileError as error:
+            print(f"Error: {error}")
+            print("Exiting.")
+            return 1
+
+        if client:
+            self.config = client._config
+        else:
+            self.config = Config()
+
         agent = Agent()
         agent_json = json.loads(agent.diagnose(self.config))
         self.agent_report = AgentReport(agent_json)

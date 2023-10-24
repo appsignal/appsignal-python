@@ -1,12 +1,10 @@
 from __future__ import annotations
 
-import os
 from argparse import ArgumentParser
-from runpy import run_path
 
 from opentelemetry import trace
 
-from ..client import Client
+from ..client import Client, InvalidClientFileError
 from ..tracing import set_params
 from .command import AppsignalCLICommand
 
@@ -21,22 +19,14 @@ class DemoCommand(AppsignalCLICommand):
         AppsignalCLICommand._push_api_key_argument(parser)
 
     def run(self) -> int:
-        cwd = os.getcwd()
-        app_config_path = os.path.join(cwd, "__appsignal__.py")
-        if os.path.exists(app_config_path):
-            try:
-                client = run_path(app_config_path)["appsignal"]
-            except KeyError:
-                print(
-                    "No `appsignal` variable exported by the __appsignal__.py "
-                    "config file."
-                    "Please update the __appsignal__.py file as described in "
-                    "our documentation: "
-                    "https://docs.appsignal.com/python/configuration.html "
-                    "Exiting."
-                )
-                return 1
+        try:
+            client = Client._load__appsignal__file()
+        except InvalidClientFileError as error:
+            print(f"Error: {error}")
+            print("Exiting.")
+            return 1
 
+        if client:
             # For demo CLI purposes, AppSignal is always active
             client._config.options["active"] = True
             # Use CLI options if set
