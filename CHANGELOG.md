@@ -1,5 +1,44 @@
 # AppSignal for Python Changelog
 
+## 0.3.2
+
+### Added
+
+- [48fbe34](https://github.com/appsignal/appsignal-python/commit/48fbe341ff53396faa22832879386db28499a6b3) patch - Add the `--environment` CLI option to the demo CLI tool. This allow you to configure to which app environment the demo samples should be sent. It would default to production (and only be configurable via the `APPSIGNAL_APP_ENV` environment variable), but now it's configurable through the CLI options as well.
+  
+  ```
+  python -m appsignal demo --environment=production
+  ```
+- [3f97c9d](https://github.com/appsignal/appsignal-python/commit/3f97c9dfcfde922a36d8f1545c76a0b1641fd0df) patch - Add the `set_sql_body` tracing helper to set the body attribute on a span that contains a SQL query. When using this helper the given SQL query will be sanitized, reducing the chances of sending sensitive data to AppSignal.
+  
+  ```python
+  from appsignal import set_sql_body
+  
+  # Must be used in an instrumented context -- e.g. a Django or Flask handler
+  def index():
+      set_sql_body("SELECT * FROM users WHERE 'password' = 'secret'")
+      # Will be stored as:
+      set_sql_body("SELECT * FROM users WHERE 'password' = ?")
+  ```
+  
+  When the `set_body` helper is also used, the `set_sql_body` overwrites the `set_body` attribute.
+  
+  More information about our [tracing helpers](https://docs.appsignal.com/python/instrumentation/instrumentation.html) can be found in our documentation.
+
+### Changed
+
+- [9cca18d](https://github.com/appsignal/appsignal-python/commit/9cca18d39b7ec815fe404f37337689f06165be1c) patch - When the `__appsignal__.py` file is found in the directory in which the demo and diagnose CLIs are run (`python -m appsignal demo` or `python -m appsignal diagnose`), AppSignal will now load the `__appsignal__.py` file's configuration. When this file is loaded, the demo and diagnose CLI will use the configuration declared in that file to send the demo data and compile a diagnose report. In this scenario, it will no longer prompt you to enter the application configuration manually.
+- [b0c6c28](https://github.com/appsignal/appsignal-python/commit/b0c6c28902d142efc3bb7e677aa61294fe24e99a) patch - Bump agent to 8260fa1
+  
+  - Add `appsignal.sql_body` magic span attribute for OpenTelemetry spans. When this attribute is detected, we store the value as the span/event body. This span is sanitized beforehand so it doesn't contain any sensitive data and helps to group events in our backend. When used in combination with the `appsignal.body` attribute, the new `appsignal.sql_body` attribute is leading.
+  
+    More information on [AppSignal OpenTelemetry span attributes](https://docs.appsignal.com/opentelemetry/custom-instrumentation/attributes.html) can be found in our docs.
+
+### Fixed
+
+- [791f874](https://github.com/appsignal/appsignal-python/commit/791f874b5c670618719f3c8a6d48837da37129f7) patch - Validate the AppSignal configuration before starting the AppSignal agent. This prevents the agent from starting with an invalid config and while reporting no data. The AppSignal client and demo CLI will communicate that they could not send any data in this invalid configuration scenario.
+- [6d42381](https://github.com/appsignal/appsignal-python/commit/6d42381b28bce61b246ea549f2a91ec9a6185e32) patch - Fix the agent diagnostic report in diagnose CLI tool (`python -m appsignal diagnose`). The agent diagnose report would always contain an error, because it did not pick up the AppSignal configuration properly.
+
 ## 0.3.1
 
 ### Changed
