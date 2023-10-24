@@ -4,7 +4,7 @@
 
 ### Added
 
-- [48fbe34](https://github.com/appsignal/appsignal-python/commit/48fbe341ff53396faa22832879386db28499a6b3) patch - Add the `--environment` CLI option to the demo CLI tool. This allow you to configure to which app environment the demo samples should be sent. It would default to production (and only be configurable via the `APPSIGNAL_APP_ENV` environment variable), but now it's configurable through the CLI options as well.
+- [48fbe34](https://github.com/appsignal/appsignal-python/commit/48fbe341ff53396faa22832879386db28499a6b3) patch - Add the `--environment` CLI option to the demo CLI tool. This allow you to configure to which app environment the demo samples should be sent. It would default to development (and only be configurable via the `APPSIGNAL_APP_ENV` environment variable), but now it's configurable through the CLI options as well.
   
   ```
   python -m appsignal demo --environment=production
