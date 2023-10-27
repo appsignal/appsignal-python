@@ -6,8 +6,6 @@ from argparse import ArgumentParser, Namespace
 from dataclasses import dataclass
 from functools import cached_property
 
-from ..config import Config
-
 
 @dataclass(frozen=True)
 class AppsignalCLICommand(ABC):
@@ -68,7 +66,3 @@ class AppsignalCLICommand(ABC):
                 "Please enter the application environment (development/production): "
             )
         return environment
-
-    @cached_property
-    def _config(self) -> Config:
-        return Config()

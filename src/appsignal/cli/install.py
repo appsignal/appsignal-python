@@ -4,6 +4,7 @@ import os
 from argparse import ArgumentParser
 
 from ..client import Client
+from ..config import Config, Options
 from ..push_api_key_validator import PushApiKeyValidator
 from .command import AppsignalCLICommand
 from .demo import Demo
@@ -30,9 +31,11 @@ class InstallCommand(AppsignalCLICommand):
         AppsignalCLICommand._push_api_key_argument(parser)
 
     def run(self) -> int:
+        options = Options()
+
         # Make sure to show input prompts before the welcome text.
-        self._name  # noqa: B018
-        self._push_api_key  # noqa: B018
+        options["name"] = self._name
+        options["push_api_key"] = self._push_api_key
 
         print("👋 Welcome to the AppSignal for Python installer!")
         print()
@@ -44,7 +47,7 @@ class InstallCommand(AppsignalCLICommand):
 
         print("Validating API key")
         print()
-        validation_result = PushApiKeyValidator.validate(self._config)
+        validation_result = PushApiKeyValidator.validate(Config(options))
         if validation_result == "valid":
             print("API key is valid!")
         elif validation_result == "invalid":
