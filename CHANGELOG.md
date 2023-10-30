@@ -1,5 +1,45 @@
 # AppSignal for Python Changelog
 
+## 1.0.0
+
+### Added
+
+- [c1b31b8](https://github.com/appsignal/appsignal-python/commit/c1b31b8e9fac34bf5e5056400fa735295d191cfd) major - Release AppSignal for Python package version 1.0!
+  
+  This release marks the 1.0 release of our Python integration and contains the following features:
+  
+  - Track errors in your app.
+  - Track performance of HTTP endpoints and background jobs.
+  - Dive into more detail with custom instrumentation.
+  - View host metrics for Virtual Machines and containers on which the app is running.
+  - Report custom metrics that are unique to your app, and get alerted when they change.
+  - Deploy tracking whenever a new version of your application gets deployed.
+  - Automatic support for the following frameworks and libraries:
+      - Celery
+      - Django
+      - FastAPI
+      - Flask
+      - Jinja2
+      - Psycopg2
+      - Redis
+      - Requests
+      - Starlette
+      - WSGI/ASGI
+  
+  Please see [our Python package documentation](https://docs.appsignal.com/python) and [guides](https://docs.appsignal.com/guides.html) for more information. Reach out to us on [support@appsignal.com](mailto:support@appsignal.com) if you need any help 👋
+
+### Changed
+
+- [cd360e6](https://github.com/appsignal/appsignal-python/commit/cd360e65220b54b642259248c5c84d1a72e0593a) patch - The diagnose CLI will now print more details about each path in diagnose CLI output, such as if it exists or not, if it's writable and the ownership details. This will help with debugging path related issues without sending the report to the AppSignal servers.
+- [bde96cb](https://github.com/appsignal/appsignal-python/commit/bde96cba6aaaefd83f4658d530378c7d5db967fd) patch - Rename the example error reported by our installer and demo CLIs from `ValueError` to `DemoError` to better communicate this is an example error and should not be treated as a real error from the app.
+- [4e854df](https://github.com/appsignal/appsignal-python/commit/4e854dfd5b158a4b7d6527dc3004f31fafb3b0fe) patch - Add a message about committing the Push API key in the client file upon generation. We recommend storing this key in environment variables instead or in some kind of separate credentials system instead.
+
+### Fixed
+
+- [05f7f8d](https://github.com/appsignal/appsignal-python/commit/05f7f8dd926dbe20c986deb2b2a986e971afb557) patch - Fix an issue where the installer would always find the push API key to be invalid, halting the installation process.
+- [cd360e6](https://github.com/appsignal/appsignal-python/commit/cd360e65220b54b642259248c5c84d1a72e0593a) patch - Fix the diagnose report CLI exiting with an error when a path was not found. When a file, like the `appsignal.log` file, was not found, the diagnose CLI would exit with an error when trying to read from the file. It will now no longer try to read a non-existing file and no longer error.
+- [ccd49ad](https://github.com/appsignal/appsignal-python/commit/ccd49ad812a2c79e544c939cf47ae4fc1539136d) patch - Fix the demo error and performance incidents that are reported by our install and demo CLI tools to recognize them by our front-end as examples. It will now show the intended box with some additional explanation that you don't have to worry about these example errors and performance measurements. They're there to test if our integration works in your app and report the first bits of data.
+
 ## 0.3.2
 
 ### Added
