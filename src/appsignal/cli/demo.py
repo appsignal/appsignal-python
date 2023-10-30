@@ -86,6 +86,10 @@ class Demo:
             set_params({"GET": {"id": 1}, "POST": {}}, span)
             set_tag("demo_sample", True, span)
             try:
-                raise ValueError("Something went wrong")
-            except ValueError as e:
+                raise DemoError("Something went wrong")
+            except DemoError as e:
                 span.record_exception(e)
+
+
+class DemoError(Exception):
+    pass
