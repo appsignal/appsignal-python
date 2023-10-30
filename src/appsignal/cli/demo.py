@@ -5,7 +5,7 @@ from argparse import ArgumentParser
 from opentelemetry import trace
 
 from ..client import Client, InvalidClientFileError
-from ..tracing import set_params, set_tag
+from ..tracing import set_error, set_params, set_tag
 from .command import AppsignalCLICommand
 
 
@@ -88,7 +88,7 @@ class Demo:
             try:
                 raise DemoError("Something went wrong")
             except DemoError as e:
-                span.record_exception(e)
+                set_error(e, span)
 
 
 class DemoError(Exception):
