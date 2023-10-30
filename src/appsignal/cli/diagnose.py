@@ -74,6 +74,74 @@ class AgentReport:
         return "-"
 
 
+class PathsReport:
+    def __init__(self, config: Config) -> None:
+        self.config = config
+
+    def paths(self) -> dict:
+        log_file_path = self.config.log_file_path() or ""
+        log_path = self.config.option("log_path") or os.path.dirname(log_file_path)
+
+        return {
+            "working_dir": {
+                "label": "Current working directory",
+                "path": os.getcwd() or "",
+            },
+            "log_dir_path": {
+                "label": "Log directory",
+                "path": log_path,
+            },
+            "appsignal.log": {
+                "label": "AppSignal log",
+                "path": log_file_path,
+            },
+        }
+
+    def report(self) -> dict:
+        paths = {}
+        for key, config in self.paths().items():
+            paths[key] = self._path_metadata(config["path"])
+
+        return paths
+
+    def _path_metadata(self, path: str) -> dict:
+        info = {"path": path, "exists": self._file_exists(path)}
+        if not info["exists"]:
+            return info
+
+        info["type"] = self._file_type(path)
+        info["writable"] = os.access(path, os.W_OK)
+        file_stat = os.stat(path)
+        info["mode"] = str(file_stat.st_mode)
+        info["ownership"] = {
+            "gid": file_stat.st_gid,
+            "uid": file_stat.st_uid,
+        }
+        if info["type"] == "file":
+            info["content"] = self._read_last_two_mib(path)
+
+        return info
+
+    def _file_exists(self, path: str) -> bool:
+        return os.path.exists(path)
+
+    def _file_type(self, path: str) -> str:
+        if os.path.exists(path):
+            if os.path.isfile(path):
+                return "file"
+            if os.path.isdir(path):
+                return "directory"
+        return ""
+
+    def _read_last_two_mib(self, path: str) -> list[str]:
+        two_mib = 2 * 1024 * 1024
+        file_size = os.path.getsize(path)
+        with open(path, "rb") as file:
+            bytes_to_read = two_mib if two_mib < file_size else file_size
+            file.seek(-bytes_to_read, os.SEEK_END)
+            return file.read().decode("utf-8").strip().split("\n")
+
+
 class DiagnoseCommand(AppsignalCLICommand):
     @staticmethod
     def init_parser(parser: ArgumentParser) -> None:
@@ -111,6 +179,7 @@ class DiagnoseCommand(AppsignalCLICommand):
         agent = Agent()
         agent_json = json.loads(agent.diagnose(self.config))
         self.agent_report = AgentReport(agent_json)
+        self.paths_report = PathsReport(self.config)
 
         self.report = {
             "agent": {
@@ -142,9 +211,9 @@ class DiagnoseCommand(AppsignalCLICommand):
                 "package_version": __version__,
                 "agent_version": str(agent.version(), "utf-8"),
             },
-            "paths": self._paths_data(),
+            "paths": self.paths_report.report(),
             "process": {
-                "uid": os.getuid(),
+                "uid": self._process_user(),
             },
             "validation": {"push_api_key": self._validate_push_api_key()},
         }
@@ -240,23 +309,34 @@ class DiagnoseCommand(AppsignalCLICommand):
         print(f'  Validating Push API key: {validation_report["push_api_key"]}')
 
     def _paths_information(self) -> None:
-        log_file_path = self.config.log_file_path() or ""
-        log_path = self.config.option("log_path") or os.path.dirname(log_file_path)
-        log_file_lines = self._last_ten_lines(log_file_path)
-
         print("Paths")
-        print("  Current working directory")
-        print(f"    Path: '{os.getcwd()}'")
-        print()
-        print("  Log directory")
-        print(f"    Path: '{log_path}'")
-        print()
-        print("  AppSignal log")
-        print(f"    Path: '{log_file_path}'")
+        paths_report = self.paths_report
+        report = paths_report.report()
+        process_uid = self._process_user()
+        for key, info in paths_report.paths().items():
+            path_report = report[key]
+            print(f"  {info['label']}")
+            print(f"    Path: '{path_report['path']}'")
 
-        print("    Contents (last 10 lines):")
-        for line in log_file_lines:
-            print(line.strip())
+            if not path_report["exists"]:
+                print("    Exists?: False")
+                print()
+                continue
+
+            print(f"    Writable?: {path_report['writable']}")
+            if process_uid:
+                owned = path_report["ownership"]["uid"] == process_uid
+            else:
+                owned = "Unknown"
+            owner = f"{owned} (file: {path_report['ownership']['uid']}, process: {process_uid})"
+            print(f"    Ownership?: {owner}")
+
+            if path_report.get("content"):
+                print("    Contents (last 10 lines):")
+                for line in path_report["content"][-10:]:
+                    print(line.strip())
+            else:
+                print()
 
     def _report_information(self) -> None:
         print("Diagnostics report")
@@ -308,63 +388,8 @@ class DiagnoseCommand(AppsignalCLICommand):
             print(f"  Response code: {status}")
             print(f"  Response body: {response.text}")
 
-    def _paths_data(self) -> dict:
-        working_dir = os.getcwd() or ""
-        log_file_path = self.config.log_file_path() or ""
-        log_path = self.config.option("log_path") or os.path.dirname(log_file_path)
-        log_file_lines = self._read_last_two_mib(log_file_path)
-
-        return {
-            "appsignal.log": {
-                "content": log_file_lines,
-                "exists": os.path.exists(log_file_path),
-                "mode": self._file_stat(log_file_path).get("mode"),
-                "ownership": self._file_stat(log_file_path).get("ownership"),
-                "path": log_file_path,
-                "type": self._file_type(log_file_path),
-                "writable": self._file_is_writable(log_file_path),
-            },
-            "log_dir_path": {
-                "exists": os.path.exists(log_path),
-                "mode": self._file_stat(log_path).get("mode"),
-                "ownership": self._file_stat(log_path).get("ownership"),
-                "path": log_path,
-                "type": self._file_type(log_path),
-                "writable": self._file_is_writable(log_path),
-            },
-            "working_dir": {
-                "exists": os.path.exists(working_dir),
-                "mode": self._file_stat(working_dir).get("mode"),
-                "ownership": self._file_stat(working_dir).get("ownership"),
-                "path": working_dir,
-                "type": self._file_type(working_dir),
-                "writable": self._file_is_writable(working_dir),
-            },
-        }
-
-    def _file_stat(self, path: str) -> dict:
-        try:
-            file_stat = os.stat(path)
-            return {
-                "mode": str(file_stat.st_mode),
-                "ownership": {
-                    "gid": file_stat.st_gid,
-                    "uid": file_stat.st_uid,
-                },
-            }
-        except FileNotFoundError:
-            return {}
-
-    def _file_type(self, path: str) -> str:
-        if os.path.exists(path):
-            if os.path.isfile(path):
-                return "file"
-            if os.path.isdir(path):
-                return "directory"
-        return ""
-
-    def _file_is_writable(self, path: str) -> bool:
-        return os.access(path, os.W_OK)
+    def _process_user(self) -> int:
+        return os.getuid()
 
     def _os_distribution(self) -> str:
         try:
@@ -383,21 +408,3 @@ class DiagnoseCommand(AppsignalCLICommand):
         if api_key_validation == "invalid":
             return "invalid"
         return f"Failed to validate: {api_key_validation}"
-
-    def _last_ten_lines(self, file_path: str) -> list[str]:
-        try:
-            file_contents = self._read_last_two_mib(file_path)
-            lines = file_contents.splitlines()
-            file_lines = lines[-10:] if len(lines) > 10 else lines
-            file_lines = [line.strip() for line in file_lines]
-        except FileNotFoundError:
-            file_lines = [""]
-        return file_lines
-
-    def _read_last_two_mib(self, path: str) -> str:
-        two_mib = 2 * 1024 * 1024
-        file_size = os.path.getsize(path)
-        with open(path, "rb") as file:
-            bytes_to_read = two_mib if two_mib < file_size else file_size
-            file.seek(-bytes_to_read, os.SEEK_END)
-            return file.read().decode("utf-8")

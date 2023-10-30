@@ -119,3 +119,11 @@ Appsignal(
         "No `appsignal` variable was exported by the __appsignal__.py config file."
         in out
     )
+
+
+def test_diagnose_with_missing_paths(mocker, capfd):
+    mocker.patch("appsignal.cli.diagnose.PathsReport._file_exists", return_value=False)
+    assert main(["diagnose", "--no-send-report"]) == 0
+
+    out, err = capfd.readouterr()
+    assert "Exists?: False" in out
