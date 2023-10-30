@@ -5,7 +5,7 @@ from argparse import ArgumentParser
 from opentelemetry import trace
 
 from ..client import Client, InvalidClientFileError
-from ..tracing import set_params
+from ..tracing import set_params, set_tag
 from .command import AppsignalCLICommand
 
 
@@ -78,19 +78,13 @@ class Demo:
                 "otel.instrumentation_library.name",
                 "opentelemetry.instrumentation.wsgi",
             )
-            span.set_attribute(
-                "demo_sample",
-                True,
-            )
+            set_tag("demo_sample", True, span)
 
         # Error sample
         with tracer.start_as_current_span("GET /demo") as span:
             span.set_attribute("http.method", "GET")
             set_params({"GET": {"id": 1}, "POST": {}}, span)
-            span.set_attribute(
-                "demo_sample",
-                True,
-            )
+            set_tag("demo_sample", True, span)
             try:
                 raise ValueError("Something went wrong")
             except ValueError as e:
