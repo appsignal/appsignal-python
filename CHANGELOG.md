@@ -5,7 +5,9 @@
 ### Added
 
 - [c1b31b8](https://github.com/appsignal/appsignal-python/commit/c1b31b8e9fac34bf5e5056400fa735295d191cfd) major - Release AppSignal for Python package version 1.0!
-  
+
+  Read our [Python package version 1.0 announcement blog post](blog.appsignal.com/2023/10/31/appsignal-monitoring-available-for-python-applications.html)!
+
   This release marks the 1.0 release of our Python integration and contains the following features:
   
   - Track errors in your app.
