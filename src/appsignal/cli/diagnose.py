@@ -45,6 +45,9 @@ class AgentReport:
     def group_id(self) -> str:
         return self.report["host"]["gid"]["result"]
 
+    def running_in_container(self) -> str:
+        return self.report["host"]["running_in_container"]["result"]
+
     def logger_started(self) -> str:
         if "logger" in self.report:
             if self.report["logger"]["started"]["result"]:
@@ -208,6 +211,7 @@ class DiagnoseCommand(AppsignalCLICommand):
             "host": {
                 "architecture": platform.machine(),
                 "heroku": os.environ.get("DYNO") is not None,
+                "running_in_container": self.agent_report.running_in_container(),
                 "language_version": platform.python_version(),
                 "os": platform.system().lower(),
                 "os_distribution": self._os_distribution(),
@@ -282,6 +286,7 @@ class DiagnoseCommand(AppsignalCLICommand):
         print(f'  Operating System: "{host_report["os"]}"')
         print(f'  Python version: "{host_report["language_version"]}"')
         print(f'  Root user: {host_report["root"]}')
+        print(f'  Running in container: {host_report["running_in_container"]}')
 
     def _agent_information(self) -> None:
         print("Agent diagnostics")
