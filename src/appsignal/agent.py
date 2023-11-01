@@ -9,13 +9,15 @@ from .config import Config
 
 @dataclass
 class Agent:
-    path: Path = Path(__file__).parent / "appsignal-agent"
+    package_path: Path = Path(__file__).parent
+    agent_path: Path = package_path / "appsignal-agent"
+    platform_path: Path = package_path / "_appsignal_platform"
     active: bool = False
 
     def start(self, config: Config) -> None:
         config.set_private_environ()
         p = subprocess.Popen(
-            [self.path, "start", "--private"],
+            [self.agent_path, "start", "--private"],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
         )
@@ -31,13 +33,17 @@ class Agent:
     def diagnose(self, config: Config) -> bytes:
         config.set_private_environ()
         return subprocess.run(
-            [self.path, "diagnose", "--private"], capture_output=True
+            [self.agent_path, "diagnose", "--private"], capture_output=True
         ).stdout
 
     def version(self) -> bytes:
         return subprocess.run(
-            [self.path, "--version"], capture_output=True
+            [self.agent_path, "--version"], capture_output=True
         ).stdout.split()[-1]
+
+    def architecutre_and_platform(self) -> list[str]:
+        with open(self.platform_path) as file:
+            return file.read().split("-", 1)
 
 
 agent = Agent()
