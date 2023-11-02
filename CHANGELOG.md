@@ -1,5 +1,20 @@
 # AppSignal for Python Changelog
 
+## 1.0.1
+
+### Changed
+
+- [4c59581](https://github.com/appsignal/appsignal-python/commit/4c59581d727f551786255804aa55327d41eb2053) patch - Report the agent's architecture and platform in the diagnose report as the "Agent architecture" field. This helps debug if the installed package version matches the host architecture and platform. If they do not match, the package for the wrong architecture is installed.
+- [42c12a2](https://github.com/appsignal/appsignal-python/commit/42c12a26c85dc44d5b66ae799aebc6419de9a818) patch - Report the package install path in the diagnose report as the "Package install path" field. This field will help us debug issues related to paths in the diagnose report viewer.
+- [c126167](https://github.com/appsignal/appsignal-python/commit/c126167afe5b637b6bfcbb9c769ec7e869392ab5) patch - Report whether the app is running in a container in the diagnose report as the "Running in container" field. This field will help notify us about the environment in which the app is running, as containers have different behavior from more standard Virtual Machines.
+- [75f9599](https://github.com/appsignal/appsignal-python/commit/75f95996b8e4eab1157a10fd4daf028307e52693) patch - Bump agent to b604345.
+  
+  - Add an exponential backoff to the retry sleep time to bind to the StatsD, NGINX and OpenTelemetry exporter ports. This gives the agent a longer time to connect to the ports if they become available within a 4 minute window.
+  - Changes to the agent logger:
+    - Logs from the agent and extension now use a more consistent format in logs for spans and transactions.
+    - Logs that are for more internal use are moved to the trace log level and logs that are useful for debugging most support issues are moved to the debug log level. It should not be necessary to use log level 'trace' as often anymore. The 'debug' log level should be enough.
+  - Add `running_in_container` to agent diagnose report, to be used primarily by the Python package as a way to detect if an app's host is a container or not.
+
 ## 1.0.0
 
 ### Added
