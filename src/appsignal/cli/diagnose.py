@@ -7,6 +7,7 @@ import os
 import platform
 import urllib
 from argparse import ArgumentParser
+from pathlib import Path
 from typing import Any
 
 import requests
@@ -83,6 +84,10 @@ class PathsReport:
         log_path = self.config.option("log_path") or os.path.dirname(log_file_path)
 
         return {
+            "package_install_path": {
+                "label": "Package install path",
+                "path": str(Path(__file__).parents[3]),
+            },
             "working_dir": {
                 "label": "Current working directory",
                 "path": os.getcwd() or "",
