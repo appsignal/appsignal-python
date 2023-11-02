@@ -181,6 +181,8 @@ class DiagnoseCommand(AppsignalCLICommand):
         self.agent_report = AgentReport(agent_json)
         self.paths_report = PathsReport(self.config)
 
+        package_arch, package_platform = agent.architecutre_and_platform()
+
         self.report = {
             "agent": {
                 "agent": {
@@ -210,6 +212,8 @@ class DiagnoseCommand(AppsignalCLICommand):
                 "language": "python",
                 "package_version": __version__,
                 "agent_version": str(agent.version(), "utf-8"),
+                "package_architecture": package_arch,
+                "package_platform": package_platform,
             },
             "paths": self.paths_report.report(),
             "process": {
@@ -263,6 +267,8 @@ class DiagnoseCommand(AppsignalCLICommand):
         print("  Language: Python")
         print(f'  Package version: "{library_report["package_version"]}"')
         print(f'  Agent version: "{library_report["agent_version"]}"')
+        print(f'  Package architecture: "{library_report["package_architecture"]}"')
+        print(f'  Package platform: "{library_report["package_platform"]}"')
 
     def _host_information(self) -> None:
         host_report: Any = self.report["host"]

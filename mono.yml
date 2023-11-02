@@ -4,7 +4,7 @@ repo: "https://github.com/appsignal/appsignal-python"
 bootstrap:
   command: ""
 clean:
-  command: "hatch clean; rm -r tmp; rm src/appsignal/appsignal-agent"
+  command: "hatch clean; rm -rf tmp; rm -f src/appsignal/appsignal-agent"
 build:
   command: "mono clean; hatch run build:all"
 publish:
