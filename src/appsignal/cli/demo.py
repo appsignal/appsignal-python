@@ -1,11 +1,12 @@
 from __future__ import annotations
 
+import time
 from argparse import ArgumentParser
 
 from opentelemetry import trace
 
 from ..client import Client, InvalidClientFileError
-from ..tracing import set_error, set_params, set_tag
+from ..tracing import set_category, set_error, set_params, set_tag
 from .command import AppsignalCLICommand
 
 
@@ -72,17 +73,13 @@ class Demo:
 
         # Performance sample
         with tracer.start_as_current_span("GET /demo") as span:
-            span.set_attribute("http.method", "GET")
+            set_category("process_request.http")
             set_params({"GET": {"id": 1}, "POST": {}}, span)
-            span.set_attribute(
-                "otel.instrumentation_library.name",
-                "opentelemetry.instrumentation.wsgi",
-            )
             set_tag("demo_sample", True, span)
+            time.sleep(0.1)
 
         # Error sample
         with tracer.start_as_current_span("GET /demo") as span:
-            span.set_attribute("http.method", "GET")
             set_params({"GET": {"id": 1}, "POST": {}}, span)
             set_tag("demo_sample", True, span)
             try:
