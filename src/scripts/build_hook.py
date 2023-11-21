@@ -45,14 +45,11 @@ def rm(path: str) -> None:
         pass
 
 
-def should_download(agent_path: str, version_path: str, platform_path: str) -> bool:
+def should_download(agent_path: str, version_path: str) -> bool:
     if not os.path.exists(agent_path):
         return True
 
     if not os.path.exists(version_path):
-        return True
-
-    if not os.path.exists(platform_path):
         return True
 
     with open(version_path) as version:
@@ -122,7 +119,6 @@ class CustomBuildHook(BuildHookInterface):
 
         tempagent_path = os.path.join(tempdir_path, "appsignal_agent")
         tempversion_path = os.path.join(tempdir_path, "version")
-        tempplatform_path = os.path.join(tempdir_path, "platform")
 
         if os.environ.get("_APPSIGNAL_BUILD_AGENT_PATH", "").strip() != "":
             tempagent_path = os.path.abspath(
@@ -136,12 +132,11 @@ class CustomBuildHook(BuildHookInterface):
                 exit(1)
 
             print(f"Using custom agent binary at {tempagent_path}")
-        elif should_download(tempagent_path, tempversion_path, tempplatform_path):
+        elif should_download(tempagent_path, tempversion_path):
             temptar_path = os.path.join(tempdir_path, triple_filename(triple))
 
             rm(tempagent_path)
             rm(tempversion_path)
-            rm(tempplatform_path)
             rm(temptar_path)
 
             with open(temptar_path, "wb") as temptar:
@@ -179,16 +174,15 @@ class CustomBuildHook(BuildHookInterface):
             with open(tempversion_path, "w") as version:
                 version.write(APPSIGNAL_AGENT_CONFIG["version"])
 
-            with open(tempplatform_path, "w") as platform:
-                platform.write(triple)
-
             print(f"Extracted agent binary to {tempagent_path}")
             rm(temptar_path)
         else:
             print(f"Using cached agent binary at {tempagent_path}")
 
         shutil.copy(tempagent_path, agent_path)
-        shutil.copy(tempplatform_path, platform_path)
         os.chmod(agent_path, stat.S_IEXEC | stat.S_IREAD | stat.S_IWRITE)
+
+        with open(platform_path, "w") as platform:
+            platform.write(triple)
 
         print(f"Copied agent binary to {agent_path}")
