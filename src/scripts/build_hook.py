@@ -119,7 +119,6 @@ class CustomBuildHook(BuildHookInterface):
 
         tempagent_path = os.path.join(tempdir_path, "appsignal_agent")
         tempversion_path = os.path.join(tempdir_path, "version")
-        tempplatform_path = os.path.join(tempdir_path, "platform")
 
         if os.environ.get("_APPSIGNAL_BUILD_AGENT_PATH", "").strip() != "":
             tempagent_path = os.path.abspath(
@@ -138,7 +137,6 @@ class CustomBuildHook(BuildHookInterface):
 
             rm(tempagent_path)
             rm(tempversion_path)
-            rm(tempplatform_path)
             rm(temptar_path)
 
             with open(temptar_path, "wb") as temptar:
@@ -176,16 +174,15 @@ class CustomBuildHook(BuildHookInterface):
             with open(tempversion_path, "w") as version:
                 version.write(APPSIGNAL_AGENT_CONFIG["version"])
 
-            with open(tempplatform_path, "w") as platform:
-                platform.write(triple)
-
             print(f"Extracted agent binary to {tempagent_path}")
             rm(temptar_path)
         else:
             print(f"Using cached agent binary at {tempagent_path}")
 
         shutil.copy(tempagent_path, agent_path)
-        shutil.copy(tempplatform_path, platform_path)
         os.chmod(agent_path, stat.S_IEXEC | stat.S_IREAD | stat.S_IWRITE)
+
+        with open(platform_path, "w") as platform:
+            platform.write(triple)
 
         print(f"Copied agent binary to {agent_path}")
