@@ -41,9 +41,12 @@ class Agent:
             [self.agent_path, "--version"], capture_output=True
         ).stdout.split()[-1]
 
-    def architecutre_and_platform(self) -> list[str]:
-        with open(self.platform_path) as file:
-            return file.read().split("-", 1)
+    def architecture_and_platform(self) -> list[str]:
+        try:
+            with open(self.platform_path) as file:
+                return file.read().split("-", 1)
+        except FileNotFoundError:
+            return ["", ""]
 
 
 agent = Agent()

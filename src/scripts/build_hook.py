@@ -45,11 +45,14 @@ def rm(path: str) -> None:
         pass
 
 
-def should_download(agent_path: str, version_path: str) -> bool:
+def should_download(agent_path: str, version_path: str, platform_path: str) -> bool:
     if not os.path.exists(agent_path):
         return True
 
     if not os.path.exists(version_path):
+        return True
+
+    if not os.path.exists(platform_path):
         return True
 
     with open(version_path) as version:
@@ -133,7 +136,7 @@ class CustomBuildHook(BuildHookInterface):
                 exit(1)
 
             print(f"Using custom agent binary at {tempagent_path}")
-        elif should_download(tempagent_path, tempversion_path):
+        elif should_download(tempagent_path, tempversion_path, tempplatform_path):
             temptar_path = os.path.join(tempdir_path, triple_filename(triple))
 
             rm(tempagent_path)

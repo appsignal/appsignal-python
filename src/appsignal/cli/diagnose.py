@@ -189,7 +189,7 @@ class DiagnoseCommand(AppsignalCLICommand):
         self.agent_report = AgentReport(agent_json)
         self.paths_report = PathsReport(self.config)
 
-        package_arch, package_platform = agent.architecutre_and_platform()
+        package_arch, package_platform = agent.architecture_and_platform()
 
         self.report = {
             "agent": {
