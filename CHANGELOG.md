@@ -1,5 +1,25 @@
 # AppSignal for Python Changelog
 
+## 1.0.2
+
+### Changed
+
+- [7ab8753](https://github.com/appsignal/appsignal-python/commit/7ab87535015f88a6e0d0d5a0ec49885d9593f76c) patch - Bump agent to 1dd2a18.
+  
+  - When adding an SQL body attribute via the extension, instead of truncating the body first and sanitising it later, sanitise it first and truncate it later. This prevents an issue where queries containing very big values result in truncated sanitisations.
+- [addb832](https://github.com/appsignal/appsignal-python/commit/addb832d94ad66a64c2d5e775ac63f1689dc10e6) patch - Bump agent to eec7f7b
+  
+  
+  Updated the probes dependency to 0.5.2. CPU usage is now normalized to the number of CPUs available to the container. This means that a container with 2 CPUs will have its CPU usage reported as 50% when using 1 CPU instead of 100%. This is a breaking change for anyone using the cpu probe.
+  
+  
+  If you have CPU triggers set up based on the old behaviour, you might need to update those to these new normalized values to get the same behaviour. Note that this is needed only if the AppSignal integration package you're using includes this change.
+
+### Fixed
+
+- [1243c3c](https://github.com/appsignal/appsignal-python/commit/1243c3c8011fd2653e140a6054dd402b921dc870) patch - Fix the metadata on the demo CLI's example samples. It will no longer contain unused attributes. The performance sample will report a named `process_request.http` event, rather than report an `unknown` event, in the event timeline.
+- [5e91cef](https://github.com/appsignal/appsignal-python/commit/5e91cefa1fcd7602444fcfc0f92011bd5213c963) patch - Fix a crash on the diagnose report when attempting to report the platform for which AppSignal for Python was installed.
+
 ## 1.0.1
 
 ### Changed
