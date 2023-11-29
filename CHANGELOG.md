@@ -1,5 +1,28 @@
 # AppSignal for Python Changelog
 
+## 1.0.3
+
+### Changed
+
+- [11e205a](https://github.com/appsignal/appsignal-python/commit/11e205a7b13516b972fa7c6dbe1a27fee87e26a1) patch - Improve extraction of OpenTelemetry span details from the Requests library, by using the HTTP method, scheme, host and port as the event name. This improves grouping in the "Slow API requests" performance panel.
+- [11e205a](https://github.com/appsignal/appsignal-python/commit/11e205a7b13516b972fa7c6dbe1a27fee87e26a1) patch - Remove extra HTTP attributes from Django root spans.
+- [11e205a](https://github.com/appsignal/appsignal-python/commit/11e205a7b13516b972fa7c6dbe1a27fee87e26a1) patch - Remove `route` tag from HTTP server spans. Since the span will already have the route attribute as part of its name, the tag is redundant.
+- [11e205a](https://github.com/appsignal/appsignal-python/commit/11e205a7b13516b972fa7c6dbe1a27fee87e26a1) patch - Filter more disk mountpoints for disk usage and disk IO stats. This helps reduce noise in the host metrics by focussing on more important mountpoints.
+  
+  The following mountpoint are ignored. Any mountpoint containing:
+  
+  - `/etc/hostname`
+  - `/etc/hosts`
+  - `/etc/resolv.conf`
+  - `/snap/`
+  - `/proc/`
+
+### Fixed
+
+- [11e205a](https://github.com/appsignal/appsignal-python/commit/11e205a7b13516b972fa7c6dbe1a27fee87e26a1) patch - Fix an issue where the `method` tag extracted from an incoming HTTP request span would be overriden with the method used for an outgoing HTTP request span.
+- [11e205a](https://github.com/appsignal/appsignal-python/commit/11e205a7b13516b972fa7c6dbe1a27fee87e26a1) patch - - Support disk usage reporting (using `df`) on Alpine Linux. This host metric would report an error on Alpine Linux.
+  - When a disk mountpoint has no inodes usage percentage, skip the mountpoint, and report the inodes information successfully for the inodes that do have an inodes usage percentage.
+
 ## 1.0.2
 
 ### Changed
