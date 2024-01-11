@@ -1,0 +1,54 @@
+name: Python package
+on: [push]
+jobs:
+  test:
+    name: "Test Python ${{ matrix.python-version }}"
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: "Install hatch"
+        run: "pip install hatch"
+      - name: "Run tests"
+        run: "hatch -v run test.py$(echo ${{ matrix.python-version }} | tr -d '.'):pytest"
+
+  lint-style:
+    name: "Style linter"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: 3.12
+      - name: "Install hatch"
+        run: "pip install hatch"
+      - name: "Run style linter"
+        run: "hatch -v run lint:style"
+
+  lint-typing:
+    name: "Typing linter"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: 3.12
+      - name: "Install hatch"
+        run: "pip install hatch"
+      - name: "Run typing linter"
+        run: "hatch -v run lint:typing"
+
+  lint-git:
+    name: "Git linter (Lintje)"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Fetch depth is required
+      - uses: lintje/action@v0.11
