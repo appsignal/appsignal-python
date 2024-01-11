@@ -1,5 +1,8 @@
 name: Python package
-on: [push]
+on:
+  push: {}
+  schedule:
+    - cron: "0 0 * * 1-5"
 jobs:
   test:
     name: "Test Python ${{ matrix.python-version }}"
