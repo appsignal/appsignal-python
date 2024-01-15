@@ -1,5 +1,15 @@
 # AppSignal for Python Changelog
 
+## 1.0.4
+
+### Changed
+
+- [2171910](https://github.com/appsignal/appsignal-python/commit/21719106b8a20a44288758fbce09e67afd1ce308) patch - Fix disk usage returning a Vec with no entries on Alpine Linux when the `df --local` command fails.
+
+### Fixed
+
+- [3215eb4](https://github.com/appsignal/appsignal-python/commit/3215eb49dc76fd7ad3674842015426c0e2763443) patch - Fix missing error metrics for the error rate and error count graphs in some scenarios, like with Node.js Koa apps.
+
 ## 1.0.3
 
 ### Changed
