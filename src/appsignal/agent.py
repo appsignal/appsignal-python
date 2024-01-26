@@ -39,7 +39,7 @@ class Agent:
     def version(self) -> bytes:
         return subprocess.run(
             [self.agent_path, "--version"], capture_output=True
-        ).stdout.split()[-1]
+        ).stdout.split()[1]
 
     def architecture_and_platform(self) -> list[str]:
         try:
