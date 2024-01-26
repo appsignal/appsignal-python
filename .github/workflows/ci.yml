@@ -21,6 +21,29 @@ jobs:
       - name: "Run tests"
         run: "hatch -v run test.py$(echo ${{ matrix.python-version }} | tr -d '.'):pytest"
 
+  diagnose-test:
+    name: "Diagnose tests"
+    runs-on: ubuntu-latest
+    env:
+      LANGUAGE: python
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: 3.12
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+          bundler-cache: true
+      - name: "Install hatch"
+        run: "pip install hatch"
+      - name: "Init Git submodules"
+        run: "git submodule init"
+      - name: "Update Git submodules"
+        run: "git submodule update"
+      - name: "Run diagnose tests"
+        run: "./tests/diagnose/bin/test"
+
   lint-style:
     name: "Style linter"
     runs-on: ubuntu-latest
