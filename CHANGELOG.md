@@ -1,5 +1,25 @@
 # AppSignal for Python Changelog
 
+## 1.1.0
+
+_Published on 2024-03-04._
+
+### Added
+
+- [f51f5e4](https://github.com/appsignal/appsignal-python/commit/f51f5e40a814faf1f941dff65fbd7162fc39d5ec) patch - Add histogram support to the OpenTelemetry HTTP server. This allows OpenTelemetry-based instrumentations to report histogram data to AppSignal as distribution metrics.
+
+### Changed
+
+- [0e3733e](https://github.com/appsignal/appsignal-python/commit/0e3733eccac09bc8be4e66ef42f57d4c3561e252) minor - **Breaking change**: Normalize CPU metrics for cgroups v1 systems. When we can detect how many CPUs are configured in the container's limits, we will normalize the CPU percentages to a maximum of 100%. This is a breaking change. Triggers for CPU percentages that are configured for a CPU percentage higher than 100% will no longer trigger after this update. Please configure triggers to a percentage with a maximum of 100% CPU percentage.
+- [fdbc92c](https://github.com/appsignal/appsignal-python/commit/fdbc92c1e39f763a21d60dd602170dc18a9ca27a) patch - Make the debug log message for OpenTelemetry spans from libraries we don't automatically recognize more clear. Mention the span id and the instrumentation library.
+- [fdbc92c](https://github.com/appsignal/appsignal-python/commit/fdbc92c1e39f763a21d60dd602170dc18a9ca27a) patch - Fix an issue where queries containing a MySQL leading type indicator would only be partially sanitised.
+- [0e3733e](https://github.com/appsignal/appsignal-python/commit/0e3733eccac09bc8be4e66ef42f57d4c3561e252) patch - Support fractional CPUs for cgroups v2 metrics. Previously a CPU count of 0.5 would be interpreted as 1 CPU. Now it will be correctly seen as half a CPU and calculate CPU percentages accordingly.
+- [ce6ebf2](https://github.com/appsignal/appsignal-python/commit/ce6ebf211549c53b85adf3e19d2cf24fbc09c072) patch - Update bundled trusted root certificates.
+
+### Fixed
+
+- [f8cf85a](https://github.com/appsignal/appsignal-python/commit/f8cf85abf09a70fd919b0f836a4b47ad7fba1fa5) patch - Fix (sub)traces not being reported in their entirety when the OpenTelemetry exporter sends one trace in multiple export requests. This would be an issue for long running traces, that are exported in several requests.
+
 ## 1.0.4
 
 ### Changed
