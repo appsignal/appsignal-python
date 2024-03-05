@@ -1,10 +1,8 @@
 from __future__ import annotations
 
 import logging
-import os
 import sys
 from logging import DEBUG, ERROR, INFO, WARNING, Logger
-from runpy import run_path
 from typing import TYPE_CHECKING, ClassVar
 
 from .agent import agent
@@ -27,29 +25,6 @@ class Client:
         "debug": DEBUG,
         "trace": DEBUG,
     }
-
-    # Load the AppSignal client from the app specific `__appsignal__.py` client
-    # file. This loads the user config, rather than our default config.
-    # If no client file is found it return `None`.
-    # If there's a problem with the client file it will raise an
-    # `InvalidClientFileError` with a message containing more details.
-    @staticmethod
-    def _load__appsignal__file() -> Client | None:
-        cwd = os.getcwd()
-        app_config_path = os.path.join(cwd, "__appsignal__.py")
-        if os.path.exists(app_config_path):
-            try:
-                return run_path(app_config_path)["appsignal"]
-            except KeyError as error:
-                raise InvalidClientFileError(
-                    "No `appsignal` variable was exported by the "
-                    "__appsignal__.py config file. "
-                    "Please update the __appsignal__.py file as described in "
-                    "our documentation: "
-                    "https://docs.appsignal.com/python/configuration.html"
-                ) from error
-
-        return None
 
     def __init__(self, **options: Unpack[Options]) -> None:
         self._config = Config(options)
@@ -95,7 +70,3 @@ class Client:
             )
         )
         self._logger.addHandler(handler)
-
-
-class InvalidClientFileError(Exception):
-    pass

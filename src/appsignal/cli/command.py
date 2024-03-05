@@ -6,6 +6,10 @@ from argparse import ArgumentParser, Namespace
 from dataclasses import dataclass
 from functools import cached_property
 
+from ..client import Client
+from .config import _client_from_config_file
+from .exit_error import ExitError
+
 
 @dataclass(frozen=True)
 class AppsignalCLICommand(ABC):
@@ -66,3 +70,11 @@ class AppsignalCLICommand(ABC):
                 "Please enter the application environment (development/production): "
             )
         return environment
+
+    def _client_from_config_file(self) -> Client | None:
+        try:
+            return _client_from_config_file()
+        except Exception as error:
+            print(f"Error loading the __appsignal__.py configuration file:\n{error}\n")
+            print("Exiting.")
+            raise ExitError(1) from error

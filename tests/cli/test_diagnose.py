@@ -115,10 +115,7 @@ Appsignal(
     os.chdir(request.config.invocation_params.dir)
 
     out, err = capfd.readouterr()
-    assert (
-        "No `appsignal` variable was exported by the __appsignal__.py config file."
-        in out
-    )
+    assert "No `appsignal` variable found" in out
 
 
 def test_diagnose_with_missing_paths(mocker, capfd):

@@ -5,13 +5,13 @@ from argparse import ArgumentParser
 
 from opentelemetry import trace
 
-from ..client import Client, InvalidClientFileError
+from ..client import Client
 from ..tracing import set_category, set_error, set_params, set_tag
 from .command import AppsignalCLICommand
 
 
 class DemoCommand(AppsignalCLICommand):
-    """Run demo application."""
+    """Send demonstration data to AppSignal."""
 
     @staticmethod
     def init_parser(parser: ArgumentParser) -> None:
@@ -20,12 +20,7 @@ class DemoCommand(AppsignalCLICommand):
         AppsignalCLICommand._push_api_key_argument(parser)
 
     def run(self) -> int:
-        try:
-            client = Client._load__appsignal__file()
-        except InvalidClientFileError as error:
-            print(f"Error: {error}")
-            print("Exiting.")
-            return 1
+        client = self._client_from_config_file()
 
         if client:
             # For demo CLI purposes, AppSignal is always active
