@@ -63,7 +63,13 @@ class AppsignalCLICommand(ABC):
             print("Validating API key...")
             print()
 
-            validation_result = PushApiKeyValidator.validate(config)
+            try:
+                validation_result = PushApiKeyValidator.validate(config)
+            except Exception as e:
+                print(f"Error while validating Push API key: {e}")
+                print("Reach us at support@appsignal.com for support.")
+                raise ExitError(1) from e
+
             if validation_result == "valid":
                 print("✅ API key is valid!")
                 return key
@@ -76,7 +82,7 @@ class AppsignalCLICommand(ABC):
             else:
                 print(
                     "Error while validating Push API key. HTTP status code: "
-                    "{validation_result}"
+                    f"{validation_result}"
                 )
                 print("Reach us at support@appsignal.com for support.")
                 raise ExitError(1)
