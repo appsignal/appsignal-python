@@ -36,15 +36,14 @@ class InstallCommand(AppsignalCLICommand):
     def run(self) -> int:
         options = Options()
 
-        # Make sure to show input prompts before the welcome text.
-        options["name"] = self._name
-        options["push_api_key"] = self._push_api_key
-
         print("👋 Welcome to the AppSignal for Python installer!")
         print()
         print("Reach us at support@appsignal.com for support")
         print("Documentation available at https://docs.appsignal.com/python")
         print()
+
+        options["name"] = self._name
+        options["push_api_key"] = self._push_api_key
 
         print()
 
