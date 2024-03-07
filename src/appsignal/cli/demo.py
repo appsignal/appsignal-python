@@ -36,15 +36,14 @@ class DemoCommand(AppsignalCLICommand):
             if push_api_key:
                 client._config.options["push_api_key"] = push_api_key
         else:
-            # Prompt for all the required config in a sensible order
-            self._name  # noqa: B018
-            self._environment  # noqa: B018
-            self._push_api_key  # noqa: B018
+            name = self._name()
+            environment = self._environment()
+            push_api_key = self._push_api_key()
             client = Client(
                 active=True,
-                name=self._name,
-                environment=self._environment,
-                push_api_key=self._push_api_key,
+                name=name,
+                environment=environment,
+                push_api_key=push_api_key,
             )
 
         if not client._config.is_active():

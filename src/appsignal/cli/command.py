@@ -5,6 +5,7 @@ from abc import ABC, abstractmethod
 from argparse import ArgumentParser, Namespace
 from dataclasses import dataclass
 from functools import cached_property
+from typing import NoReturn
 
 from ..client import Client
 from .config import _client_from_config_file
@@ -48,22 +49,19 @@ class AppsignalCLICommand(ABC):
     def run(self) -> int:
         raise NotImplementedError
 
-    @cached_property
-    def _push_api_key(self) -> str | None:
+    def _push_api_key(self) -> str:
         key = self.args.push_api_key
         while not key:
             key = input("Please enter your Push API key: ")
         return key
 
-    @cached_property
-    def _name(self) -> str | None:
+    def _name(self) -> str:
         name = self.args.application
         while not name:
             name = input("Please enter the name of your application: ")
         return name
 
-    @cached_property
-    def _environment(self) -> str | None:
+    def _environment(self) -> str:
         environment = self.args.environment
         while not environment:
             environment = input(
@@ -71,7 +69,7 @@ class AppsignalCLICommand(ABC):
             )
         return environment
 
-    def _client_from_config_file(self) -> Client | None:
+    def _client_from_config_file(self) -> Client | NoReturn:
         try:
             return _client_from_config_file()
         except Exception as error:

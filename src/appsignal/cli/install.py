@@ -42,8 +42,8 @@ class InstallCommand(AppsignalCLICommand):
         print("Documentation available at https://docs.appsignal.com/python")
         print()
 
-        options["name"] = self._name
-        options["push_api_key"] = self._push_api_key
+        options["name"] = self._name()
+        options["push_api_key"] = self._push_api_key()
 
         print()
 
@@ -53,7 +53,7 @@ class InstallCommand(AppsignalCLICommand):
         if validation_result == "valid":
             print("API key is valid!")
         elif validation_result == "invalid":
-            print(f"API key {self._push_api_key} is not valid ")
+            print(f"API key {options["push_api_key"]} is not valid ")
             print("please get a new one on https://appsignal.com")
             return 1
         else:
@@ -68,14 +68,14 @@ class InstallCommand(AppsignalCLICommand):
 
         if self._should_write_file():
             print(f"Writing the {INSTALL_FILE_NAME} configuration file...")
-            self._write_file()
+            self._write_file(options)
             print()
             print()
 
             client = Client(
                 active=True,
-                name=self._name,
-                push_api_key=self._push_api_key,
+                name=options["name"],
+                push_api_key=options["push_api_key"],
             )
             client.start()
             Demo.transmit()
@@ -108,11 +108,11 @@ class InstallCommand(AppsignalCLICommand):
         print('Please answer "y" (yes) or "n" (no)')
         return self._input_should_overwrite_file()
 
-    def _write_file(self) -> None:
+    def _write_file(self, options: Options) -> None:
         with open(INSTALL_FILE_NAME, "w") as f:
             file_contents = INSTALL_FILE_TEMPLATE.format(
-                name=self._name,
-                push_api_key=self._push_api_key,
+                name=options["name"],
+                push_api_key=options["push_api_key"],
             )
 
             f.write(file_contents)
