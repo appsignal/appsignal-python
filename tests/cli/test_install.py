@@ -2,11 +2,12 @@ from __future__ import annotations
 
 import os
 import shutil
-from contextlib import contextmanager
 from unittest.mock import MagicMock
 
 from appsignal.cli.base import main
 from appsignal.cli.install import INSTALL_FILE_TEMPLATE
+
+from .utils import mock_input
 
 
 EXPECTED_FILE_CONTENTS = """from appsignal import Appsignal
@@ -22,15 +23,6 @@ appsignal = Appsignal(
 """
 
 
-@contextmanager
-def mock_input(mocker, *pairs: tuple[str, str]):
-    prompt_calls = [mocker.call(prompt) for (prompt, _) in pairs]
-    answers = [answer for (_, answer) in pairs]
-    mock = mocker.patch("builtins.input", side_effect=answers)
-    yield
-    assert prompt_calls == mock.mock_calls
-
-
 def mock_file_operations(mocker, file_exists: bool = False):
     mocker.patch("os.path.exists", return_value=file_exists)
     mocker.patch("appsignal.cli.install.open")
@@ -44,6 +36,17 @@ def assert_wrote_file_contents(mocker):
     assert (
         mocker.call().__enter__().write(EXPECTED_FILE_CONTENTS)
         in builtins_open.mock_calls
+    )
+
+
+def assert_did_not_write_file_contents(mocker):
+    from appsignal.cli import install
+
+    builtins_open: MagicMock = install.open  # type: ignore[attr-defined]
+    assert mocker.call("__appsignal__.py", "w") not in builtins_open.mock_calls
+    assert (
+        mocker.call().__enter__().write(EXPECTED_FILE_CONTENTS)
+        not in builtins_open.mock_calls
     )
 
 
@@ -159,11 +162,16 @@ def test_install_command_when_file_exists_no_overwrite(mocker):
     assert install.open.mock_calls == []  # type: ignore[attr-defined]
 
 
-def test_install_comand_when_api_key_is_not_valid(mocker):
+def test_install_command_when_invalid_api_key_ask_again(mocker):
+    mock_file_operations(mocker)
     mock_validate_push_api_key_request(mocker, status_code=401)
 
     with mock_input(
         mocker,
         ("Please enter the name of your application: ", "My app name"),
+        ("Please enter your Push API key: ", "My push API key"),
+        ("Please enter your Push API key: ", None),
     ):
-        assert main(["install", "--push-api-key=bad-push-api-key"]) == 1
+        main(["install"])
+
+    assert_did_not_write_file_contents(mocker)

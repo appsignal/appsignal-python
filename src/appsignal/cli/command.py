@@ -4,7 +4,6 @@ import os
 from abc import ABC, abstractmethod
 from argparse import ArgumentParser, Namespace
 from dataclasses import dataclass
-from typing import NoReturn
 
 from ..client import Client
 from ..config import Config, Options
@@ -56,7 +55,7 @@ class AppsignalCLICommand(ABC):
             key = input("Please enter your Push API key: ")
         return key
 
-    def _valid_push_api_key(self) -> str | NoReturn:
+    def _valid_push_api_key(self) -> str:
         while True:
             key = self._push_api_key()
             config = Config(Options(push_api_key=key))
@@ -101,7 +100,7 @@ class AppsignalCLICommand(ABC):
             )
         return environment
 
-    def _client_from_config_file(self) -> Client | None | NoReturn:
+    def _client_from_config_file(self) -> Client | None:
         try:
             return _client_from_config_file()
         except Exception as error:
