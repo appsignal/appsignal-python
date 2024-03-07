@@ -8,13 +8,13 @@ import platform
 import urllib
 from argparse import ArgumentParser
 from pathlib import Path
+from sys import stderr
 from typing import Any
 
 import requests
 
 from ..__about__ import __version__
 from ..agent import Agent
-from ..client import Client, InvalidClientFileError
 from ..config import Config
 from ..push_api_key_validator import PushApiKeyValidator
 from .command import AppsignalCLICommand
@@ -172,16 +172,16 @@ class DiagnoseCommand(AppsignalCLICommand):
             print("Error: Cannot use --send-report and --no-send-report together.")
             return 1
 
-        try:
-            client = Client._load__appsignal__file()
-        except InvalidClientFileError as error:
-            print(f"Error: {error}")
-            print("Exiting.")
-            return 1
+        client = self._client_from_config_file()
 
         if client:
             self.config = client._config
         else:
+            print(
+                "Could not load the configuration from the `__appsignal__.py` "
+                "configuration file. Some configuration options may be missing.",
+                file=stderr,
+            )
             self.config = Config()
 
         agent = Agent()

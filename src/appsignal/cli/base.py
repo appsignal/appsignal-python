@@ -7,6 +7,7 @@ from typing import Mapping, NoReturn
 from .command import AppsignalCLICommand
 from .demo import DemoCommand
 from .diagnose import DiagnoseCommand
+from .exit_error import ExitError
 from .install import InstallCommand
 from .version import VersionCommand
 
@@ -36,6 +37,8 @@ def main(argv: list[str]) -> int:
     cmd = cmd_class(args=args)
     try:
         return cmd.run()
+    except ExitError as error:
+        return error.exit_code
     except KeyboardInterrupt:
         return 0
 
