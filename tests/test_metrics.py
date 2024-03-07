@@ -2,10 +2,10 @@ from __future__ import annotations
 
 from typing import Any
 
-from opentelemetry.metrics import CallbackOptions, UpDownCounter
+from opentelemetry.metrics import CallbackOptions, Histogram, UpDownCounter
 
-from appsignal import increment_counter, set_gauge
-from appsignal.metrics import _counters, _gauges, _meter
+from appsignal import add_distribution_value, increment_counter, set_gauge
+from appsignal.metrics import _counters, _gauges, _histograms, _meter
 
 
 def test_increment_counter_creates_new_counter():
@@ -37,6 +37,40 @@ def test_increment_counter_with_tags(mocker):
     )
 
     counter_spy.assert_called_once_with(
+        1,
+        {"tag1": "value1", "int": 123, "float": 123.456, "true": True, "false": False},
+    )
+
+
+def test_add_distribution_value_creates_new_histogram():
+    assert _histograms.get("metric_name") is None
+
+    add_distribution_value("metric_name", 1)
+
+    assert isinstance(_histograms["metric_name"], Histogram)
+
+
+def test_add_distribution_value_updates_existing_histogram(mocker):
+    add_distribution_value("metric_name", 1)
+
+    histogram_spy = mocker.spy(_histograms["metric_name"], "record")
+    add_distribution_value("metric_name", 1)
+
+    histogram_spy.assert_called_once_with(1, None)
+
+
+def test_add_distribution_value_with_tags(mocker):
+    add_distribution_value("metric_name", 1)
+
+    histogram_spy = mocker.spy(_histograms["metric_name"], "record")
+
+    add_distribution_value(
+        "metric_name",
+        1,
+        {"tag1": "value1", "int": 123, "float": 123.456, "true": True, "false": False},
+    )
+
+    histogram_spy.assert_called_once_with(
         1,
         {"tag1": "value1", "int": 123, "float": 123.456, "true": True, "false": False},
     )
