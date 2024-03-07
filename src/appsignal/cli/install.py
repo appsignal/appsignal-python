@@ -4,8 +4,7 @@ import os
 from argparse import ArgumentParser
 
 from ..client import Client
-from ..config import Config, Options
-from ..push_api_key_validator import PushApiKeyValidator
+from ..config import Options
 from .command import AppsignalCLICommand
 from .demo import Demo
 
@@ -43,28 +42,9 @@ class InstallCommand(AppsignalCLICommand):
         print()
 
         options["name"] = self._name()
-        options["push_api_key"] = self._push_api_key()
+        options["push_api_key"] = self._valid_push_api_key()
 
         print()
-
-        print("Validating API key")
-        print()
-        validation_result = PushApiKeyValidator.validate(Config(options))
-        if validation_result == "valid":
-            print("API key is valid!")
-        elif validation_result == "invalid":
-            print(f"API key {options["push_api_key"]} is not valid ")
-            print("please get a new one on https://appsignal.com")
-            return 1
-        else:
-            print(
-                "Error while validating Push API key. HTTP status code: "
-                "{validation_result}"
-            )
-            print(
-                "Reach us at support@appsignal.com for support if this keeps happening."
-            )
-            return 1
 
         if self._should_write_file():
             print(f"Writing the {INSTALL_FILE_NAME} configuration file...")
