@@ -14,6 +14,7 @@ from opentelemetry.sdk.metrics import (
     ObservableGauge,
     ObservableUpDownCounter,
     UpDownCounter,
+    Histogram,
 )
 from opentelemetry.sdk.metrics.export import (
     AggregationTemporality,
@@ -138,6 +139,7 @@ METRICS_PREFERRED_TEMPORALITY: dict[type, AggregationTemporality] = {
     ObservableCounter: AggregationTemporality.DELTA,
     ObservableGauge: AggregationTemporality.CUMULATIVE,
     ObservableUpDownCounter: AggregationTemporality.DELTA,
+    Histogram: AggregationTemporality.DELTA
 }
 
 
