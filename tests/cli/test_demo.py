@@ -2,19 +2,11 @@ from __future__ import annotations
 
 import os
 import shutil
-from contextlib import contextmanager
 
 from appsignal.cli.base import main
 from appsignal.cli.install import INSTALL_FILE_TEMPLATE
 
-
-@contextmanager
-def mock_input(mocker, *pairs: tuple[str, str]):
-    prompt_calls = [mocker.call(prompt) for (prompt, _) in pairs]
-    answers = [answer for (_, answer) in pairs]
-    mock = mocker.patch("builtins.input", side_effect=answers)
-    yield
-    assert prompt_calls == mock.mock_calls
+from .utils import mock_input
 
 
 def test_demo_with_valid_config(mocker, capfd):

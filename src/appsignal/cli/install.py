@@ -4,8 +4,7 @@ import os
 from argparse import ArgumentParser
 
 from ..client import Client
-from ..config import Config, Options
-from ..push_api_key_validator import PushApiKeyValidator
+from ..config import Options
 from .command import AppsignalCLICommand
 from .demo import Demo
 
@@ -36,47 +35,27 @@ class InstallCommand(AppsignalCLICommand):
     def run(self) -> int:
         options = Options()
 
-        # Make sure to show input prompts before the welcome text.
-        options["name"] = self._name
-        options["push_api_key"] = self._push_api_key
-
         print("👋 Welcome to the AppSignal for Python installer!")
         print()
         print("Reach us at support@appsignal.com for support")
         print("Documentation available at https://docs.appsignal.com/python")
         print()
 
-        print()
+        options["name"] = self._name()
+        options["push_api_key"] = self._valid_push_api_key()
 
-        print("Validating API key")
         print()
-        validation_result = PushApiKeyValidator.validate(Config(options))
-        if validation_result == "valid":
-            print("API key is valid!")
-        elif validation_result == "invalid":
-            print(f"API key {self._push_api_key} is not valid ")
-            print("please get a new one on https://appsignal.com")
-            return 1
-        else:
-            print(
-                "Error while validating Push API key. HTTP status code: "
-                "{validation_result}"
-            )
-            print(
-                "Reach us at support@appsignal.com for support if this keeps happening."
-            )
-            return 1
 
         if self._should_write_file():
             print(f"Writing the {INSTALL_FILE_NAME} configuration file...")
-            self._write_file()
+            self._write_file(options)
             print()
             print()
 
             client = Client(
                 active=True,
-                name=self._name,
-                push_api_key=self._push_api_key,
+                name=options["name"],
+                push_api_key=options["push_api_key"],
             )
             client.start()
             Demo.transmit()
@@ -109,11 +88,11 @@ class InstallCommand(AppsignalCLICommand):
         print('Please answer "y" (yes) or "n" (no)')
         return self._input_should_overwrite_file()
 
-    def _write_file(self) -> None:
+    def _write_file(self, options: Options) -> None:
         with open(INSTALL_FILE_NAME, "w") as f:
             file_contents = INSTALL_FILE_TEMPLATE.format(
-                name=self._name,
-                push_api_key=self._push_api_key,
+                name=options["name"],
+                push_api_key=options["push_api_key"],
             )
 
             f.write(file_contents)
