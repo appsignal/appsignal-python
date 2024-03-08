@@ -9,12 +9,12 @@ from opentelemetry.exporter.otlp.proto.http.metric_exporter import OTLPMetricExp
 from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
 from opentelemetry.sdk.metrics import (
     Counter,
+    Histogram,
     MeterProvider,
     ObservableCounter,
     ObservableGauge,
     ObservableUpDownCounter,
     UpDownCounter,
-    Histogram,
 )
 from opentelemetry.sdk.metrics.export import (
     AggregationTemporality,
@@ -112,9 +112,9 @@ def start_opentelemetry(config: Config) -> None:
     # Configure OpenTelemetry request headers config
     request_headers = list_to_env_str(config.option("request_headers"))
     if request_headers:
-        os.environ["OTEL_INSTRUMENTATION_HTTP_CAPTURE_HEADERS_SERVER_REQUEST"] = (
-            request_headers
-        )
+        os.environ[
+            "OTEL_INSTRUMENTATION_HTTP_CAPTURE_HEADERS_SERVER_REQUEST"
+        ] = request_headers
 
     opentelemetry_port = config.option("opentelemetry_port")
     _start_opentelemetry_tracer(opentelemetry_port)
@@ -139,7 +139,7 @@ METRICS_PREFERRED_TEMPORALITY: dict[type, AggregationTemporality] = {
     ObservableCounter: AggregationTemporality.DELTA,
     ObservableGauge: AggregationTemporality.CUMULATIVE,
     ObservableUpDownCounter: AggregationTemporality.DELTA,
-    Histogram: AggregationTemporality.DELTA
+    Histogram: AggregationTemporality.DELTA,
 }
 
 
@@ -148,7 +148,9 @@ def _start_opentelemetry_metrics(opentelemetry_port: str | int) -> None:
         endpoint=f"http://localhost:{opentelemetry_port}/v1/metrics",
         preferred_temporality=METRICS_PREFERRED_TEMPORALITY,
     )
-    metric_reader = PeriodicExportingMetricReader(metric_exporter)
+    metric_reader = PeriodicExportingMetricReader(
+        metric_exporter, export_interval_millis=10000
+    )
 
     resource = Resource(attributes={"appsignal.service.process_id": os.getpid()})
     provider = MeterProvider(resource=resource, metric_readers=[metric_reader])
