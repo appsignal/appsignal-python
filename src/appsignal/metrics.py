@@ -2,7 +2,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Iterable
 
-from opentelemetry.metrics import CallbackOptions, Observation, UpDownCounter, get_meter
+from opentelemetry.metrics import (
+    CallbackOptions,
+    Histogram,
+    Observation,
+    UpDownCounter,
+    get_meter,
+)
 
 
 if TYPE_CHECKING:
@@ -21,6 +27,19 @@ def increment_counter(name: str, value: int | float, tags: Tags = None) -> None:
         _counters[name] = counter
 
     counter.add(value, tags)
+
+
+_histograms: dict[str, Histogram] = {}
+
+
+def add_distribution_value(name: str, value: int | float, tags: Tags = None) -> None:
+    if name in _histograms:
+        histogram = _histograms[name]
+    else:
+        histogram = _meter.create_histogram(name)
+        _histograms[name] = histogram
+
+    histogram.record(value, tags)
 
 
 _gauges: dict[str, dict[TagsKey, int | float]] = {}

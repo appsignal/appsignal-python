@@ -1,5 +1,5 @@
 from .client import Client as Appsignal
-from .metrics import increment_counter, set_gauge
+from .metrics import add_distribution_value, increment_counter, set_gauge
 from .tracing import (
     send_error,
     send_error_with_context,
@@ -36,6 +36,7 @@ __all__ = [
     "send_error_with_context",
     "increment_counter",
     "set_gauge",
+    "add_distribution_value",
 ]
 
 
