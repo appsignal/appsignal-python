@@ -112,9 +112,9 @@ def start_opentelemetry(config: Config) -> None:
     # Configure OpenTelemetry request headers config
     request_headers = list_to_env_str(config.option("request_headers"))
     if request_headers:
-        os.environ[
-            "OTEL_INSTRUMENTATION_HTTP_CAPTURE_HEADERS_SERVER_REQUEST"
-        ] = request_headers
+        os.environ["OTEL_INSTRUMENTATION_HTTP_CAPTURE_HEADERS_SERVER_REQUEST"] = (
+            request_headers
+        )
 
     opentelemetry_port = config.option("opentelemetry_port")
     _start_opentelemetry_tracer(opentelemetry_port)

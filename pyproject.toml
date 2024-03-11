@@ -94,16 +94,16 @@ dependencies = [
 ]
 
 [tool.hatch.envs.lint.scripts]
-typing = "mypy --enable-incomplete-feature=Unpack {args}"
+typing = "mypy {args}"
 style = [
-  "ruff {args:.}",
+  "ruff check {args:.}",
   "isort --check {args:.}",
   "black --check --diff {args:.}",
 ]
 fmt = [
   "isort {args:.}",
   "black {args:.}",
-  "ruff --fix {args:.}",
+  "ruff check --fix {args:.}",
 ]
 all = [
   "fmt",
@@ -114,6 +114,8 @@ all = [
 [tool.ruff]
 line-length = 90
 extend-exclude = ["src/scripts/agent.py"]
+
+[tool.ruff.lint]
 select = [
   "E", "W", "F",  # flake8 (pycodestyle and pyflakes)
   "N",    # pep8-naming
