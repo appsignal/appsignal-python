@@ -1,5 +1,26 @@
 # AppSignal for Python Changelog
 
+## 1.1.1
+
+_Published on 2024-03-11._
+
+### Added
+
+- [16fb8f9](https://github.com/appsignal/appsignal-python/commit/16fb8f94a848a0cdd8f15692ba0fe2cd3c5822c1) patch - Add distribution value custom metric helper. This can be used to add values to distributions in the same way as in our other integrations:
+  
+  ```python
+  # Import the AppSignal metric helper
+  from appsignal import add_distribution_value
+  
+  # The first argument is a string, the second argument a number (int/float)
+  # add_distribution_value(metric_name, value)
+  add_distribution_value("memory_usage", 100)
+  add_distribution_value("memory_usage", 110)
+  
+  # Will create a metric "memory_usage" with the mean field value 105
+  # Will create a metric "memory_usage" with the count field value 2
+  ```
+
 ## 1.1.0
 
 _Published on 2024-03-04._
