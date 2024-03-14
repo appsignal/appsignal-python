@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, ClassVar
 from .agent import agent
 from .config import Config, Options
 from .opentelemetry import start_opentelemetry
+from .probes import start_probes
 
 
 if TYPE_CHECKING:
@@ -38,6 +39,7 @@ class Client:
             self._logger.info("Starting AppSignal")
             agent.start(self._config)
             start_opentelemetry(self._config)
+            start_probes()
 
     def start_logger(self) -> None:
         self._logger = logging.getLogger("appsignal")

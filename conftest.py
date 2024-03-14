@@ -87,6 +87,16 @@ def remove_logging_handlers_after_tests():
 
 
 @pytest.fixture(scope="function", autouse=True)
+def remove_probes_after_tests():
+    yield
+
+    from appsignal.probes import _probes, _probe_states
+
+    _probes.clear()
+    _probe_states.clear()
+
+
+@pytest.fixture(scope="function", autouse=True)
 def reset_agent_active_state():
     agent.active = False
 
