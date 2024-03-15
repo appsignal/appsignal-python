@@ -18,3 +18,5 @@ def new_carts(previous_carts=None):
 
 probes.register("new_carts", new_carts)
 ```
+
+The minutely probes system starts by default, but no probes are automatically registered. You can use the `enable_minutely_probes` configuration option to disable it.

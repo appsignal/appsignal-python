@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 from inspect import signature
-from threading import Thread
+from threading import Lock, Thread
 from time import gmtime, sleep
 from typing import Any, Callable, NoReturn, Optional, TypeVar, Union, cast
 
@@ -13,13 +13,18 @@ Probe = Union[Callable[[], None], Callable[[Optional[T]], Optional[T]]]
 
 _probes: dict[str, Probe] = {}
 _probe_states: dict[str, Any] = {}
+_lock: Lock = Lock()
+_thread: Thread | None = None
 
 
-def start_probes() -> None:
-    Thread(target=_start_probes, daemon=True).start()
+def start() -> None:
+    global _thread
+    if _thread is None:
+        _thread = Thread(target=_minutely_loop, daemon=True)
+        _thread.start()
 
 
-def _start_probes() -> NoReturn:
+def _minutely_loop() -> NoReturn:
     sleep(_initial_wait_time())
 
     while True:
@@ -28,8 +33,9 @@ def _start_probes() -> NoReturn:
 
 
 def _run_probes() -> None:
-    for name in _probes:
-        _run_probe(name)
+    with _lock:
+        for name in _probes:
+            _run_probe(name)
 
 
 def _run_probe(name: str) -> None:
@@ -65,18 +71,20 @@ def _initial_wait_time() -> int:
 
 
 def register(name: str, probe: Probe) -> None:
-    if name in _probes:
-        logger = logging.getLogger("appsignal")
-        logger.debug(
-            f"A probe with the name `{name}` is already "
-            "registered. Overwriting the entry with the new probe."
-        )
+    with _lock:
+        if name in _probes:
+            logger = logging.getLogger("appsignal")
+            logger.debug(
+                f"A probe with the name `{name}` is already "
+                "registered. Overwriting the entry with the new probe."
+            )
 
-    _probes[name] = probe
+        _probes[name] = probe
 
 
 def unregister(name: str) -> None:
-    if name in _probes:
-        del _probes[name]
-    if name in _probe_states:
-        del _probe_states[name]
+    with _lock:
+        if name in _probes:
+            del _probes[name]
+        if name in _probe_states:
+            del _probe_states[name]
