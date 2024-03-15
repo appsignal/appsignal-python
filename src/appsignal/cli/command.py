@@ -5,10 +5,10 @@ from abc import ABC, abstractmethod
 from argparse import ArgumentParser, Namespace
 from dataclasses import dataclass
 
+from .. import _client_from_config_file
 from ..client import Client
 from ..config import Config, Options
 from ..push_api_key_validator import PushApiKeyValidator
-from .config import _client_from_config_file
 from .exit_error import ExitError
 
 
