@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, ClassVar
 
 from .agent import agent
 from .config import Config, Options
-from .opentelemetry import start_opentelemetry
+from .opentelemetry import start as start_opentelemetry
 from .probes import start as start_probes
 
 

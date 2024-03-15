@@ -21,8 +21,8 @@ from appsignal.opentelemetry import METRICS_PREFERRED_TEMPORALITY
 
 @pytest.fixture(scope="function", autouse=True)
 def disable_start_opentelemetry(mocker):
-    mocker.patch("appsignal.opentelemetry._start_opentelemetry_tracer")
-    mocker.patch("appsignal.opentelemetry._start_opentelemetry_metrics")
+    mocker.patch("appsignal.opentelemetry._start_tracer")
+    mocker.patch("appsignal.opentelemetry._start_metrics")
 
 
 @pytest.fixture(scope="session", autouse=True)
