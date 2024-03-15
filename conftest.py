@@ -15,6 +15,7 @@ from opentelemetry.sdk.trace.export import SimpleSpanProcessor
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
 from opentelemetry.trace import set_tracer_provider
 
+from appsignal import probes
 from appsignal.agent import agent
 from appsignal.opentelemetry import METRICS_PREFERRED_TEMPORALITY
 
@@ -87,13 +88,11 @@ def remove_logging_handlers_after_tests():
 
 
 @pytest.fixture(scope="function", autouse=True)
-def remove_probes_after_tests():
+def stop_and_clear_probes_after_tests():
     yield
 
-    from appsignal.probes import _probes, _probe_states
-
-    _probes.clear()
-    _probe_states.clear()
+    probes.stop()
+    probes.clear()
 
 
 @pytest.fixture(scope="function", autouse=True)

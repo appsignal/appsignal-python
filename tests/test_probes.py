@@ -1,6 +1,15 @@
+from time import sleep
 from typing import Any, Callable, cast
 
-from appsignal.probes import _probe_states, _probes, _run_probes, register, unregister
+from appsignal.probes import (
+    _probe_states,
+    _probes,
+    _run_probes,
+    register,
+    start,
+    stop,
+    unregister,
+)
 
 
 def test_register(mocker):
@@ -32,7 +41,7 @@ def test_register_with_state(mocker):
     probe.assert_called_with("state")
 
 
-def test_register_signatures(mocker):
+def test_register_signatures():
     # `mocker.Mock` is not used here because we want to test against
     # specific function signatures.
 
@@ -107,3 +116,23 @@ def test_unregister(mocker):
     assert "probe_name" not in _probes
     assert "probe_name" not in _probe_states
     probe.assert_called_once_with(None)
+
+
+def test_start_stop(mocker):
+    mocker.patch("appsignal.probes._initial_wait_time").return_value = 0.001
+    mocker.patch("appsignal.probes._wait_time").return_value = 0.001
+
+    probe = mocker.Mock()
+    register("probe_name", probe)
+    start()
+
+    sleep(0.05)
+
+    probe.assert_called()
+
+    stop()
+    call_count = probe.call_count
+
+    sleep(0.05)
+
+    assert probe.call_count == call_count

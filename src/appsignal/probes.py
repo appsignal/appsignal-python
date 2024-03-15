@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import logging
 from inspect import signature
-from threading import Lock, Thread
-from time import gmtime, sleep
-from typing import Any, Callable, NoReturn, Optional, TypeVar, Union, cast
+from threading import Event, Lock, Thread
+from time import gmtime
+from typing import Any, Callable, Optional, TypeVar, Union, cast
 
 
 T = TypeVar("T")
@@ -15,6 +15,7 @@ _probes: dict[str, Probe] = {}
 _probe_states: dict[str, Any] = {}
 _lock: Lock = Lock()
 _thread: Thread | None = None
+_stop_event: Event = Event()
 
 
 def start() -> None:
@@ -24,12 +25,15 @@ def start() -> None:
         _thread.start()
 
 
-def _minutely_loop() -> NoReturn:
-    sleep(_initial_wait_time())
+def _minutely_loop() -> None:
+    wait_time = _initial_wait_time()
 
     while True:
+        if _stop_event.wait(timeout=wait_time):
+            break
+
         _run_probes()
-        sleep(_wait_time())
+        wait_time = _wait_time()
 
 
 def _run_probes() -> None:
@@ -88,3 +92,18 @@ def unregister(name: str) -> None:
             del _probes[name]
         if name in _probe_states:
             del _probe_states[name]
+
+
+def stop() -> None:
+    global _thread
+    if _thread is not None:
+        _stop_event.set()
+        _thread.join()
+        _thread = None
+        _stop_event.clear()
+
+
+def clear() -> None:
+    with _lock:
+        _probes.clear()
+        _probe_states.clear()
