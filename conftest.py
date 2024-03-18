@@ -15,14 +15,15 @@ from opentelemetry.sdk.trace.export import SimpleSpanProcessor
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
 from opentelemetry.trace import set_tracer_provider
 
+from appsignal import probes
 from appsignal.agent import agent
 from appsignal.opentelemetry import METRICS_PREFERRED_TEMPORALITY
 
 
 @pytest.fixture(scope="function", autouse=True)
 def disable_start_opentelemetry(mocker):
-    mocker.patch("appsignal.opentelemetry._start_opentelemetry_tracer")
-    mocker.patch("appsignal.opentelemetry._start_opentelemetry_metrics")
+    mocker.patch("appsignal.opentelemetry._start_tracer")
+    mocker.patch("appsignal.opentelemetry._start_metrics")
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -84,6 +85,14 @@ def remove_logging_handlers_after_tests():
     logger = logging.getLogger("appsignal")
     for handler in logger.handlers:
         logger.removeHandler(handler)
+
+
+@pytest.fixture(scope="function", autouse=True)
+def stop_and_clear_probes_after_tests():
+    yield
+
+    probes.stop()
+    probes.clear()
 
 
 @pytest.fixture(scope="function", autouse=True)

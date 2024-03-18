@@ -108,7 +108,7 @@ DEFAULT_INSTRUMENTATION_ADDERS: Mapping[
 }
 
 
-def start_opentelemetry(config: Config) -> None:
+def start(config: Config) -> None:
     # Configure OpenTelemetry request headers config
     request_headers = list_to_env_str(config.option("request_headers"))
     if request_headers:
@@ -117,13 +117,13 @@ def start_opentelemetry(config: Config) -> None:
         )
 
     opentelemetry_port = config.option("opentelemetry_port")
-    _start_opentelemetry_tracer(opentelemetry_port)
-    _start_opentelemetry_metrics(opentelemetry_port)
+    _start_tracer(opentelemetry_port)
+    _start_metrics(opentelemetry_port)
 
     add_instrumentations(config)
 
 
-def _start_opentelemetry_tracer(opentelemetry_port: str | int) -> None:
+def _start_tracer(opentelemetry_port: str | int) -> None:
     otlp_exporter = OTLPSpanExporter(
         endpoint=f"http://localhost:{opentelemetry_port}/v1/traces"
     )
@@ -143,7 +143,7 @@ METRICS_PREFERRED_TEMPORALITY: dict[type, AggregationTemporality] = {
 }
 
 
-def _start_opentelemetry_metrics(opentelemetry_port: str | int) -> None:
+def _start_metrics(opentelemetry_port: str | int) -> None:
     metric_exporter = OTLPMetricExporter(
         endpoint=f"http://localhost:{opentelemetry_port}/v1/metrics",
         preferred_temporality=METRICS_PREFERRED_TEMPORALITY,

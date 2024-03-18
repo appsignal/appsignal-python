@@ -7,7 +7,8 @@ from typing import TYPE_CHECKING, ClassVar
 
 from .agent import agent
 from .config import Config, Options
-from .opentelemetry import start_opentelemetry
+from .opentelemetry import start as start_opentelemetry
+from .probes import start as start_probes
 
 
 if TYPE_CHECKING:
@@ -28,7 +29,7 @@ class Client:
 
     def __init__(self, **options: Unpack[Options]) -> None:
         self._config = Config(options)
-        self.start_logger()
+        self._start_logger()
 
         if not self._config.is_active():
             self._logger.info("AppSignal not starting: no active config found")
@@ -38,8 +39,13 @@ class Client:
             self._logger.info("Starting AppSignal")
             agent.start(self._config)
             start_opentelemetry(self._config)
+            self._start_probes()
 
-    def start_logger(self) -> None:
+    def _start_probes(self) -> None:
+        if self._config.option("enable_minutely_probes"):
+            start_probes()
+
+    def _start_logger(self) -> None:
         self._logger = logging.getLogger("appsignal")
         self._logger.setLevel(self.LOG_LEVELS[self._config.option("log_level")])
 

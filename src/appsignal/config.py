@@ -32,6 +32,7 @@ class Options(TypedDict, total=False):
     )
     dns_servers: list[str] | None
     enable_host_metrics: bool | None
+    enable_minutely_probes: bool | None
     enable_nginx_metrics: bool | None
     enable_statsd: bool | None
     endpoint: str | None
@@ -80,6 +81,7 @@ class Config:
         ca_file_path=CA_FILE_PATH,
         diagnose_endpoint="https://appsignal.com/diag",
         enable_host_metrics=True,
+        enable_minutely_probes=True,
         enable_nginx_metrics=False,
         enable_statsd=False,
         environment=DEFAULT_ENVIRONMENT,
@@ -155,6 +157,9 @@ class Config:
             dns_servers=parse_list(os.environ.get("APPSIGNAL_DNS_SERVERS")),
             enable_host_metrics=parse_bool(
                 os.environ.get("APPSIGNAL_ENABLE_HOST_METRICS")
+            ),
+            enable_minutely_probes=parse_bool(
+                os.environ.get("APPSIGNAL_ENABLE_MINUTELY_PROBES")
             ),
             enable_nginx_metrics=parse_bool(
                 os.environ.get("APPSIGNAL_ENABLE_NGINX_METRICS")
