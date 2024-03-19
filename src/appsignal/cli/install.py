@@ -23,6 +23,8 @@ appsignal = Appsignal(
 
 INSTALL_FILE_NAME = "__appsignal__.py"
 
+WARNING_EMOJI = "\u26A0\ufe0f"
+
 
 class InstallCommand(AppsignalCLICommand):
     """Generate Appsignal client integration code."""
@@ -123,9 +125,11 @@ class InstallCommand(AppsignalCLICommand):
             print()
             self._add_dependency("opentelemetry-instrumentation-django")
 
-        print("Django requires some manual configuration.")
-        print("The __appsignal__ module needs to be imported in the manage.py file")
-        print("and the appsignal.start() method needs to be called in the main method.")
+        print(f"{WARNING_EMOJI} Django requires some manual configuration.")
+        print(
+            "AppSignal needs to be imported and started at your Django application's "
+            "entry points."
+        )
         print()
         print("Please refer to the documentation for more information:")
         print("https://docs.appsignal.com/python/instrumentations/django.html")
@@ -139,9 +143,14 @@ class InstallCommand(AppsignalCLICommand):
             print()
             self._add_dependency("opentelemetry-instrumentation-flask")
 
-        print("Flask requires some manual configuration.")
-        print("The __appsignal__ module needs to be imported before Flask is imported")
-        print("and the appsignal.start() method needs to be called right after.")
+        print(f"{WARNING_EMOJI} Flask requires some manual configuration.")
+        print(
+            "AppSignal needs to be imported and initialized before Flask is imported."
+        )
+        print()
+        print("    import appsignal")
+        print("    appsignal.start()")
+        print("    import flask")
         print()
         print("Please refer to the documentation for more information:")
         print("https://docs.appsignal.com/python/instrumentations/flask.html")
@@ -149,10 +158,11 @@ class InstallCommand(AppsignalCLICommand):
     def _generic_installation(self) -> None:
         print("✅ Done! AppSignal for Python has now been installed.")
         print()
+        print(f"{WARNING_EMOJI} Some manual configuration might be required.")
         print("To start AppSignal in your application, add the following code to your")
         print("application's entrypoint:")
         print()
-        print("    from __appsignal__ import appsignal")
+        print("    import appsignal")
         print("    appsignal.start()")
         print()
         print("You can check a list of the supported integrations here:")
