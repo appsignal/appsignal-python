@@ -26,6 +26,7 @@ class Options(TypedDict, total=False):
     app_path: str | None
     bind_address: str | None
     ca_file_path: str | None
+    cpu_count: float | None
     diagnose_endpoint: str | None
     disable_default_instrumentations: None | (
         list[Config.DefaultInstrumentation] | bool
@@ -150,6 +151,7 @@ class Config:
             active=parse_bool(os.environ.get("APPSIGNAL_ACTIVE")),
             bind_address=os.environ.get("APPSIGNAL_BIND_ADDRESS"),
             ca_file_path=os.environ.get("APPSIGNAL_CA_FILE_PATH"),
+            cpu_count=parse_float(os.environ.get("APPSIGNAL_CPU_COUNT")),
             diagnose_endpoint=os.environ.get("APPSIGNAL_DIAGNOSE_ENDPOINT"),
             disable_default_instrumentations=parse_disable_default_instrumentations(
                 os.environ.get("APPSIGNAL_DISABLE_DEFAULT_INSTRUMENTATIONS")
@@ -220,6 +222,7 @@ class Config:
             "_APPSIGNAL_APP_PATH": options.get("app_path"),
             "_APPSIGNAL_BIND_ADDRESS": options.get("bind_address"),
             "_APPSIGNAL_CA_FILE_PATH": options.get("ca_file_path"),
+            "_APPSIGNAL_CPU_COUNT": float_to_env_str(options.get("cpu_count")),
             "_APPSIGNAL_DNS_SERVERS": list_to_env_str(options.get("dns_servers")),
             "_APPSIGNAL_DIAGNOSE_ENDPOINT": options.get("diagnose_endpoint"),
             "_APPSIGNAL_ENABLE_HOST_METRICS": bool_to_env_str(
@@ -328,6 +331,16 @@ def parse_list(value: str | None) -> list[str] | None:
     return value.split(",")
 
 
+def parse_float(value: str | None) -> float | None:
+    if value is None:
+        return None
+
+    try:
+        return float(value)
+    except ValueError:
+        return None
+
+
 def parse_disable_default_instrumentations(
     value: str | None,
 ) -> list[Config.DefaultInstrumentation] | bool | None:
@@ -357,3 +370,10 @@ def list_to_env_str(value: list[str] | None) -> str | None:
         return None
 
     return ",".join(value)
+
+
+def float_to_env_str(value: float | None) -> str | None:
+    if value is None:
+        return None
+
+    return str(value)

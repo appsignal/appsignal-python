@@ -48,6 +48,7 @@ def test_environ_source():
     os.environ["APPSIGNAL_APP_NAME"] = "MyApp"
     os.environ["APPSIGNAL_BIND_ADDRESS"] = "0.0.0.0"
     os.environ["APPSIGNAL_CA_FILE_PATH"] = "/path/to/cacert.pem"
+    os.environ["APPSIGNAL_CPU_COUNT"] = "1.5"
     os.environ["APPSIGNAL_DNS_SERVERS"] = "8.8.8.8,8.8.4.4"
     os.environ["APPSIGNAL_ENABLE_HOST_METRICS"] = "true"
     os.environ["APPSIGNAL_ENABLE_NGINX_METRICS"] = "false"
@@ -81,6 +82,7 @@ def test_environ_source():
         active=True,
         bind_address="0.0.0.0",
         ca_file_path="/path/to/cacert.pem",
+        cpu_count=1.5,
         dns_servers=["8.8.8.8", "8.8.4.4"],
         enable_host_metrics=True,
         enable_nginx_metrics=False,
@@ -178,6 +180,7 @@ def test_set_private_environ():
             app_path="/path/to/app",
             bind_address="0.0.0.0",
             ca_file_path="/path/to/cacert.pem",
+            cpu_count=1.5,
             dns_servers=["8.8.8.8", "8.8.4.4"],
             enable_host_metrics=True,
             enable_nginx_metrics=False,
@@ -216,6 +219,7 @@ def test_set_private_environ():
     assert os.environ["_APPSIGNAL_APP_PATH"] == "/path/to/app"
     assert os.environ["_APPSIGNAL_BIND_ADDRESS"] == "0.0.0.0"
     assert os.environ["_APPSIGNAL_CA_FILE_PATH"] == "/path/to/cacert.pem"
+    assert os.environ["_APPSIGNAL_CPU_COUNT"] == "1.5"
     assert os.environ["_APPSIGNAL_DNS_SERVERS"] == "8.8.8.8,8.8.4.4"
     assert os.environ["_APPSIGNAL_ENABLE_HOST_METRICS"] == "true"
     assert os.environ["_APPSIGNAL_ENABLE_NGINX_METRICS"] == "false"
