@@ -1,5 +1,36 @@
 # AppSignal for Python Changelog
 
+## 1.2.0
+
+_Published on 2024-03-20._
+
+### Added
+
+- [9c20b6f](https://github.com/appsignal/appsignal-python/commit/9c20b6f821e25a7b7f5d47521a97f2a744ab66c6) minor - Add a minutely probes system. This can be used, alongside our metric helpers, to report metrics to AppSignal once per minute.
+  
+  ```python
+  from appsignal import probes, set_gauge
+  
+  def new_carts(previous_carts=None):
+      current_carts = Cart.objects.all().count()
+  
+      if previous_carts is not None:
+        set_gauge("new_carts", current_carts - previous_carts)
+  
+      return current_carts
+  
+  probes.register("new_carts", new_carts)
+  ```
+  
+  The minutely probes system starts by default, but no probes are automatically registered. You can use the `enable_minutely_probes` configuration option to disable it.
+- [3a27381](https://github.com/appsignal/appsignal-python/commit/3a27381d42470a3e65e5862aa52d78ba77e28a30) patch - Implement CPU count configuration option. Use it to override the auto-detected, cgroups-provided number of CPUs that is used to calculate CPU usage percentages.
+  
+  To set it, use the the `cpu_count` configuration option or the `APPSIGNAL_CPU_COUNT` environment variable.
+
+### Fixed
+
+- [3a797e1](https://github.com/appsignal/appsignal-python/commit/3a797e1cca59ba1d6fcd67f7e36c25eff0445ee2) patch - Fix ASGI events (from Python ASGI applications) showing up in the "Slow API requests" panel.
+
 ## 1.1.1
 
 _Published on 2024-03-11._
