@@ -3,22 +3,9 @@ from __future__ import annotations
 import os
 import platform
 import tempfile
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    ClassVar,
-    List,
-    Literal,
-    TypedDict,
-    cast,
-    get_args,
-)
+from typing import Any, ClassVar, List, Literal, TypedDict, cast, get_args
 
 from .__about__ import __version__
-
-
-if TYPE_CHECKING:
-    pass
 
 
 class Options(TypedDict, total=False):
