@@ -17,6 +17,7 @@ if TYPE_CHECKING:
 
 _client: Client | None = None
 
+
 def _reset_client() -> None:
     global _client
     _client = None

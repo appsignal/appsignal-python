@@ -4,6 +4,7 @@ import os
 from runpy import run_path
 
 from .client import Client as Appsignal
+from .heartbeat import Heartbeat, heartbeat
 from .metrics import add_distribution_value, increment_counter, set_gauge
 from .tracing import (
     send_error,
@@ -42,6 +43,8 @@ __all__ = [
     "increment_counter",
     "set_gauge",
     "add_distribution_value",
+    "Heartbeat",
+    "heartbeat",
     "start",
 ]
 

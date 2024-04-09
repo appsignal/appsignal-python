@@ -17,8 +17,8 @@ from opentelemetry.trace import set_tracer_provider
 
 from appsignal import probes
 from appsignal.agent import agent
-from appsignal.opentelemetry import METRICS_PREFERRED_TEMPORALITY
 from appsignal.client import _reset_client
+from appsignal.opentelemetry import METRICS_PREFERRED_TEMPORALITY
 
 
 @pytest.fixture(scope="function", autouse=True)
@@ -100,9 +100,11 @@ def stop_and_clear_probes_after_tests():
 def reset_agent_active_state():
     agent.active = False
 
+
 @pytest.fixture(scope="function", autouse=True)
 def reset_global_client():
     _reset_client()
+
 
 @pytest.fixture(scope="function", autouse=True)
 def stop_agent():

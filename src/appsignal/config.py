@@ -37,6 +37,7 @@ class Options(TypedDict, total=False):
     log: str | None
     log_level: str | None
     log_path: str | None
+    logging_endpoint: str | None
     opentelemetry_port: str | int | None
     name: str | None
     push_api_key: str | None
@@ -77,6 +78,7 @@ class Config:
         files_world_accessible=True,
         log="file",
         log_level="info",
+        logging_endpoint="https://appsignal-endpoint.net",
         opentelemetry_port=8099,
         send_environment_metadata=True,
         send_params=True,
@@ -172,6 +174,7 @@ class Config:
             log=os.environ.get("APPSIGNAL_LOG"),
             log_level=os.environ.get("APPSIGNAL_LOG_LEVEL"),
             log_path=os.environ.get("APPSIGNAL_LOG_PATH"),
+            logging_endpoint=os.environ.get("APPSIGNAL_LOGGING_ENDPOINT"),
             opentelemetry_port=os.environ.get("APPSIGNAL_OPENTELEMETRY_PORT"),
             name=os.environ.get("APPSIGNAL_APP_NAME"),
             push_api_key=os.environ.get("APPSIGNAL_PUSH_API_KEY"),
@@ -239,6 +242,7 @@ class Config:
             "_APPSIGNAL_LOG": options.get("log"),
             "_APPSIGNAL_LOG_LEVEL": options.get("log_level"),
             "_APPSIGNAL_LOG_FILE_PATH": self.log_file_path(),
+            "_APPSIGNAL_LOGGING_ENDPOINT": options.get("logging_endpoint"),
             "_APPSIGNAL_OPENTELEMETRY_PORT": options.get("opentelemetry_port"),
             "_APPSIGNAL_PUSH_API_KEY": options.get("push_api_key"),
             "_APPSIGNAL_PUSH_API_ENDPOINT": options.get("endpoint"),
