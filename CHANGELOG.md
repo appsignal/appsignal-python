@@ -1,5 +1,11 @@
 # AppSignal for Python Changelog
 
+## 1.2.1
+
+### Fixed
+
+- [bf4aa09](https://github.com/appsignal/appsignal-python/commit/bf4aa099ea87a09736c4b908ba0fa4a418f3a6d2) patch - Unmatching Flask app routes are no longer recorded as valid spans.
+
 ## 1.2.0
 
 _Published on 2024-03-20._
