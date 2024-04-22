@@ -91,6 +91,7 @@ dependencies = [
   "types-deprecated",
   "types-requests",
   "django-stubs",
+  "pytest",
 ]
 
 [tool.hatch.envs.lint.scripts]

@@ -15,6 +15,14 @@ if TYPE_CHECKING:
     from typing_extensions import Unpack
 
 
+_client: Client | None = None
+
+
+def _reset_client() -> None:
+    global _client
+    _client = None
+
+
 class Client:
     _logger: Logger
     _config: Config
@@ -28,11 +36,21 @@ class Client:
     }
 
     def __init__(self, **options: Unpack[Options]) -> None:
+        global _client
+
         self._config = Config(options)
         self._start_logger()
+        _client = self
 
         if not self._config.is_active():
             self._logger.info("AppSignal not starting: no active config found")
+
+    @classmethod
+    def config(cls) -> Config | None:
+        if _client is None:
+            return None
+
+        return _client._config
 
     def start(self) -> None:
         if self._config.is_active():

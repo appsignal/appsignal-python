@@ -5,18 +5,16 @@ from __future__ import annotations
 import json
 import os
 import platform
-import urllib
 from argparse import ArgumentParser
 from pathlib import Path
 from sys import stderr
 from typing import Any
 
-import requests
-
 from ..__about__ import __version__
 from ..agent import Agent
 from ..config import Config
 from ..push_api_key_validator import PushApiKeyValidator
+from ..transmitter import transmit
 from .command import AppsignalCLICommand
 
 
@@ -377,19 +375,9 @@ class DiagnoseCommand(AppsignalCLICommand):
         return None
 
     def _send_diagnose_report(self) -> None:
-        params = urllib.parse.urlencode(
-            {
-                "api_key": self.config.option("push_api_key"),
-                "name": self.config.option("name"),
-                "environment": self.config.option("environment"),
-                "hostname": self.config.option("hostname") or "",
-            }
-        )
+        url = self.config.option("diagnose_endpoint")
 
-        endpoint = self.config.option("diagnose_endpoint")
-        url = f"{endpoint}?{params}"
-
-        response = requests.post(url, json={"diagnose": self.report})
+        response = transmit(url, json={"diagnose": self.report}, config=self.config)
 
         status = response.status_code
         if status == 200:
