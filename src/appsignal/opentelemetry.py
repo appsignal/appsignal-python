@@ -78,7 +78,13 @@ def add_jinja2_instrumentation() -> None:
 def add_psycopg2_instrumentation() -> None:
     from opentelemetry.instrumentation.psycopg2 import Psycopg2Instrumentor
 
-    Psycopg2Instrumentor().instrument(enable_commenter=True, commenter_options={})
+    Psycopg2Instrumentor().instrument()
+
+
+def add_psycopg_instrumentation() -> None:
+    from opentelemetry.instrumentation.psycopg import PsycopgInstrumentor
+
+    PsycopgInstrumentor().instrument()
 
 
 def add_redis_instrumentation() -> None:
@@ -93,6 +99,18 @@ def add_requests_instrumentation() -> None:
     RequestsInstrumentor().instrument()
 
 
+def add_sqlalchemy_instrumentation() -> None:
+    from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
+
+    SQLAlchemyInstrumentor().instrument()
+
+
+def add_sqlite3_instrumentation() -> None:
+    from opentelemetry.instrumentation.sqlite3 import SQLite3Instrumentor
+
+    SQLite3Instrumentor().instrument()
+
+
 DefaultInstrumentationAdder = Callable[[], None]
 
 DEFAULT_INSTRUMENTATION_ADDERS: Mapping[
@@ -103,8 +121,11 @@ DEFAULT_INSTRUMENTATION_ADDERS: Mapping[
     "opentelemetry.instrumentation.flask": add_flask_instrumentation,
     "opentelemetry.instrumentation.jinja2": add_jinja2_instrumentation,
     "opentelemetry.instrumentation.psycopg2": add_psycopg2_instrumentation,
+    "opentelemetry.instrumentation.psycopg": add_psycopg_instrumentation,
     "opentelemetry.instrumentation.redis": add_redis_instrumentation,
     "opentelemetry.instrumentation.requests": add_requests_instrumentation,
+    "opentelemetry.instrumentation.sqlalchemy": add_sqlalchemy_instrumentation,
+    "opentelemetry.instrumentation.sqlite3": add_sqlite3_instrumentation,
 }
 
 
