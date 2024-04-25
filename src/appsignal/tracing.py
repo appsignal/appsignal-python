@@ -1,13 +1,14 @@
 from __future__ import annotations
 
 import json
-from . import internal_logger as logger
 from contextlib import contextmanager
 from typing import TYPE_CHECKING, Any, Iterator
 
 from opentelemetry import trace
 from opentelemetry.context import Context
 from opentelemetry.trace import Status, StatusCode
+
+from . import internal_logger as logger
 
 
 if TYPE_CHECKING:

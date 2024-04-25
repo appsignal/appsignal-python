@@ -8,44 +8,77 @@ from appsignal.client import Client
 
 def test_logger_default_level():
     internal_logger.info("trigger logger initialization")
+
     assert internal_logger._logger is not None
     assert internal_logger._logger.getEffectiveLevel() == INFO
+    assert internal_logger._level == "info"
 
 
 def test_logger_info_level():
     Client(log_level="info")
     internal_logger.info("trigger logger initialization")
+
     assert internal_logger._logger is not None
     assert internal_logger._logger.getEffectiveLevel() == INFO
+    assert internal_logger._level == "info"
 
 
 def test_logger_error_level():
     Client(log_level="error")
     internal_logger.info("trigger logger initialization")
+
     assert internal_logger._logger is not None
     assert internal_logger._logger.getEffectiveLevel() == ERROR
+    assert internal_logger._level == "error"
 
 
 def test_logger_warning_level():
     Client(log_level="warning")
-    internal_logger.info("ignore me")
+    internal_logger.info("trigger logger initialization")
+
     assert internal_logger._logger is not None
     assert internal_logger._logger.getEffectiveLevel() == WARNING
+    assert internal_logger._level == "warning"
 
 
 def test_logger_debug_level():
     Client(log_level="debug")
-    internal_logger.info("ignore me")
+    internal_logger.info("trigger logger initialization")
+
     assert internal_logger._logger is not None
     assert internal_logger._logger.getEffectiveLevel() == DEBUG
+    assert internal_logger._level == "debug"
 
 
 def test_logger_trace_level():
     Client(log_level="trace")
-    # the logger must be used for `_logger` to be initialised
-    internal_logger.info("ignore me")
+    internal_logger.info("trigger logger initialization")
+
     assert internal_logger._logger is not None
     assert internal_logger._logger.getEffectiveLevel() == DEBUG
+    assert internal_logger._level == "trace"
+
+
+def test_logger_trace_level_logs_trace(mocker):
+    Client(log_level="trace")
+    internal_logger.info("trigger logger initialization")
+
+    mock = mocker.patch("appsignal.internal_logger._logger.log")
+    internal_logger.trace("trace message")
+    mock.assert_called_with(DEBUG, "trace message")
+    internal_logger.debug("debug message")
+    mock.assert_called_with(DEBUG, "debug message")
+
+
+def test_logger_debug_level_does_not_log_trace(mocker):
+    Client(log_level="debug")
+    internal_logger.info("trigger logger initialization")
+
+    mock = mocker.patch("appsignal.internal_logger._logger.log")
+    internal_logger.trace("trace message")
+    mock.assert_not_called()
+    internal_logger.debug("debug message")
+    mock.assert_called_with(DEBUG, "debug message")
 
 
 def test_logger_file(tmp_path):

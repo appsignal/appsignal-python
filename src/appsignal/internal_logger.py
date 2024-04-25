@@ -13,6 +13,7 @@ _LOG_LEVEL_MAPPING: dict[str, int] = {
 }
 
 _logger: logging.Logger | None = None
+_level: str | None = None
 
 
 def _reset_logger() -> None:
@@ -20,8 +21,8 @@ def _reset_logger() -> None:
     for handler in logger.handlers:
         logger.removeHandler(handler)
 
-    global _logger
-    _logger = None
+    global _logger, _level
+    _logger, _level = None, None
 
 
 def error(message: str) -> None:
@@ -40,16 +41,23 @@ def debug(message: str) -> None:
     _log("debug", message)
 
 
+def trace(message: str) -> None:
+    _log("trace", message)
+
+
 def _log(level: str, message: str) -> None:
-    global _logger
+    global _logger, _level
 
     if _logger is None:
-        _logger = _configure_logger()
+        _logger, _level = _configure_logger()
+
+    if level == "trace" and _level != "trace":
+        return
 
     _logger.log(_LOG_LEVEL_MAPPING[level], message)
 
 
-def _configure_logger() -> logging.Logger:
+def _configure_logger() -> tuple[logging.Logger, str]:
     from .client import Client
     from .config import Config
 
@@ -75,7 +83,7 @@ def _configure_logger() -> logging.Logger:
             "using default logger configuration."
         )
 
-    return logger
+    return logger, level
 
 
 def _configure_file_logger(logger: logging.Logger, log_file_path: str) -> None:

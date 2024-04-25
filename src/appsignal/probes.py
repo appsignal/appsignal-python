@@ -1,10 +1,11 @@
 from __future__ import annotations
 
-from . import internal_logger as logger
 from inspect import signature
 from threading import Event, Lock, Thread
 from time import gmtime
 from typing import Any, Callable, Optional, TypeVar, Union, cast
+
+from . import internal_logger as logger
 
 
 T = TypeVar("T")

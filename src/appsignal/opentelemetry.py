@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from . import internal_logger as logger
-
 import os
 from typing import TYPE_CHECKING, Callable, Mapping
 
@@ -25,6 +23,7 @@ from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
 
+from . import internal_logger as logger
 from .config import Config, list_to_env_str
 
 
