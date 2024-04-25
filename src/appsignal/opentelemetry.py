@@ -20,8 +20,12 @@ from opentelemetry.sdk.metrics.export import (
     PeriodicExportingMetricReader,
 )
 from opentelemetry.sdk.resources import Resource
-from opentelemetry.sdk.trace import TracerProvider
-from opentelemetry.sdk.trace.export import BatchSpanProcessor
+from opentelemetry.sdk.trace import ConcurrentMultiSpanProcessor, TracerProvider
+from opentelemetry.sdk.trace.export import (
+    BatchSpanProcessor,
+    ConsoleSpanExporter,
+    SimpleSpanProcessor,
+)
 
 from . import internal_logger as logger
 from .config import Config, list_to_env_str
@@ -117,19 +121,36 @@ def start(config: Config) -> None:
         )
 
     opentelemetry_port = config.option("opentelemetry_port")
-    _start_tracer(opentelemetry_port)
+    _start_tracer(opentelemetry_port, config.option("log_level") == "trace")
     _start_metrics(opentelemetry_port)
 
     add_instrumentations(config)
 
 
-def _start_tracer(opentelemetry_port: str | int) -> None:
+def _otlp_span_processor(opentelemetry_port: str | int) -> BatchSpanProcessor:
     otlp_exporter = OTLPSpanExporter(
         endpoint=f"http://localhost:{opentelemetry_port}/v1/traces"
     )
-    exporter_processor = BatchSpanProcessor(otlp_exporter)
+    return BatchSpanProcessor(otlp_exporter)
+
+
+def _console_span_processor() -> SimpleSpanProcessor:
+    console_exporter = ConsoleSpanExporter()
+    return SimpleSpanProcessor(console_exporter)
+
+
+def _start_tracer(opentelemetry_port: str | int, should_trace: bool = False) -> None:
+    otlp_span_processor = _otlp_span_processor(opentelemetry_port)
     provider = TracerProvider()
-    provider.add_span_processor(exporter_processor)
+
+    if should_trace:
+        multi_span_processor = ConcurrentMultiSpanProcessor()
+        multi_span_processor.add_span_processor(otlp_span_processor)
+        multi_span_processor.add_span_processor(_console_span_processor())
+        provider.add_span_processor(multi_span_processor)
+    else:
+        provider.add_span_processor(otlp_span_processor)
+
     trace.set_tracer_provider(provider)
 
 
