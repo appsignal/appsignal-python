@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import logging
+from . import internal_logger as logger
 from inspect import signature
 from threading import Event, Lock, Thread
 from time import gmtime
@@ -43,7 +43,6 @@ def _run_probes() -> None:
 
 
 def _run_probe(name: str) -> None:
-    logger = logging.getLogger("appsignal")
     logger.debug(f"Gathering minutely metrics with `{name}` probe")
 
     try:
@@ -77,7 +76,6 @@ def _initial_wait_time() -> int:
 def register(name: str, probe: Probe) -> None:
     with _lock:
         if name in _probes:
-            logger = logging.getLogger("appsignal")
             logger.debug(
                 f"A probe with the name `{name}` is already "
                 "registered. Overwriting the entry with the new probe."

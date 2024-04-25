@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-import logging
+from . import internal_logger as logger
+
 import os
 from typing import TYPE_CHECKING, Callable, Mapping
 
@@ -163,7 +164,6 @@ def add_instrumentations(
         Config.DefaultInstrumentation, DefaultInstrumentationAdder
     ] = DEFAULT_INSTRUMENTATION_ADDERS,
 ) -> None:
-    logger = logging.getLogger("appsignal")
     disable_list = config.options.get("disable_default_instrumentations") or []
 
     if disable_list is True:

@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import logging
 import os
 import platform
 import tempfile
@@ -18,6 +17,7 @@ from opentelemetry.trace import set_tracer_provider
 from appsignal import probes
 from appsignal.agent import agent
 from appsignal.client import _reset_client
+from appsignal.internal_logger import _reset_logger
 from appsignal.opentelemetry import METRICS_PREFERRED_TEMPORALITY
 
 
@@ -80,12 +80,10 @@ def reset_environment_between_tests():
 
 
 @pytest.fixture(scope="function", autouse=True)
-def remove_logging_handlers_after_tests():
+def reset_internal_logger_after_tests():
     yield
 
-    logger = logging.getLogger("appsignal")
-    for handler in logger.handlers:
-        logger.removeHandler(handler)
+    _reset_logger()
 
 
 @pytest.fixture(scope="function", autouse=True)

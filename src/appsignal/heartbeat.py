@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-import logging
 from binascii import hexlify
 from os import urandom
 from time import time
 from typing import Any, Callable, Literal, TypedDict, TypeVar, Union
 
+from . import internal_logger as logger
 from .client import Client
 from .config import Config
 from .transmitter import transmit
@@ -36,7 +36,6 @@ class Heartbeat:
 
     def _transmit(self, event: Event) -> None:
         config = Client.config() or Config()
-        logger = logging.getLogger("appsignal")
 
         if not config.is_active():
             logger.debug("AppSignal not active, not transmitting heartbeat event")

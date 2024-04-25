@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-import logging
+from . import internal_logger as logger
 from contextlib import contextmanager
 from typing import TYPE_CHECKING, Any, Iterator
 
@@ -12,8 +12,6 @@ from opentelemetry.trace import Status, StatusCode
 
 if TYPE_CHECKING:
     from opentelemetry.trace import Span
-
-logger = logging.getLogger("appsignal")
 
 
 def _set_attribute(attribute: str, value: Any, span: Span | None = None) -> None:
