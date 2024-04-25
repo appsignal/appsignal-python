@@ -192,7 +192,7 @@ def add_instrumentations(
     for name, adder in _adders.items():
         if name not in disable_list:
             try:
-                logger.info(f"Instrumenting {name}")
                 adder()
+                logger.info(f"Instrumented {name}")
             except ModuleNotFoundError:
                 pass
