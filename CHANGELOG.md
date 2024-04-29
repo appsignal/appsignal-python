@@ -1,5 +1,13 @@
 # AppSignal for Python Changelog
 
+## 1.3.1
+
+_Published on 2024-04-29._
+
+### Added
+
+- [a455252](https://github.com/appsignal/appsignal-python/commit/a4552522962ff6f95d4c61b30ab111addb589719) patch - Add automatic instrumentation support for SQLAlchemy, SQLite and version 3 of the `psycopg` PostgreSQL adapter.
+
 ## 1.3.0
 
 _Published on 2024-04-22._
