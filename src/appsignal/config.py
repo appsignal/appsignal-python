@@ -100,9 +100,12 @@ class Config:
         "opentelemetry.instrumentation.django",
         "opentelemetry.instrumentation.flask",
         "opentelemetry.instrumentation.jinja2",
+        "opentelemetry.instrumentation.psycopg",
         "opentelemetry.instrumentation.psycopg2",
         "opentelemetry.instrumentation.redis",
         "opentelemetry.instrumentation.requests",
+        "opentelemetry.instrumentation.sqlite3",
+        "opentelemetry.instrumentation.sqlalchemy",
     ]
     DEFAULT_INSTRUMENTATIONS = cast(
         List[DefaultInstrumentation], list(get_args(DefaultInstrumentation))
