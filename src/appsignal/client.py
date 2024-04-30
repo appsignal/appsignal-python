@@ -6,7 +6,7 @@ from . import internal_logger as logger
 from .agent import agent
 from .config import Config, Options
 from .opentelemetry import start as start_opentelemetry
-from .probes import start as start_probes
+from .probes import start as start_probes, stop as stop_probes
 
 
 if TYPE_CHECKING:
@@ -49,3 +49,6 @@ class Client:
     def _start_probes(self) -> None:
         if self._config.option("enable_minutely_probes"):
             start_probes()
+
+    def stop(self) -> None:
+        stop_probes()
