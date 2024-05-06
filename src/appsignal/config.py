@@ -96,12 +96,17 @@ class Config:
     )
 
     DefaultInstrumentation = Literal[
+        "opentelemetry.instrumentation.aiopg",
+        "opentelemetry.instrumentation.asyncpg",
         "opentelemetry.instrumentation.celery",
         "opentelemetry.instrumentation.django",
         "opentelemetry.instrumentation.flask",
         "opentelemetry.instrumentation.jinja2",
+        "opentelemetry.instrumentation.mysql",
+        "opentelemetry.instrumentation.mysqlclient",
         "opentelemetry.instrumentation.psycopg",
         "opentelemetry.instrumentation.psycopg2",
+        "opentelemetry.instrumentation.pymysql",
         "opentelemetry.instrumentation.redis",
         "opentelemetry.instrumentation.requests",
         "opentelemetry.instrumentation.sqlite3",

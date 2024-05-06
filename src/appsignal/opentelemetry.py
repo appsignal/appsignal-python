@@ -35,6 +35,18 @@ if TYPE_CHECKING:
     from opentelemetry.trace.span import Span
 
 
+def add_aiopg_instrumentation() -> None:
+    from opentelemetry.instrumentation.aiopg import AiopgInstrumentor
+
+    AiopgInstrumentor().instrument()
+
+
+def add_asyncpg_instrumentation() -> None:
+    from opentelemetry.instrumentation.asyncpg import AsyncPGInstrumentor
+
+    AsyncPGInstrumentor().instrument()
+
+
 def add_celery_instrumentation() -> None:
     from opentelemetry.instrumentation.celery import CeleryInstrumentor
 
@@ -79,6 +91,18 @@ def add_jinja2_instrumentation() -> None:
     Jinja2Instrumentor().instrument()
 
 
+def add_mysql_instrumentation() -> None:
+    from opentelemetry.instrumentation.mysql import MySQLInstrumentor
+
+    MySQLInstrumentor().instrument()
+
+
+def add_mysqlclient_instrumentation() -> None:
+    from opentelemetry.instrumentation.mysqlclient import MySQLClientInstrumentor
+
+    MySQLClientInstrumentor().instrument()
+
+
 def add_psycopg2_instrumentation() -> None:
     from opentelemetry.instrumentation.psycopg2 import Psycopg2Instrumentor
 
@@ -89,6 +113,12 @@ def add_psycopg_instrumentation() -> None:
     from opentelemetry.instrumentation.psycopg import PsycopgInstrumentor
 
     PsycopgInstrumentor().instrument()
+
+
+def add_pymysql_instrumentation() -> None:
+    from opentelemetry.instrumentation.pymysql import PyMySQLInstrumentor
+
+    PyMySQLInstrumentor().instrument()
 
 
 def add_redis_instrumentation() -> None:
@@ -120,12 +150,17 @@ DefaultInstrumentationAdder = Callable[[], None]
 DEFAULT_INSTRUMENTATION_ADDERS: Mapping[
     Config.DefaultInstrumentation, DefaultInstrumentationAdder
 ] = {
+    "opentelemetry.instrumentation.aiopg": add_aiopg_instrumentation,
+    "opentelemetry.instrumentation.asyncpg": add_asyncpg_instrumentation,
     "opentelemetry.instrumentation.celery": add_celery_instrumentation,
     "opentelemetry.instrumentation.django": add_django_instrumentation,
     "opentelemetry.instrumentation.flask": add_flask_instrumentation,
     "opentelemetry.instrumentation.jinja2": add_jinja2_instrumentation,
+    "opentelemetry.instrumentation.mysql": add_mysql_instrumentation,
+    "opentelemetry.instrumentation.mysqlclient": add_mysqlclient_instrumentation,
     "opentelemetry.instrumentation.psycopg2": add_psycopg2_instrumentation,
     "opentelemetry.instrumentation.psycopg": add_psycopg_instrumentation,
+    "opentelemetry.instrumentation.pymysql": add_pymysql_instrumentation,
     "opentelemetry.instrumentation.redis": add_redis_instrumentation,
     "opentelemetry.instrumentation.requests": add_requests_instrumentation,
     "opentelemetry.instrumentation.sqlalchemy": add_sqlalchemy_instrumentation,
