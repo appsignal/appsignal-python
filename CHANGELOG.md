@@ -1,5 +1,13 @@
 # AppSignal for Python Changelog
 
+## 1.3.2
+
+_Published on 2024-05-06._
+
+### Added
+
+- [c4a2ac4](https://github.com/appsignal/appsignal-python/commit/c4a2ac4777ff8938bd58818349249b935b747b10) patch - Add support for the `aiopg`, `asyncpg`, `mysql`, `pymysql` and `mysqlclient` Python SQL database adapters.
+
 ## 1.3.1
 
 _Published on 2024-04-29._
