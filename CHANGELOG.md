@@ -1,5 +1,13 @@
 # AppSignal for Python Changelog
 
+## 1.3.3
+
+_Published on 2024-05-14._
+
+### Added
+
+- [b3db311](https://github.com/appsignal/appsignal-python/commit/b3db3118ff5368d4e24d0bfaf15be725a1a6134a) patch - Support Kamal-based deployments. Read the `KAMAL_VERSION` environment variable, which Kamal exposes within the deployed container, if present, and use it as the application revision if it is not set. This will automatically report deploy markers for applications using Kamal.
+
 ## 1.3.2
 
 _Published on 2024-05-06._
