@@ -19,4 +19,5 @@ TRIPLE_PLATFORM_TAG = {
     # https://peps.python.org/pep-0656/
     "aarch64-linux-musl": "musllinux_1_1_aarch64",
     "x86_64-linux-musl": "musllinux_1_1_x86_64",
+    "any": "any",
 }

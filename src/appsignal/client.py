@@ -41,6 +41,8 @@ class Client:
         if self._config.is_active():
             logger.info("Starting AppSignal")
             agent.start(self._config)
+            if not agent.active:
+                return
             start_opentelemetry(self._config)
             self._start_probes()
         else:

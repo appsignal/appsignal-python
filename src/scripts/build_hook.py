@@ -114,6 +114,12 @@ class CustomBuildHook(BuildHookInterface):
 
         rm(agent_path)
 
+        if triple == "any":
+            print("Skipping agent download for `any` triple")
+            with open(platform_path, "w") as platform:
+                platform.write(triple)
+            return
+
         tempdir_path = os.path.join(self.root, "tmp", triple)
         os.makedirs(tempdir_path, exist_ok=True)
 
