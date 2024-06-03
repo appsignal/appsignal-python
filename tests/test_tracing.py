@@ -109,7 +109,7 @@ def test_set_error(spans):
     assert span.status.status_code == StatusCode.ERROR
     event = span.events[0]
     assert event.name == "exception"
-    assert event.attributes["exception.type"] == "FooError"
+    assert event.attributes["exception.type"] == "tests.test_tracing.FooError"
     assert event.attributes["exception.message"] == "Whoops!"
 
 
@@ -126,7 +126,7 @@ def test_set_error_on_span(spans):
 
     event = parent_span.events[0]
     assert event.name == "exception"
-    assert event.attributes["exception.type"] == "FooError"
+    assert event.attributes["exception.type"] == "tests.test_tracing.FooError"
     assert event.attributes["exception.message"] == "Whoops!"
 
     child_span = next(span for span in spans if span.name == "child span")
@@ -142,7 +142,7 @@ def test_send_error(spans):
 
     event = span.events[0]
     assert event.name == "exception"
-    assert event.attributes["exception.type"] == "FooError"
+    assert event.attributes["exception.type"] == "tests.test_tracing.FooError"
     assert event.attributes["exception.message"] == "Whoops!"
 
 
@@ -162,7 +162,7 @@ def test_send_error_with_current_span(spans):
 
     event = error_span.events[0]
     assert event.name == "exception"
-    assert event.attributes["exception.type"] == "FooError"
+    assert event.attributes["exception.type"] == "tests.test_tracing.FooError"
     assert event.attributes["exception.message"] == "Whoops!"
 
     assert current_span.parent is None
@@ -193,5 +193,5 @@ def test_send_error_with_context(spans):
 
         event = span.events[0]
         assert event.name == "exception"
-        assert event.attributes["exception.type"] == "FooError"
+        assert event.attributes["exception.type"] == "tests.test_tracing.FooError"
         assert event.attributes["exception.message"] == "Whoops!"
