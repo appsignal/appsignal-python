@@ -16,6 +16,15 @@ class Agent:
 
     def start(self, config: Config) -> None:
         config.set_private_environ()
+
+        if self.architecture_and_platform() == ["any"]:
+            print(
+                "AppSignal agent is not available for this platform. "
+                "The integration is now running in no-op mode therefore "
+                "no data will be sent to AppSignal."
+            )
+            return
+
         p = subprocess.Popen(
             [self.agent_path, "start", "--private"],
             stdout=subprocess.PIPE,
