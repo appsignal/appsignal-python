@@ -1,5 +1,11 @@
 # AppSignal for Python Changelog
 
+## 1.3.4
+
+### Added
+
+- [5ed6e44](https://github.com/appsignal/appsignal-python/commit/5ed6e44b7afa98408833d836368270d3a7c34e7e) patch - Unsupported systems, like Microsoft Windows, won't start the agent and other integration components to prevent them from failing and allowing apps to be run normally.
+
 ## 1.3.3
 
 _Published on 2024-05-14._
