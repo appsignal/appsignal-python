@@ -1,5 +1,19 @@
 # AppSignal for Python Changelog
 
+## 1.3.5
+
+_Published on 2024-06-11._
+
+### Added
+
+- [8d036f8](https://github.com/appsignal/appsignal-python/commit/8d036f8ee5c6991ba9c15df64bdac66d0fc94a9d) patch - Add basic OpenTelemetry messaging support. This adds support for any OpenTelemetry instrumentation that complies with the OpenTelemetry Semantic Conventions specification for messaging.
+
+### Changed
+
+- [8d036f8](https://github.com/appsignal/appsignal-python/commit/8d036f8ee5c6991ba9c15df64bdac66d0fc94a9d) patch - Rename the `hostname` tag, which contains the host of the URI that an HTTP request was made against, to `request_host`.
+  
+  This fixes an issue where the `hostname` tag would later be internally overriden to the hostname of the machine processing the request, but notifications would still be emitted containing the previous `hostname` value.
+
 ## 1.3.4
 
 ### Added
