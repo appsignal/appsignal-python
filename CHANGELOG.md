@@ -1,5 +1,13 @@
 # AppSignal for Python Changelog
 
+## 1.3.6
+
+_Published on 2024-06-12._
+
+### Fixed
+
+- [21ce8fb](https://github.com/appsignal/appsignal-python/commit/21ce8fb51338f7e94b2d9737ee511e6ea37ccb5d) patch - Fix an issue where Redis events are misidentified as HTTP events.
+
 ## 1.3.5
 
 _Published on 2024-06-11._
