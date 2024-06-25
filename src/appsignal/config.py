@@ -104,6 +104,7 @@ class Config:
         "opentelemetry.instrumentation.jinja2",
         "opentelemetry.instrumentation.mysql",
         "opentelemetry.instrumentation.mysqlclient",
+        "opentelemetry.instrumentation.pika",
         "opentelemetry.instrumentation.psycopg",
         "opentelemetry.instrumentation.psycopg2",
         "opentelemetry.instrumentation.pymysql",

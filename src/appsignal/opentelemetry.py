@@ -103,6 +103,12 @@ def add_mysqlclient_instrumentation() -> None:
     MySQLClientInstrumentor().instrument()
 
 
+def add_pika_instrumentation() -> None:
+    from opentelemetry.instrumentation.pika import PikaInstrumentor
+
+    PikaInstrumentor().instrument()
+
+
 def add_psycopg2_instrumentation() -> None:
     from opentelemetry.instrumentation.psycopg2 import Psycopg2Instrumentor
 
@@ -158,6 +164,7 @@ DEFAULT_INSTRUMENTATION_ADDERS: Mapping[
     "opentelemetry.instrumentation.jinja2": add_jinja2_instrumentation,
     "opentelemetry.instrumentation.mysql": add_mysql_instrumentation,
     "opentelemetry.instrumentation.mysqlclient": add_mysqlclient_instrumentation,
+    "opentelemetry.instrumentation.pika": add_pika_instrumentation,
     "opentelemetry.instrumentation.psycopg2": add_psycopg2_instrumentation,
     "opentelemetry.instrumentation.psycopg": add_psycopg_instrumentation,
     "opentelemetry.instrumentation.pymysql": add_pymysql_instrumentation,
