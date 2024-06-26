@@ -1,5 +1,14 @@
 # AppSignal for Python Changelog
 
+## 1.3.7
+
+_Published on 2024-06-26._
+
+### Added
+
+- [d6d9724](https://github.com/appsignal/appsignal-python/commit/d6d9724c8655a667923859c87ac609e6729ce650) patch - Add support for Pika
+- [626db80](https://github.com/appsignal/appsignal-python/commit/626db805596279b1c76e140edb8087855807c0af) patch - AMQP messaging processing with Pika tracing data is now supported.
+
 ## 1.3.6
 
 _Published on 2024-06-12._
