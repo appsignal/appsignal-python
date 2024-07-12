@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 from runpy import run_path
 
+from . import check_in
 from .client import Client as Appsignal
 from .heartbeat import Heartbeat, heartbeat
 from .metrics import add_distribution_value, increment_counter, set_gauge
@@ -45,6 +46,7 @@ __all__ = [
     "add_distribution_value",
     "Heartbeat",
     "heartbeat",
+    "check_in",
     "start",
 ]
 

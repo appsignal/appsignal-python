@@ -17,6 +17,7 @@ from opentelemetry.trace import set_tracer_provider
 from appsignal import probes
 from appsignal.agent import agent
 from appsignal.client import _reset_client
+from appsignal.heartbeat import _heartbeat_class_warning, _heartbeat_helper_warning
 from appsignal.internal_logger import _reset_logger
 from appsignal.opentelemetry import METRICS_PREFERRED_TEMPORALITY
 
@@ -110,3 +111,11 @@ def stop_agent():
     working_dir = os.path.join(tmp_path, "appsignal")
     if os.path.isdir(working_dir):
         os.system(f"rm -rf {working_dir}")
+
+
+@pytest.fixture(scope="function")
+def reset_heartbeat_warnings():
+    _heartbeat_class_warning.reset()
+    _heartbeat_helper_warning.reset()
+
+    yield
