@@ -58,7 +58,7 @@ def test_cron_start_sends_cron_checkin_start_event(mocker):
 
     assert requests_mock.called
     assert (
-        "https://appsignal-endpoint.net/checkins/cron/json?"
+        "https://appsignal-endpoint.net/check_ins/json?"
         in requests_mock.call_args[0][0]
     )
     # The ordering of query parameters is not guaranteed.
@@ -67,10 +67,11 @@ def test_cron_start_sends_cron_checkin_start_event(mocker):
     assert "hostname=beepboop.local" in requests_mock.call_args[0][0]
     assert "name=some-app" in requests_mock.call_args[0][0]
 
-    assert requests_mock.call_args[1]["json"]["name"] == "some-cron-checkin"
+    assert requests_mock.call_args[1]["json"]["identifier"] == "some-cron-checkin"
     assert requests_mock.call_args[1]["json"]["kind"] == "start"
     assert isinstance(requests_mock.call_args[1]["json"]["timestamp"], int)
-    assert isinstance(requests_mock.call_args[1]["json"]["id"], str)
+    assert isinstance(requests_mock.call_args[1]["json"]["digest"], str)
+    assert requests_mock.call_args[1]["json"]["check_in_type"] == "cron"
 
 
 def test_cron_finish_sends_cron_checkin_finish_event(mocker):
@@ -82,7 +83,7 @@ def test_cron_finish_sends_cron_checkin_finish_event(mocker):
 
     assert requests_mock.called
     assert (
-        "https://appsignal-endpoint.net/checkins/cron/json?"
+        "https://appsignal-endpoint.net/check_ins/json?"
         in requests_mock.call_args[0][0]
     )
     # The ordering of query parameters is not guaranteed.
@@ -91,10 +92,11 @@ def test_cron_finish_sends_cron_checkin_finish_event(mocker):
     assert "hostname=beepboop.local" in requests_mock.call_args[0][0]
     assert "name=some-app" in requests_mock.call_args[0][0]
 
-    assert requests_mock.call_args[1]["json"]["name"] == "some-cron-checkin"
+    assert requests_mock.call_args[1]["json"]["identifier"] == "some-cron-checkin"
     assert requests_mock.call_args[1]["json"]["kind"] == "finish"
     assert isinstance(requests_mock.call_args[1]["json"]["timestamp"], int)
-    assert isinstance(requests_mock.call_args[1]["json"]["id"], str)
+    assert isinstance(requests_mock.call_args[1]["json"]["digest"], str)
+    assert requests_mock.call_args[1]["json"]["check_in_type"] == "cron"
 
 
 def test_cron_sends_cron_checkin_finish_event(mocker):
@@ -106,7 +108,7 @@ def test_cron_sends_cron_checkin_finish_event(mocker):
     assert requests_mock.called
     assert len(requests_mock.call_args_list) == 1
 
-    assert requests_mock.call_args[1]["json"]["name"] == "some-cron-checkin"
+    assert requests_mock.call_args[1]["json"]["identifier"] == "some-cron-checkin"
     assert requests_mock.call_args[1]["json"]["kind"] == "finish"
 
 
@@ -123,18 +125,24 @@ def test_cron_with_function_sends_cron_checkin_start_and_finish_event(mocker):
     assert requests_mock.called
     assert len(requests_mock.call_args_list) == 2
 
-    assert requests_mock.call_args_list[0][1]["json"]["name"] == "some-cron-checkin"
+    assert (
+        requests_mock.call_args_list[0][1]["json"]["identifier"] == "some-cron-checkin"
+    )
     assert requests_mock.call_args_list[0][1]["json"]["kind"] == "start"
-    assert requests_mock.call_args_list[1][1]["json"]["name"] == "some-cron-checkin"
+    assert (
+        requests_mock.call_args_list[1][1]["json"]["identifier"] == "some-cron-checkin"
+    )
     assert requests_mock.call_args_list[1][1]["json"]["kind"] == "finish"
     assert (
         requests_mock.call_args_list[0][1]["json"]["timestamp"]
         < requests_mock.call_args_list[1][1]["json"]["timestamp"]
     )
     assert (
-        requests_mock.call_args_list[0][1]["json"]["id"]
-        == requests_mock.call_args_list[1][1]["json"]["id"]
+        requests_mock.call_args_list[0][1]["json"]["digest"]
+        == requests_mock.call_args_list[1][1]["json"]["digest"]
     )
+    assert requests_mock.call_args_list[0][1]["json"]["check_in_type"] == "cron"
+    assert requests_mock.call_args_list[1][1]["json"]["check_in_type"] == "cron"
 
 
 def test_cron_with_function_does_not_send_cron_checkin_finish_event_on_exception(
@@ -152,7 +160,9 @@ def test_cron_with_function_does_not_send_cron_checkin_finish_event_on_exception
     assert requests_mock.called
     assert len(requests_mock.call_args_list) == 1
 
-    assert requests_mock.call_args_list[0][1]["json"]["name"] == "some-cron-checkin"
+    assert (
+        requests_mock.call_args_list[0][1]["json"]["identifier"] == "some-cron-checkin"
+    )
     assert requests_mock.call_args_list[0][1]["json"]["kind"] == "start"
 
 
@@ -166,18 +176,24 @@ def test_cron_context_manager_sends_cron_checkin_start_and_finish_event(mocker):
     assert requests_mock.called
     assert len(requests_mock.call_args_list) == 2
 
-    assert requests_mock.call_args_list[0][1]["json"]["name"] == "some-cron-checkin"
+    assert (
+        requests_mock.call_args_list[0][1]["json"]["identifier"] == "some-cron-checkin"
+    )
     assert requests_mock.call_args_list[0][1]["json"]["kind"] == "start"
-    assert requests_mock.call_args_list[1][1]["json"]["name"] == "some-cron-checkin"
+    assert (
+        requests_mock.call_args_list[1][1]["json"]["identifier"] == "some-cron-checkin"
+    )
     assert requests_mock.call_args_list[1][1]["json"]["kind"] == "finish"
     assert (
         requests_mock.call_args_list[0][1]["json"]["timestamp"]
         < requests_mock.call_args_list[1][1]["json"]["timestamp"]
     )
     assert (
-        requests_mock.call_args_list[0][1]["json"]["id"]
-        == requests_mock.call_args_list[1][1]["json"]["id"]
+        requests_mock.call_args_list[0][1]["json"]["digest"]
+        == requests_mock.call_args_list[1][1]["json"]["digest"]
     )
+    assert requests_mock.call_args_list[0][1]["json"]["check_in_type"] == "cron"
+    assert requests_mock.call_args_list[1][1]["json"]["check_in_type"] == "cron"
 
 
 def test_cron_context_manager_does_not_send_cron_checkin_finish_event_on_exception(
@@ -193,7 +209,9 @@ def test_cron_context_manager_does_not_send_cron_checkin_finish_event_on_excepti
     assert requests_mock.called
     assert len(requests_mock.call_args_list) == 1
 
-    assert requests_mock.call_args_list[0][1]["json"]["name"] == "some-cron-checkin"
+    assert (
+        requests_mock.call_args_list[0][1]["json"]["identifier"] == "some-cron-checkin"
+    )
     assert requests_mock.call_args_list[0][1]["json"]["kind"] == "start"
 
 
@@ -243,9 +261,9 @@ def test_heartbeat_helper_behaves_like_cron_helper(mocker):
     assert requests_mock.called
     assert len(requests_mock.call_args_list) == 2
 
-    assert requests_mock.call_args_list[0][1]["json"]["name"] == "some-heartbeat"
+    assert requests_mock.call_args_list[0][1]["json"]["identifier"] == "some-heartbeat"
     assert requests_mock.call_args_list[0][1]["json"]["kind"] == "start"
-    assert requests_mock.call_args_list[1][1]["json"]["name"] == "some-heartbeat"
+    assert requests_mock.call_args_list[1][1]["json"]["identifier"] == "some-heartbeat"
     assert requests_mock.call_args_list[1][1]["json"]["kind"] == "finish"
 
 

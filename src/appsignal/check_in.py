@@ -17,10 +17,11 @@ EventKind = Union[Literal["start"], Literal["finish"]]
 
 
 class Event(TypedDict):
-    name: str
-    id: str
+    identifier: str
+    digest: str
     kind: EventKind
     timestamp: int
+    check_in_type: Literal["cron"]
 
 
 class Cron:
@@ -32,7 +33,13 @@ class Cron:
         self.id = hexlify(urandom(8)).decode("utf-8")
 
     def _event(self, kind: EventKind) -> Event:
-        return Event(name=self.name, id=self.id, kind=kind, timestamp=int(time()))
+        return Event(
+            identifier=self.name,
+            digest=self.id,
+            kind=kind,
+            timestamp=int(time()),
+            check_in_type="cron",
+        )
 
     def _transmit(self, event: Event) -> None:
         config = Client.config() or Config()
@@ -41,13 +48,13 @@ class Cron:
             logger.debug("AppSignal not active, not transmitting cron check-in event")
             return
 
-        url = f"{config.option('logging_endpoint')}/checkins/cron/json"
+        url = f"{config.option('logging_endpoint')}/check_ins/json"
         try:
             response = transmit(url, json=event)
             if 200 <= response.status_code <= 299:
                 logger.debug(
-                    f"Transmitted cron check-in `{event['name']}` ({event['id']}) "
-                    f"{event['kind']} event"
+                    f"Transmitted cron check-in `{event['identifier']}` "
+                    f"({event['digest']}) {event['kind']} event"
                 )
             else:
                 logger.error(
