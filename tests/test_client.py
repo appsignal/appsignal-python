@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import os
+import signal
+from unittest.mock import call, mock_open, patch
 
 from appsignal.agent import agent
 from appsignal.client import Client
@@ -97,4 +99,20 @@ def test_client_inactive():
     assert (
         os.environ.get("OTEL_INSTRUMENTATION_HTTP_CAPTURE_HEADERS_SERVER_REQUEST")
         is None
+    )
+
+
+@patch("time.sleep", return_value=None)
+@patch("os.kill", return_value=None)
+@patch("builtins.open", new_callable=mock_open, read_data="123456;running;123\n")
+def test_client_stop(mock_open, mock_kill, mock_sleep):
+    client = Client(active=True, name="MyApp", push_api_key="0000-0000-0000-0000")
+    client.start()
+
+    client.stop()
+
+    mock_kill.assert_has_calls(
+        [
+            call(123, signal.SIGTERM),
+        ]
     )
