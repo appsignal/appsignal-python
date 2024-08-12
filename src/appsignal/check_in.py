@@ -25,17 +25,17 @@ class Event(TypedDict):
 
 
 class Cron:
-    name: str
-    id: str
+    identifier: str
+    digest: str
 
-    def __init__(self, name: str) -> None:
-        self.name = name
-        self.id = hexlify(urandom(8)).decode("utf-8")
+    def __init__(self, identifier: str) -> None:
+        self.identifier = identifier
+        self.digest = hexlify(urandom(8)).decode("utf-8")
 
     def _event(self, kind: EventKind) -> Event:
         return Event(
-            identifier=self.name,
-            digest=self.id,
+            identifier=self.identifier,
+            digest=self.digest,
             kind=kind,
             timestamp=int(time()),
             check_in_type="cron",
@@ -82,8 +82,8 @@ class Cron:
         return False
 
 
-def cron(name: str, fn: Callable[[], T] | None = None) -> None | T:
-    cron = Cron(name)
+def cron(identifier: str, fn: Callable[[], T] | None = None) -> None | T:
+    cron = Cron(identifier)
     output = None
 
     if fn is not None:
