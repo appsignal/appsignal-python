@@ -1,5 +1,37 @@
 # AppSignal for Python Changelog
 
+## 1.3.8
+
+_Published on 2024-08-14._
+
+### Changed
+
+- Rename heartbeats to cron check-ins. Calls to `appsignal.heartbeat` and `appsignal.Heartbeat` should be replaced with calls to `appsignal.check_in.cron` and `appsignal.check_in.Cron`, for example:
+
+  ```python
+  # Before
+  from appsignal import heartbeat
+
+  def do_something():
+    pass
+
+  heartbeat("do_something", do_something)
+
+  # After
+  from appsignal.check_in import cron
+
+  def do_something():
+    pass
+
+  cron("do_something", do_something)
+  ```
+
+  (patch [b530263](https://github.com/appsignal/appsignal-python/commit/b5302635665ed43c42d5cac063f7c008c2ffb85f))
+
+### Deprecated
+
+- Calls to `appsignal.heartbeat` and to the `appsignal.Heartbeat` constructor will emit a deprecation warning. (patch [b530263](https://github.com/appsignal/appsignal-python/commit/b5302635665ed43c42d5cac063f7c008c2ffb85f))
+
 ## 1.3.7
 
 _Published on 2024-06-26._
