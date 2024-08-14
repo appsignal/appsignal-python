@@ -1,87 +1,64 @@
 from __future__ import annotations
 
-from binascii import hexlify
-from os import urandom
-from time import time
-from typing import Any, Callable, Literal, TypedDict, TypeVar, Union
+from typing import Any, Callable, TypeVar
 
 from . import internal_logger as logger
-from .client import Client
-from .config import Config
-from .transmitter import transmit
+from .check_in import Cron, cron
 
 
 T = TypeVar("T")
 
-EventKind = Union[Literal["start"], Literal["finish"]]
+
+class _Once:
+    def __init__(self, func: Callable[..., None], *args: Any, **kwargs: Any) -> None:
+        self.called = False
+        self.func = func
+        self.args = args
+        self.kwargs = kwargs
+
+    def __call__(self) -> None:
+        if not self.called:
+            self.called = True
+            self.func(*self.args, **self.kwargs)
+
+    def reset(self) -> None:
+        self.called = False
 
 
-class Event(TypedDict):
-    name: str
-    id: str
-    kind: EventKind
-    timestamp: int
+def _warn_logger_and_stdout(msg: str) -> None:
+    logger.warning(msg)
+    print(f"appsignal WARNING: {msg}")
 
 
-class Heartbeat:
-    name: str
-    id: str
+_heartbeat_helper_warning = _Once(
+    _warn_logger_and_stdout,
+    "The helper `heartbeat` has been deprecated. "
+    "Please update uses of the helper `heartbeat(...)` to `cron(...)`, "
+    "importing it as `from appsignal.check_in import cron`, "
+    "in order to remove this message.",
+)
 
-    def __init__(self, name: str) -> None:
-        self.name = name
-        self.id = hexlify(urandom(8)).decode("utf-8")
-
-    def _event(self, kind: EventKind) -> Event:
-        return Event(name=self.name, id=self.id, kind=kind, timestamp=int(time()))
-
-    def _transmit(self, event: Event) -> None:
-        config = Client.config() or Config()
-
-        if not config.is_active():
-            logger.debug("AppSignal not active, not transmitting heartbeat event")
-            return
-
-        url = f"{config.option('logging_endpoint')}/heartbeats/json"
-        try:
-            response = transmit(url, json=event)
-            if 200 <= response.status_code <= 299:
-                logger.debug(
-                    f"Transmitted heartbeat `{event['name']}` ({event['id']}) "
-                    f"{event['kind']} event"
-                )
-            else:
-                logger.error(
-                    "Failed to transmit heartbeat event: "
-                    f"status code was {response.status_code}"
-                )
-        except Exception as e:
-            logger.error(f"Failed to transmit heartbeat event: {e}")
-
-    def start(self) -> None:
-        self._transmit(self._event("start"))
-
-    def finish(self) -> None:
-        self._transmit(self._event("finish"))
-
-    def __enter__(self) -> None:
-        self.start()
-
-    def __exit__(
-        self, exc_type: Any = None, exc_value: Any = None, traceback: Any = None
-    ) -> Literal[False]:
-        if exc_type is None:
-            self.finish()
-
-        return False
+_heartbeat_class_warning = _Once(
+    _warn_logger_and_stdout,
+    "The class `Heartbeat` has been deprecated. "
+    "Please update uses of the class `Heartbeat(...)` to `Cron(...)`, "
+    "importing it as `from appsignal.check_in import Cron`, "
+    "in order to remove this message.",
+)
 
 
 def heartbeat(name: str, fn: Callable[[], T] | None = None) -> None | T:
-    heartbeat = Heartbeat(name)
-    output = None
+    _heartbeat_helper_warning()
+    return cron(name, fn)
 
-    if fn is not None:
-        heartbeat.start()
-        output = fn()
 
-    heartbeat.finish()
-    return output
+class _MetaHeartbeat(type):
+    def __instancecheck__(cls, other: Any) -> bool:
+        _heartbeat_class_warning()
+        return isinstance(other, Cron)
+
+
+class Heartbeat(metaclass=_MetaHeartbeat):
+    def __new__(cls, name: str) -> Cron:  # type: ignore[misc]
+        _heartbeat_class_warning()
+        return Cron(name)
