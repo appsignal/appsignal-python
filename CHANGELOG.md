@@ -1,5 +1,15 @@
 # AppSignal for Python Changelog
 
+## 1.3.9
+
+_Published on 2024-08-19._
+
+### Added
+
+- [c2e3f26](https://github.com/appsignal/appsignal-python/commit/c2e3f26575747fbd17e333c527ab33fc4758385d) patch - Add helper to manually stop the agent process for this AppSignal instance.
+  
+  Some contexts, like serverless functions, exit before AppSignal can ensure all data is sent to our servers. To ensure the data is sent, the new `appsignal.stop()` method can be called to gracefully stop the AppSignal agent process.
+
 ## 1.3.8
 
 _Published on 2024-08-14._
