@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import os
+import signal
+import time
 from typing import TYPE_CHECKING
 
 from . import internal_logger as logger
@@ -47,6 +50,19 @@ class Client:
             self._start_probes()
         else:
             logger.info("AppSignal not starting: no active config found")
+
+    def stop(self) -> None:
+        logger.info("Stopping AppSignal")
+        working_dir = self._config.option("working_directory_path") or "/tmp/appsignal"
+        lock_path = os.path.join(working_dir, "agent.lock")
+        try:
+            with open(lock_path) as file:
+                line = file.readline()
+                pid = int(line.split(";")[2])
+                os.kill(pid, signal.SIGTERM)
+                time.sleep(2)
+        except FileNotFoundError:
+            logger.info("Agent lock file not found")
 
     def _start_probes(self) -> None:
         if self._config.option("enable_minutely_probes"):
