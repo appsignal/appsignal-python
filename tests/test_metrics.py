@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 from typing import Any
+from unittest.mock import call
 
-from opentelemetry.metrics import CallbackOptions, Histogram, UpDownCounter
+from opentelemetry.metrics import Histogram, UpDownCounter, _Gauge
 
 from appsignal import add_distribution_value, increment_counter, set_gauge
 from appsignal.metrics import _counters, _gauges, _histograms, _meter
@@ -77,73 +78,36 @@ def test_add_distribution_value_with_tags(mocker):
 
 
 def test_set_gauge_creates_new_gauge(mocker):
-    meter_spy = mocker.spy(_meter, "create_observable_gauge")
+    meter_spy = mocker.spy(_meter, "create_gauge")
     assert "metric_name" not in _gauges
 
     set_gauge("metric_name", 10)
 
     # Registers the gauges internally
-    assert _gauges["metric_name"][None] == 10
+    assert isinstance(_gauges["metric_name"], _Gauge)
 
     # Check if it was registered on the meter
-    meter_spy.assert_called_once_with("metric_name", callbacks=mocker.ANY)
-    callbacks = meter_spy.call_args.kwargs["callbacks"]
-    assert len(callbacks) == 1
-
-    # Mock the ObservableGauge's async task calling the callbacks
-    return_values = callbacks[0](CallbackOptions())
-    assert len(return_values) == 1
-    return_value = return_values[0]
-    assert return_value.value == 10
-    assert return_value.attributes is None
-
-    # Resets gauge values
-    assert _gauges["metric_name"] == {}
-
-    return_values = callbacks[0](CallbackOptions())
-    assert len(return_values) == 0
+    meter_spy.assert_called_once_with("metric_name")
 
 
-def test_set_gauge_updates_existing_gauge():
+def test_set_gauge_updates_existing_gauge(mocker):
+    _gauges["existing"] = _meter.create_gauge("existing")
+    gauge1_spy = mocker.spy(_gauges["existing"], "set")
+
     set_gauge("existing", 10)
     set_gauge("existing", 11, None)  # None is also the default
 
-    assert _gauges["existing"][None] == 11
+    gauge1_spy.assert_has_calls([call(10, None), call(11, None)])
+
+    _gauges["existing_with_tags"] = _meter.create_gauge("existing_with_tags")
+    gauge2_spy = mocker.spy(_gauges["existing_with_tags"], "set")
 
     set_gauge("existing_with_tags", 10, {"tag1": "value1"})
     set_gauge("existing_with_tags", 11, {"tag1": "value1"})
 
-    assert _gauges["existing_with_tags"][tags_key({"tag1": "value1"})] == 11
-
-
-def test_set_gauge_updates_with_tags(mocker):
-    meter_spy = mocker.spy(_meter, "create_observable_gauge")
-    set_gauge("with_tags1", 10, {"tag1": "value1"})
-    set_gauge("with_tags1", 11, {"tag1": "value1"})
-    set_gauge("with_tags1", 55, {"other": "value2"})
-
-    assert _gauges["with_tags1"][tags_key({"tag1": "value1"})] == 11
-    assert _gauges["with_tags1"][tags_key({"other": "value2"})] == 55
-
-    # Mock the ObservableGauge's async task calling the callbacks
-    callbacks = meter_spy.call_args.kwargs["callbacks"]
-    return_values = callbacks[0](CallbackOptions())
-    assert len(return_values) == 2
-
-    obs1 = return_values[0]
-    assert obs1.value == 11
-    assert obs1.attributes == {"tag1": "value1"}
-
-    obs2 = return_values[1]
-    assert obs2.value == 55
-    assert obs2.attributes == {"other": "value2"}
-
-    # Resets gauge values
-    assert _gauges["with_tags1"] == {}
-
-    callbacks = meter_spy.call_args.kwargs["callbacks"]
-    return_values = callbacks[0](CallbackOptions())
-    assert len(return_values) == 0
+    gauge2_spy.assert_has_calls(
+        [call(10, {"tag1": "value1"}), call(11, {"tag1": "value1"})]
+    )
 
 
 def tags_key(tags: dict[str, str]) -> frozenset[Any]:
