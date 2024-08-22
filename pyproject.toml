@@ -27,8 +27,8 @@ classifiers = [
   "Development Status :: 5 - Production/Stable"
 ]
 dependencies = [
-  "opentelemetry-api",
-  "opentelemetry-sdk",
+  "opentelemetry-api>=1.26.0",
+  "opentelemetry-sdk>=1.26.0",
   "opentelemetry-exporter-otlp-proto-http",
 ]
 dynamic = ["version"]
