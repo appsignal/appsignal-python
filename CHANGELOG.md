@@ -1,5 +1,13 @@
 # AppSignal for Python Changelog
 
+## 1.3.10
+
+_Published on 2024-08-23._
+
+### Changed
+
+- [f9b17a7](https://github.com/appsignal/appsignal-python/commit/f9b17a753cb8178851658334f6235add43acc89d) patch - Simplify the implementation of `set_gauge` in favor of the newer OpenTelemetry's sync implementation.
+
 ## 1.3.9
 
 _Published on 2024-08-19._
