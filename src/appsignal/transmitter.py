@@ -5,8 +5,9 @@ from typing import TYPE_CHECKING, Any
 
 import requests
 
-from appsignal.client import Client
-from appsignal.config import Config
+from .client import Client
+from .config import Config
+from .ndjson import dumps as ndjson_dumps
 
 
 if TYPE_CHECKING:
@@ -14,10 +15,16 @@ if TYPE_CHECKING:
 
 
 def transmit(
-    url: str, json: Any | None = None, config: Config | None = None
+    url: str,
+    json: Any | None = None,
+    ndjson: list[Any] | None = None,
+    config: Config | None = None,
 ) -> Response:
     if config is None:
         config = Client.config() or Config()
+
+    if json is not None and ndjson is not None:
+        raise ValueError("Cannot send both `json` and `ndjson`")
 
     params = urllib.parse.urlencode(
         {
@@ -36,5 +43,12 @@ def transmit(
         proxies["https"] = config.option("http_proxy")
 
     cert = config.option("ca_file_path")
+
+    if ndjson is not None:
+        data = ndjson_dumps(ndjson)
+        headers = {"Content-Type": "application/x-ndjson"}
+        return requests.post(
+            url, data=data, headers=headers, proxies=proxies, verify=cert
+        )
 
     return requests.post(url, json=json, proxies=proxies, verify=cert)

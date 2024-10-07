@@ -1,37 +1,30 @@
 from __future__ import annotations
 
-from threading import Thread, Lock
 from queue import Queue
-from typing import List, Optional, cast
-from time import sleep
+from threading import Event as ThreadEvent
+from threading import Lock, Thread
+from typing import cast
 
-from .event import Event
-from ..client import Client
 from .. import internal_logger as logger
+from ..client import Client
+from ..config import Config
 from ..transmitter import transmit
+from .event import Event, describe, is_redundant
 
-class AcquiredLock:
-    def __new__(_cls):
-        raise TypeError("AcquiredLock instances cannot be constructed")
-
-class TypedLock(Lock):
-    def __enter__(self) -> AcquiredLock:
-        super().__enter__()
-        return cast(AcquiredLock, None)
 
 class Scheduler:
-    events: List[Event]
-    lock: TypedLock
+    events: list[Event]
+    lock: Lock
     queue: Queue
     stopped: bool
-    thread: Optional[Thread]
-    waker: Optional[Thread]
+    thread: Thread | None
+    waker: ThreadEvent | None
     _transmitted: int
 
-    INITIAL_DEBOUNCE_SECONDS = 0.1
-    BETWEEN_TRANSMISSIONS_DEBOUNCE_SECONDS = 10
+    INITIAL_DEBOUNCE_SECONDS: float = 0.1
+    BETWEEN_TRANSMISSIONS_DEBOUNCE_SECONDS: float = 10.0
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.lock = Lock()
         self.thread = None
         self.queue = Queue()
@@ -40,88 +33,121 @@ class Scheduler:
         self.waker = None
         self._transmitted = 0
 
-    def schedule(self, event: Event):
-        if not Client.config().is_active():
-            logger.debug(f"Cannot transmit {Event.describe([event])}: AppSignal is not active")
+    def schedule(self, event: Event) -> None:
+        config = Client.config()
+        if config is None or not config.is_active():
+            logger.debug(
+                f"Cannot transmit {describe([event])}: AppSignal is not active"
+            )
             return
 
-        with self.lock as locked:
+        with self.lock:
             if self.stopped:
-                logger.debug(f"Cannot transmit {Event.describe([event])}: AppSignal is stopped")
+                logger.debug(
+                    f"Cannot transmit {describe([event])}: AppSignal is stopped"
+                )
                 return
-            self._add_event(locked, event)
-            if self.waker is None:
-                self._start_waker(locked, self.INITIAL_DEBOUNCE_SECONDS)
 
-            logger.debug(f"Scheduling {Event.describe([event])} to be transmitted")
+            self._add_event(event)
+            if self.waker is None:
+                self._start_waker(self.INITIAL_DEBOUNCE_SECONDS)
+
+            logger.debug(f"Scheduling {describe([event])} to be transmitted")
 
             if self.thread is None:
                 self.thread = Thread(target=self._run)
                 self.thread.start()
 
-    def stop(self):
-        with self.lock as locked:
-            self._push_events(locked)
+    def stop(self) -> None:
+        with self.lock:
+            self._push_events()
             self.stopped = True
-            self._stop_waker(locked)
+            self._stop_waker()
             if self.thread is not None:
+                self.queue.put(None)
                 self.thread.join()
                 self.thread = None
 
-    def _run(self):
+    def _run(self) -> None:
         while True:
             events = self.queue.get()
             if events is None:
                 break
-
             self._transmit(events)
-            self.transmitted += 1
+            self._transmitted += 1
 
-    def _transmit(self, events: List[Event]):
-        description = Event.describe(events)
+    def _transmit(self, events: list[Event]) -> None:
+        description = describe(events)
 
         try:
-            response = transmit(f"{Client.config().option('logging_endpoint')}/check_ins/json", json=events)
+            response = transmit(
+                f"{cast(Config, Client.config()).option('logging_endpoint')}"
+                "/check_ins/json",
+                ndjson=events,
+            )
 
             if 200 <= response.status_code <= 299:
                 logger.debug(f"Transmitted {description}")
             else:
-                logger.error(f"Failed to transmit {description}: {response.status_code} status code")
+                logger.error(
+                    f"Failed to transmit {description}: "
+                    f"{response.status_code} status code"
+                )
         except Exception as e:
             logger.error(f"Failed to transmit {description}: {e}")
 
-    def _add_event(self, locked: AcquiredLock, event: Event):
+    # Must be called from within a `with self.lock` block.
+    def _add_event(self, event: Event) -> None:
         self.events = [
-            existing_event for existing_event in self.events
-            if not event.is_redundant(existing_event)
+            existing_event
+            for existing_event in self.events
+            if not is_redundant(event, existing_event)
         ]
-        
+
         self.events.append(event)
 
-    def _run_waker(self, debounce: float):
-        sleep(debounce)
-
-        with self.lock as locked:
+    def _run_waker(self, debounce: float, kill: ThreadEvent) -> None:
+        if kill.wait(debounce):
+            return
+        with self.lock:
             self.waker = None
-            self._push_events(locked)
+            self._push_events()
 
-    def _start_waker(self, locked: AcquiredLock, debounce: float):
-        self._stop_waker(locked)
+    # Must be called from within a `with self.lock` block.
+    def _start_waker(self, debounce: float) -> None:
+        self._stop_waker()
 
-        self.waker = Thread(debounce, target=self._run_waker, args=(debounce,))
-        self.waker.start()
+        kill = ThreadEvent()
+        thread = Thread(target=self._run_waker, args=(debounce, kill))
+        thread.start()
+        self.waker = kill
 
-    def _stop_waker(self, locked: AcquiredLock):
+    # Must be called from within a `with self.lock` block.
+    def _stop_waker(self) -> None:
         if self.waker is not None:
-            self.waker.cancel()
+            kill = self.waker
+            kill.set()
             self.waker = None
 
-    def _push_events(self, locked: AcquiredLock):
+    # Must be called from within a `with self.lock` block.
+    def _push_events(self) -> None:
         if not self.events:
             return
-
         self.queue.put(self.events.copy())
         self.events.clear()
-        self._start_waker(locked, self.BETWEEN_TRANSMISSIONS_DEBOUNCE_SECONDS)
+        self._start_waker(self.BETWEEN_TRANSMISSIONS_DEBOUNCE_SECONDS)
 
-scheduler = Scheduler()
+
+_scheduler = Scheduler()
+
+
+def scheduler() -> Scheduler:
+    return _scheduler
+
+
+def _reset_scheduler() -> None:
+    global _scheduler
+    _scheduler.stop()
+    _scheduler = Scheduler()
+    Scheduler.INITIAL_DEBOUNCE_SECONDS = 0.1
+    Scheduler.BETWEEN_TRANSMISSIONS_DEBOUNCE_SECONDS = 10.0

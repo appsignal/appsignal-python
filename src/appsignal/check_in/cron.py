@@ -4,10 +4,12 @@ from binascii import hexlify
 from os import urandom
 from typing import Any, Callable, Literal, TypeVar
 
-from .event import Event
+from .event import cron as cron_event
 from .scheduler import scheduler
 
+
 T = TypeVar("T")
+
 
 class Cron:
     identifier: str
@@ -18,10 +20,10 @@ class Cron:
         self.digest = hexlify(urandom(8)).decode("utf-8")
 
     def start(self) -> None:
-        scheduler.schedule(Event.cron(self.identifier, self.digest, "start"))
+        scheduler().schedule(cron_event(self.identifier, self.digest, "start"))
 
     def finish(self) -> None:
-        scheduler.schedule(Event.cron(self.identifier, self.digest, "finish"))
+        scheduler().schedule(cron_event(self.identifier, self.digest, "finish"))
 
     def __enter__(self) -> None:
         self.start()
