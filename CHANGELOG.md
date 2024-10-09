@@ -1,5 +1,40 @@
 # AppSignal for Python Changelog
 
+## 1.4.0
+
+_Published on 2024-10-09._
+
+### Added
+
+- Add support for heartbeat check-ins.
+
+  Use the `appsignal.check_in.heartbeat` function to send a single heartbeat check-in event from your application. This can be used, for example, in your application's main loop:
+
+  ```python
+  from appsignal.check_in import heartbeat
+
+  while True:
+    heartbeat("job_processor")
+    process_job()
+  ```
+
+  Heartbeats are deduplicated and sent asynchronously, without blocking the current thread. Regardless of how often the `.heartbeat` function is called, at most one heartbeat with the same identifier will be sent every ten seconds.
+
+  Pass `continuous=True` as the second argument to send heartbeats continuously during the entire lifetime of the current process. This can be used, for example, after your application has finished its boot process:
+
+  ```python
+  def main():
+    start_app()
+    heartbeat("my_app", continuous=True)
+  ```
+
+  (minor [687890b](https://github.com/appsignal/appsignal-python/commit/687890b54db3b9f03d8e0a7270586c545a89fdb6))
+
+### Changed
+
+- Change the primary download mirror for integrations. (patch [3e0bb9e](https://github.com/appsignal/appsignal-python/commit/3e0bb9e36eb3b0fbe2ae9b907fcda9060c018d2e))
+- Send check-ins concurrently. When calling `appsignal.check_in.cron`, instead of blocking the current thread while the check-in events are sent, schedule them to be sent in a separate thread. (patch [687890b](https://github.com/appsignal/appsignal-python/commit/687890b54db3b9f03d8e0a7270586c545a89fdb6))
+
 ## 1.3.10
 
 _Published on 2024-08-23._
