@@ -52,6 +52,20 @@ def test_transmitter_send_body_as_json(mocker):
     assert mock_request.call_args[1]["json"] == {"key": "value"}
 
 
+def test_transmitter_send_body_as_ndjson(mocker):
+    mock_request = mocker.patch("requests.post")
+
+    transmit(
+        "https://example.url/", ndjson=[{"key": "value"}, {"foo": "bar"}], config=config
+    )
+
+    assert mock_request.called
+    assert mock_request.call_args[1]["data"] == '{"key": "value"}\n{"foo": "bar"}'
+    assert mock_request.call_args[1]["headers"] == {
+        "Content-Type": "application/x-ndjson"
+    }
+
+
 def test_transmitter_set_proxies_from_config(mocker):
     mock_request = mocker.patch("requests.post")
 
