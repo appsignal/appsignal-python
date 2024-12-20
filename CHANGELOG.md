@@ -1,5 +1,17 @@
 # AppSignal for Python Changelog
 
+## 1.4.1
+
+_Published on 2024-12-20._
+
+### Added
+
+- Set the app revision config option for Scalingo deploys automatically. If the `CONTAINER_VERSION` system environment variable is present, it will use used to set the `revision` config option automatically. Overwrite it's value by configuring the `revision` config option for your application. (patch [fbec34c](https://github.com/appsignal/appsignal-python/commit/fbec34cbddfd40fa4bf2b2cd166e45c1df63fc56))
+
+### Fixed
+
+- Fix a performance issue when sanitising `INSERT INTO ... VALUES` queries. (patch [073e6d2](https://github.com/appsignal/appsignal-python/commit/073e6d2c5c928e6cb527786469a2b0518417c296))
+
 ## 1.4.0
 
 _Published on 2024-10-09._
