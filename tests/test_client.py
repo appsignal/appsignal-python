@@ -105,7 +105,7 @@ def test_client_inactive():
 @patch("time.sleep", return_value=None)
 @patch("os.kill", return_value=None)
 @patch("builtins.open", new_callable=mock_open, read_data="123456;running;123\n")
-def test_client_stop(mock_open, mock_kill, mock_sleep):
+def test_client_stop_kills_agent(mock_open, mock_kill, mock_sleep):
     client = Client(active=True, name="MyApp", push_api_key="0000-0000-0000-0000")
     client.start()
 
@@ -116,3 +116,19 @@ def test_client_stop(mock_open, mock_kill, mock_sleep):
             call(123, signal.SIGTERM),
         ]
     )
+
+
+def test_client_stop_stops_scheduler(mocker):
+    # use mocker to check that the `stop` method in the `_scheduler` global variable
+    # in `check_in.scheduler._scheduler` is called
+
+    stop_mock = mocker.patch("appsignal.check_in.scheduler._scheduler.stop")
+
+    client = Client(active=True, name="MyApp", push_api_key="0000-0000-0000-0000")
+    client.start()
+
+    stop_mock.assert_not_called()
+
+    client.stop()
+
+    stop_mock.assert_called_once()

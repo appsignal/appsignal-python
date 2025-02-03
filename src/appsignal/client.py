@@ -52,7 +52,10 @@ class Client:
             logger.info("AppSignal not starting: no active config found")
 
     def stop(self) -> None:
+        from .check_in.scheduler import scheduler
+
         logger.info("Stopping AppSignal")
+        scheduler().stop()
         working_dir = self._config.option("working_directory_path") or "/tmp/appsignal"
         lock_path = os.path.join(working_dir, "agent.lock")
         try:
