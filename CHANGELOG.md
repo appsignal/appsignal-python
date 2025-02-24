@@ -1,5 +1,22 @@
 # AppSignal for Python Changelog
 
+## 1.5.0
+
+_Published on 2025-02-24._
+
+### Changed
+
+- [cea5704](https://github.com/appsignal/appsignal-python/commit/cea5704df63a917cb6d17449b88fa4710b708af9) patch - Update span recognition following the OpenTelemetry Semantic Conventions 1.30 database specification. We now also sanitize SQL queries in the `db.query.text` attribute and Redis queries in the `db.operation.name` attribute.
+- [71eb3f7](https://github.com/appsignal/appsignal-python/commit/71eb3f743051d6864e5447cf4fc2ba1eb9e3fc3e) patch - Update bundled trusted root certificates
+
+### Removed
+
+- [cea5704](https://github.com/appsignal/appsignal-python/commit/cea5704df63a917cb6d17449b88fa4710b708af9) minor - Remove the OpenTelemetry beta feature in favor of the new [AppSignal collector](https://docs.appsignal.com/collector). If you are using the AppSignal agent to send OpenTelemetry data in our public beta through the `/enriched` endpoint on the agent's HTTP server, please migrate to the collector to continue using the beta. The collector has a much better implementation of this feature for the beta.
+
+### Fixed
+
+- [11afe17](https://github.com/appsignal/appsignal-python/commit/11afe177c02feded4f296d3340f75d3729349ad3) patch - Fix an issue where calling `appsignal.stop()` after sending check-in events would leave a dangling thread, stopping the application from shutting down correctly.
+
 ## 1.4.1
 
 _Published on 2024-12-20._
