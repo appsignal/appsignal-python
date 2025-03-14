@@ -1,5 +1,13 @@
 # AppSignal for Python Changelog
 
+## 1.5.1
+
+_Published on 2025-03-14._
+
+### Changed
+
+- Improve SQL sanitisation for functions and numbered placeholders. (patch [684f895](https://github.com/appsignal/appsignal-python/commit/684f895bf70093fe26ccf5f59fa2cab3e22d720a))
+
 ## 1.5.0
 
 _Published on 2025-02-24._
