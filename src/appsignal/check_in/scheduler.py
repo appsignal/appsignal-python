@@ -9,7 +9,7 @@ from .. import internal_logger as logger
 from ..client import Client
 from ..config import Config
 from ..transmitter import transmit
-from .event import Event, describe, is_redundant
+from .event import Event, deduplicate_cron, describe, is_redundant
 
 
 class Scheduler:
@@ -133,7 +133,9 @@ class Scheduler:
     def _push_events(self) -> None:
         if not self.events:
             return
-        self.queue.put(self.events.copy())
+        events_copy = self.events.copy()
+        deduplicate_cron(events_copy)
+        self.queue.put(events_copy)
         self.events.clear()
         self._start_waker(self.BETWEEN_TRANSMISSIONS_DEBOUNCE_SECONDS)
 

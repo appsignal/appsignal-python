@@ -70,3 +70,49 @@ def describe(events: list[Event]) -> str:
 
     # This shouldn't happen.
     return "unknown check-in event"  # type: ignore[unreachable]
+
+
+def deduplicate_cron(events: list[Event]) -> None:
+    """Remove redundant pairs of cron events in-place, keeping only
+    the most recent complete pair."""
+    start_digests: dict[str, set[str | None]] = {}
+    finish_digests: dict[str, set[str | None]] = {}
+    complete_digests: dict[str, set[str | None]] = {}
+    keep_digest: dict[str, str | None] = {}
+
+    # Find complete pairs (start+finish) and track the latest one
+    for event in events:
+        if event["check_in_type"] != "cron" or event["kind"] not in ["start", "finish"]:
+            continue
+
+        identifier = event["identifier"]
+        digest = event.get("digest")
+        if identifier not in start_digests:
+            start_digests[identifier] = set()
+            finish_digests[identifier] = set()
+            complete_digests[identifier] = set()
+
+        if event["kind"] == "start":
+            start_digests[identifier].add(digest)
+            if digest in finish_digests[identifier]:
+                complete_digests[identifier].add(digest)
+                keep_digest[identifier] = digest
+        elif event["kind"] == "finish":
+            finish_digests[identifier].add(digest)
+            if digest in start_digests[identifier]:
+                complete_digests[identifier].add(digest)
+                keep_digest[identifier] = digest
+
+    # Iterate through the events and remove unwanted ones in place
+    i = 0
+    while i < len(events):
+        event = events[i]
+        if (
+            event["check_in_type"] == "cron"
+            and event.get("kind") in ("start", "finish")
+            and event.get("digest") in complete_digests.get(event["identifier"], set())
+            and event.get("digest") != keep_digest.get(event["identifier"])
+        ):
+            del events[i]
+        else:
+            i += 1
