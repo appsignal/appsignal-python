@@ -1,7 +1,15 @@
 import json
+from itertools import permutations
 from typing import cast
 
-from appsignal.check_in.event import Event, cron, describe, heartbeat, is_redundant
+from appsignal.check_in.event import (
+    Event,
+    cron,
+    deduplicate_cron,
+    describe,
+    heartbeat,
+    is_redundant,
+)
 
 
 def test_describe_no_events():
@@ -93,3 +101,51 @@ def test_heartbeat_event_json_serialised():
     assert '"timestamp":' in serialised
     assert '"kind":' not in serialised
     assert '"digest":' not in serialised
+
+
+def test_deduplicate_cron_removes_redundant_pairs():
+    first_start = cron("checkin-name", "first", "start")
+    first_finish = cron("checkin-name", "first", "finish")
+    second_start = cron("checkin-name", "second", "start")
+    second_finish = cron("checkin-name", "second", "finish")
+    base_events = [first_start, first_finish, second_start, second_finish]
+
+    for events_tuple in permutations(base_events):
+        events = list(events_tuple)  # Convert tuple to list for in-place modification
+        deduplicate_cron(events)
+
+        assert len(events) == 2
+        assert events[0]["digest"] == events[1]["digest"]
+        assert {"start", "finish"} == {events[0]["kind"], events[1]["kind"]}
+
+
+def test_deduplicate_cron_keeps_unmatched_pairs():
+    first_start = cron("checkin-name", "first", "start")
+    second_start = cron("checkin-name", "second", "start")
+    second_finish = cron("checkin-name", "second", "finish")
+    third_finish = cron("checkin-name", "third", "finish")
+    base_events = [first_start, second_start, second_finish, third_finish]
+
+    for events_tuple in permutations(base_events):
+        events = list(events_tuple)  # Convert tuple to list for in-place modification
+        deduplicate_cron(events)
+
+        assert len(events) == 4
+        for event in [first_start, second_start, second_finish, third_finish]:
+            assert event in events
+
+
+def test_deduplicate_cron_keeps_different_identifiers():
+    first_start = cron("checkin-name", "first", "start")
+    first_finish = cron("checkin-name", "first", "finish")
+    second_start = cron("other-name", "second", "start")
+    second_finish = cron("other-name", "second", "finish")
+    base_events = [first_start, first_finish, second_start, second_finish]
+
+    for events_tuple in permutations(base_events):
+        events = list(events_tuple)  # Convert tuple to list for in-place modification
+        deduplicate_cron(events)
+
+        assert len(events) == 4
+        for event in [first_start, first_finish, second_start, second_finish]:
+            assert event in events
