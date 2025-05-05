@@ -1,5 +1,13 @@
 # AppSignal for Python Changelog
 
+## 1.5.2
+
+_Published on 2025-05-05._
+
+### Changed
+
+- Remove redundant cron check-in pairs. When more than one pair of start and finish cron check-in events is reported for the same identifier in the same period, only one of them will be reported to AppSignal. (patch [392a9e7](https://github.com/appsignal/appsignal-python/commit/392a9e718b3d1100b68afa0f1d6286386333c357))
+
 ## 1.5.1
 
 _Published on 2025-03-14._
