@@ -1,5 +1,13 @@
 # AppSignal for Python Changelog
 
+## 1.5.3
+
+_Published on 2025-05-08._
+
+### Changed
+
+- Allow overriding namespaces that are automatically set by the AppSignal agent based on the OpenTelemetry instrumentation that emitted the span, such as the `graphql` or `background` namespaces. (patch [548ba1c](https://github.com/appsignal/appsignal-python/commit/548ba1c051bfaf9b6305c8ae3adabe785da0bacc))
+
 ## 1.5.2
 
 _Published on 2025-05-05._
