@@ -1,5 +1,13 @@
 # AppSignal for Python Changelog
 
+## 1.5.4
+
+_Published on 2025-06-06._
+
+### Added
+
+- Add `nginx_port` configuration option. This configuration option can be used to customize the port on which the AppSignal integration exposes [the NGINX metrics server](https://docs.appsignal.com/metrics/nginx.html). (patch [e531134](https://github.com/appsignal/appsignal-python/commit/e5311340141879d02ec2d40ff8961b40b669e711), [151c290](https://github.com/appsignal/appsignal-python/commit/151c290c14878f787936ac8c2c1e18bf0db56e5c), [2a76f66](https://github.com/appsignal/appsignal-python/commit/2a76f66c6f9cdf769833d9c0e0666bffdebd8fbd))
+
 ## 1.5.3
 
 _Published on 2025-05-08._
