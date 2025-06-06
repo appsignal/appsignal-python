@@ -19,7 +19,7 @@ from opentelemetry.sdk.metrics.export import (
     AggregationTemporality,
     PeriodicExportingMetricReader,
 )
-from opentelemetry.sdk.resources import Resource
+from opentelemetry.sdk.resources import Resource  # type: ignore[attr-defined]
 from opentelemetry.sdk.trace import ConcurrentMultiSpanProcessor, TracerProvider
 from opentelemetry.sdk.trace.export import (
     BatchSpanProcessor,

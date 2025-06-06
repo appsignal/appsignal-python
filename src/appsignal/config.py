@@ -38,6 +38,7 @@ class Options(TypedDict, total=False):
     log_level: str | None
     log_path: str | None
     logging_endpoint: str | None
+    nginx_port: str | int | None
     opentelemetry_port: str | int | None
     name: str | None
     push_api_key: str | None
@@ -184,6 +185,7 @@ class Config:
             log_level=os.environ.get("APPSIGNAL_LOG_LEVEL"),
             log_path=os.environ.get("APPSIGNAL_LOG_PATH"),
             logging_endpoint=os.environ.get("APPSIGNAL_LOGGING_ENDPOINT"),
+            nginx_port=os.environ.get("APPSIGNAL_NGINX_PORT"),
             opentelemetry_port=os.environ.get("APPSIGNAL_OPENTELEMETRY_PORT"),
             name=os.environ.get("APPSIGNAL_APP_NAME"),
             push_api_key=os.environ.get("APPSIGNAL_PUSH_API_KEY"),
@@ -252,6 +254,7 @@ class Config:
             "_APPSIGNAL_LOG_LEVEL": options.get("log_level"),
             "_APPSIGNAL_LOG_FILE_PATH": self.log_file_path(),
             "_APPSIGNAL_LOGGING_ENDPOINT": options.get("logging_endpoint"),
+            "_APPSIGNAL_NGINX_PORT": options.get("nginx_port"),
             "_APPSIGNAL_OPENTELEMETRY_PORT": options.get("opentelemetry_port"),
             "_APPSIGNAL_PUSH_API_KEY": options.get("push_api_key"),
             "_APPSIGNAL_PUSH_API_ENDPOINT": options.get("endpoint"),
