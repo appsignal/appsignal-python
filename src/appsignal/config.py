@@ -214,8 +214,9 @@ class Config:
         "_APPSIGNAL_ENABLE_OPENTELEMETRY_HTTP": "true",
     }
 
-    def set_private_environ(self) -> None:
+    def _private_environ(self) -> dict[str, str | int | None]:
         options = self.options
+
         private_environ = {
             "_APPSIGNAL_ACTIVE": bool_to_env_str(options.get("active")),
             "_APPSIGNAL_APP_ENV": options.get("environment"),
@@ -273,10 +274,23 @@ class Config:
             "_APP_REVISION": options.get("revision"),
         }
         private_environ.update(self.CONSTANT_PRIVATE_ENVIRON)
+    
+        return private_environ
+
+    def set_private_environ(self) -> None:
+        private_environ = self._private_environ()
 
         for var, value in private_environ.items():
             if value is not None:
                 os.environ[var] = str(value)
+    
+    def set_public_environ(self) -> None:
+        private_environ = self._private_environ()
+        
+        for var, value in private_environ.items():
+            if value is not None:
+                public_var = var.removeprefix("_")
+                os.environ[public_var] = str(value)
 
     def log_file_path(self) -> str | None:
         path = self.options.get("log_path")

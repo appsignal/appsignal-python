@@ -60,6 +60,7 @@ sources = ["src"]
 exclude = ["src/scripts", "tests", "conftest.py"]
 artifacts = [
   "src/appsignal/appsignal-agent",
+  "src/appsignal/appsignal-collector",
   "src/appsignal/_appsignal_platform",
   "src/appsignal/resources/cacert.pem",
   "src/appsignal/py.typed",

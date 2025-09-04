@@ -5,7 +5,7 @@ TRIPLE_PLATFORM_TAG = {
     # MacOS builds
     "x86_64-darwin": "macosx_10_9_x86_64",
     # Apple Silicon (and Apple Silicon w/ Intel emulation)
-    "arm64-darwin": "macosx_10_9_universal2.macosx_12_3_arm64",
+    "aarch64-darwin": "macosx_10_9_universal2.macosx_12_3_arm64",
     # Glibc Linux builds
     # manylinux2014 is a legacy tag defined as glibc >= 2.17,
     # we actually support glibc >= 2.15

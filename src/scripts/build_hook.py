@@ -8,7 +8,7 @@ import subprocess
 import sysconfig
 import tarfile
 from runpy import run_path
-from typing import Any
+from typing import Any, Union, Literal
 
 import requests
 from hatchling.builders.hooks.plugin.interface import BuildHookInterface
@@ -17,26 +17,48 @@ from hatchling.builders.hooks.plugin.interface import BuildHookInterface
 def run_relative(filename: str) -> dict[str, Any]:
     return run_path(os.path.join(os.path.dirname(os.path.abspath(__file__)), filename))
 
+Binary = Literal["agent", "collector"]
+BINARIES: list[Binary] = ["agent", "collector"]
 
-APPSIGNAL_AGENT_CONFIG = run_relative("agent.py")["APPSIGNAL_AGENT_CONFIG"]
+DEFAULT_ENABLED: dict[Binary, bool] = {
+    "agent": True,
+    "collector": False,
+}
+
+def binary_enabled_env_var(binary: Binary) -> str:
+    return f"_APPSIGNAL_BUILD_{binary.upper()}_ENABLED"
+
+APPSIGNAL_CONFIG: dict[Binary, Any] = {
+    "agent": run_relative("agent.py")["APPSIGNAL_AGENT_CONFIG"],
+    "collector": run_relative("collector.py")["APPSIGNAL_COLLECTOR_CONFIG"],
+}
+
 TRIPLE_PLATFORM_TAG = run_relative("platform.py")["TRIPLE_PLATFORM_TAG"]
 
 
-def triple_filename(triple: str) -> str:
-    return APPSIGNAL_AGENT_CONFIG["triples"][triple]["static"]["filename"]
+def triple_filename(binary: Binary, triple: str) -> str:
+    return APPSIGNAL_CONFIG[binary]["triples"][triple]["static"]["filename"]
 
 
-def triple_checksum(triple: str) -> str:
-    return APPSIGNAL_AGENT_CONFIG["triples"][triple]["static"]["checksum"]
+def triple_checksum(binary: Binary, triple: str) -> str:
+    return APPSIGNAL_CONFIG[binary]["triples"][triple]["static"]["checksum"]
 
 
-def triple_urls(triple: str) -> list[str]:
-    mirrors = APPSIGNAL_AGENT_CONFIG["mirrors"]
-    version = APPSIGNAL_AGENT_CONFIG["version"]
-    filename = triple_filename(triple)
+def triple_urls(binary: Binary, triple: str) -> list[str]:
+    mirrors = APPSIGNAL_CONFIG[binary]["mirrors"]
+    version = APPSIGNAL_CONFIG[binary]["version"]
+    filename = triple_filename(binary, triple)
 
     return [f"{mirror}/{version}/{filename}" for mirror in mirrors]
 
+def binary_version(binary: Binary) -> str:
+    return APPSIGNAL_CONFIG[binary]["version"]
+
+def binary_enabled(binary: Binary) -> bool:
+    return os.environ.get(
+        binary_enabled_env_var(binary),
+        str(DEFAULT_ENABLED[binary])
+    ).lower() not in ["0", "no", "false"]
 
 def rm(path: str) -> None:
     try:
@@ -45,15 +67,15 @@ def rm(path: str) -> None:
         pass
 
 
-def should_download(agent_path: str, version_path: str) -> bool:
-    if not os.path.exists(agent_path):
+def should_download(binary: Binary, binary_path: str, version_path: str) -> bool:
+    if not os.path.exists(binary_path):
         return True
 
     if not os.path.exists(version_path):
         return True
 
     with open(version_path) as version:
-        return version.read() != APPSIGNAL_AGENT_CONFIG["version"]
+        return version.read() != APPSIGNAL_CONFIG[binary]["version"]
 
 
 def this_triple() -> str:
@@ -101,94 +123,127 @@ class CustomBuildHook(BuildHookInterface):
         build_data["tag"] = f"py3-none-{platform_tag}"
         build_data["pure_python"] = False
 
-        agent_path = os.path.join(self.root, "src", "appsignal", "appsignal-agent")
+        binary_filenames = {
+            "agent": "appsignal-agent",
+            "collector": "appsignal-collector",
+        }
+
+        agent_path = os.path.join(self.root, "src", "appsignal", binary_filenames["agent"])
+        collector_path = os.path.join(self.root, "src", "appsignal", binary_filenames["collector"])
+
+        binary_paths: dict[Binary, str] = {
+            "agent": agent_path,
+            "collector": collector_path,
+        }
+
+        binary_path_env_vars: dict[Binary, str] = {
+            "agent": "_APPSIGNAL_BUILD_AGENT_PATH",
+            "collector": "_APPSIGNAL_BUILD_COLLECTOR_PATH",
+        }
+
+        binary_path_keep_flags: dict[Binary, str] = {
+            "agent": "--keep-agent",
+            "collector": "--keep-collector",
+        }
+
         platform_path = os.path.join(
             self.root, "src", "appsignal", "_appsignal_platform"
         )
 
-        if os.environ.get(
-            "_APPSIGNAL_BUILD_AGENT_PATH", ""
-        ).strip() == "--keep-agent" and os.path.isfile(agent_path):
-            print(f"Using existing agent binary at {agent_path}")
-            return
+        for binary in BINARIES:
+            if not binary_enabled(binary):
+                print(f"Skipping {binary} binary download; set {binary_enabled_env_var(binary)}=1 to enable")
+                continue
 
-        rm(agent_path)
+            binary_filename = binary_filenames[binary]
+            binary_path = binary_paths[binary]
+            binary_path_env_var = binary_path_env_vars[binary]
+            binary_path_keep_flag = binary_path_keep_flags[binary]
 
-        if triple == "any":
-            print("Skipping agent download for `any` triple")
+            if os.environ.get(binary_path_env_var, "").strip() == binary_path_keep_flag:
+                if os.path.isfile(binary_path):
+                    print(f"Using existing {binary} binary at {binary_path}")
+                    return
+                else:
+                    print(
+                        f"{binary_path_keep_flag} specified but no {binary} binary found at {binary_path}; exiting..."
+                    )
+                    exit(1)
+        
+            rm(binary_path)
+
             with open(platform_path, "w") as platform:
                 platform.write(triple)
-            return
 
-        tempdir_path = os.path.join(self.root, "tmp", triple)
-        os.makedirs(tempdir_path, exist_ok=True)
+            if triple == "any":
+                print(f"Skipping {binary} binary download for `any` triple")
+                return
 
-        tempagent_path = os.path.join(tempdir_path, "appsignal_agent")
-        tempversion_path = os.path.join(tempdir_path, "version")
+            tempdir_path = os.path.join(self.root, "tmp", triple)
+            os.makedirs(tempdir_path, exist_ok=True)
 
-        if os.environ.get("_APPSIGNAL_BUILD_AGENT_PATH", "").strip() != "":
-            tempagent_path = os.path.abspath(
-                os.environ["_APPSIGNAL_BUILD_AGENT_PATH"].strip()
-            )
+            tempbinary_path = os.path.join(tempdir_path, binary_filename)
+            tempversion_path = os.path.join(tempdir_path, f"{binary}-version")
 
-            if not os.path.isfile(tempagent_path):
-                print(
-                    f"Custom agent binary at {tempagent_path} is not a file; exiting..."
+            if os.environ.get(binary_path_env_var, "").strip() != "":
+                tempbinary_path = os.path.abspath(
+                    os.environ[binary_path_env_var].strip()
                 )
-                exit(1)
 
-            print(f"Using custom agent binary at {tempagent_path}")
-        elif should_download(tempagent_path, tempversion_path):
-            temptar_path = os.path.join(tempdir_path, triple_filename(triple))
-
-            rm(tempagent_path)
-            rm(tempversion_path)
-            rm(temptar_path)
-
-            with open(temptar_path, "wb") as temptar:
-                for url in triple_urls(triple):
-                    try:
-                        r = requests.get(url, allow_redirects=True)
-                        if r.status_code != 200:
-                            raise DownloadError("Status code is not 200")
-
-                        if hashlib.sha256(r.content).hexdigest() != triple_checksum(
-                            triple
-                        ):
-                            raise DownloadError("Checksum does not match")
-
-                        temptar.write(r.content)
-                    except DownloadError as e:
-                        print(f"Something went wrong downloading from `{url}`: {e}")
-                    else:
-                        break
-                else:
-                    print("Failed to download from any mirrors; exiting...")
+                if not os.path.isfile(tempbinary_path):
+                    print(
+                        f"Custom {binary} binary at {tempbinary_path} is not a file; exiting..."
+                    )
                     exit(1)
 
-            print(f"Downloaded agent tarball for {triple}")
+                print(f"Using custom {binary} binary at {tempbinary_path}")
+            elif should_download(binary, tempbinary_path, tempversion_path):
+                temptar_path = os.path.join(tempdir_path, triple_filename(binary, triple))
 
-            with tarfile.open(temptar_path, "r:*") as tar:
-                with open(tempagent_path, "wb") as agent:
-                    tar_agent = tar.extractfile("appsignal-agent")
-                    if tar_agent is not None:
-                        agent.write(tar_agent.read())
+                rm(tempbinary_path)
+                rm(tempversion_path)
+                rm(temptar_path)
+
+                with open(temptar_path, "wb") as temptar:
+                    for url in triple_urls(binary, triple):
+                        try:
+                            r = requests.get(url, allow_redirects=True)
+                            if r.status_code != 200:
+                                raise DownloadError(f"Status code is not 200: {r.status_code} {r.reason}")
+
+                            if hashlib.sha256(r.content).hexdigest() != triple_checksum(binary, triple):
+                                raise DownloadError("Checksum does not match")
+
+                            temptar.write(r.content)
+                        except DownloadError as e:
+                            print(f"Something went wrong downloading {binary} binary from `{url}`: {e}")
+                        else:
+                            break
                     else:
-                        print("Failed to extract agent binary; exiting...")
+                        print(f"Failed to download {binary} binary from any mirrors; exiting...")
+                        rm(temptar_path)
                         exit(1)
 
-            with open(tempversion_path, "w") as version:
-                version.write(APPSIGNAL_AGENT_CONFIG["version"])
+                print(f"Downloaded {binary} tarball for {triple}")
 
-            print(f"Extracted agent binary to {tempagent_path}")
-            rm(temptar_path)
-        else:
-            print(f"Using cached agent binary at {tempagent_path}")
+                with tarfile.open(temptar_path, "r:*") as tar:
+                    with open(tempbinary_path, "wb") as binary_file:
+                        tar_binary = tar.extractfile(binary_filename)
+                        if tar_binary is not None:
+                            binary_file.write(tar_binary.read())
+                        else:
+                            print(f"Failed to extract {binary} binary; exiting...")
+                            exit(1)
 
-        shutil.copy(tempagent_path, agent_path)
-        os.chmod(agent_path, stat.S_IEXEC | stat.S_IREAD | stat.S_IWRITE)
+                with open(tempversion_path, "w") as version:
+                    version.write(binary_version(binary))
 
-        with open(platform_path, "w") as platform:
-            platform.write(triple)
+                print(f"Extracted {binary} binary to {tempbinary_path}")
+                rm(temptar_path)
+            else:
+                print(f"Using cached {binary} binary at {tempbinary_path}")
 
-        print(f"Copied agent binary to {agent_path}")
+            shutil.copy(tempbinary_path, binary_path)
+            os.chmod(binary_path, stat.S_IEXEC | stat.S_IREAD | stat.S_IWRITE)
+
+            print(f"Copied {binary} binary to {binary_path}")

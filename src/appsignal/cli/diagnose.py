@@ -183,7 +183,12 @@ class DiagnoseCommand(AppsignalCLICommand):
             self.config = Config()
 
         agent = Agent()
-        agent_json = json.loads(agent.diagnose(self.config))
+        diagnose_output = agent.diagnose(self.config)
+        if not diagnose_output:
+            print("No diagnose output received from the agent.")
+            return 1
+        
+        agent_json = json.loads(diagnose_output)
         self.agent_report = AgentReport(agent_json)
         self.paths_report = PathsReport(self.config)
 

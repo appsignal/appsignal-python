@@ -6,7 +6,7 @@ import time
 from typing import TYPE_CHECKING
 
 from . import internal_logger as logger
-from .agent import agent
+from .agent import agent, collector
 from .config import Config, Options
 from .opentelemetry import start as start_opentelemetry
 from .probes import start as start_probes
@@ -43,8 +43,8 @@ class Client:
     def start(self) -> None:
         if self._config.is_active():
             logger.info("Starting AppSignal")
-            agent.start(self._config)
-            if not agent.active:
+            collector.start(self._config)
+            if not collector.active:
                 return
             start_opentelemetry(self._config)
             self._start_probes()
