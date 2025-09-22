@@ -25,7 +25,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - name: "Install hatch"
-        run: "pip install hatch"
+        run: "pip install hatch \"click<8.3.0\""
       - name: "Run tests"
         run: "hatch -v run test.py$(echo ${{ matrix.python-version }} | tr -d '.'):pytest"
 
@@ -44,7 +44,7 @@ jobs:
           ruby-version: "3.3"
           bundler-cache: true
       - name: "Install hatch"
-        run: "pip install hatch"
+        run: "pip install hatch \"click<8.3.0\""
       - name: "Init Git submodules"
         run: "git submodule init"
       - name: "Update Git submodules"
@@ -61,7 +61,7 @@ jobs:
         with:
           python-version: 3.12
       - name: "Install hatch"
-        run: "pip install hatch"
+        run: "pip install hatch \"click<8.3.0\""
       - name: "Run style linter"
         run: "hatch -v run lint:style"
 
@@ -74,7 +74,7 @@ jobs:
         with:
           python-version: 3.12
       - name: "Install hatch"
-        run: "pip install hatch"
+        run: "pip install hatch \"click<8.3.0\""
       - name: "Run typing linter"
         run: "hatch -v run lint:typing"
 
