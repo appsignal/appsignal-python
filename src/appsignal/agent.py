@@ -7,16 +7,21 @@ import time
 from dataclasses import dataclass
 from pathlib import Path
 
+from . import internal_logger as logger
+from .binary import Binary
 from .config import Config
-from .internal_logger import logger
 
 
 @dataclass
-class Agent:
+class Agent(Binary):
     package_path: Path = Path(__file__).parent
     agent_path: Path = package_path / "appsignal-agent"
     platform_path: Path = package_path / "_appsignal_platform"
-    active: bool = False
+    _active: bool = False
+
+    @property
+    def active(self) -> bool:
+        return self._active
 
     def start(self, config: Config) -> None:
         config.set_private_environ()
@@ -37,7 +42,7 @@ class Agent:
         p.wait(timeout=1)
         returncode = p.returncode
         if returncode == 0:
-            self.active = True
+            self._active = True
         else:
             output, _ = p.communicate()
             out = output.decode("utf-8")
@@ -72,6 +77,3 @@ class Agent:
                 return file.read().split("-", 1)
         except FileNotFoundError:
             return ["", ""]
-
-
-agent = Agent()

@@ -13,6 +13,7 @@ class Options(TypedDict, total=False):
     app_path: str | None
     bind_address: str | None
     ca_file_path: str | None
+    collector_endpoint: str | None
     cpu_count: float | None
     diagnose_endpoint: str | None
     disable_default_instrumentations: None | (
@@ -150,6 +151,7 @@ class Config:
             active=parse_bool(os.environ.get("APPSIGNAL_ACTIVE")),
             bind_address=os.environ.get("APPSIGNAL_BIND_ADDRESS"),
             ca_file_path=os.environ.get("APPSIGNAL_CA_FILE_PATH"),
+            collector_endpoint=os.environ.get("APPSIGNAL_COLLECTOR_ENDPOINT"),
             cpu_count=parse_float(os.environ.get("APPSIGNAL_CPU_COUNT")),
             diagnose_endpoint=os.environ.get("APPSIGNAL_DIAGNOSE_ENDPOINT"),
             disable_default_instrumentations=parse_disable_default_instrumentations(

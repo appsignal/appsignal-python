@@ -183,17 +183,15 @@ def start(config: Config) -> None:
             request_headers
         )
 
-    opentelemetry_port = config.option("opentelemetry_port")
-    _start_tracer(opentelemetry_port, config.option("log_level") == "trace")
-    _start_metrics(opentelemetry_port)
+    opentelemetry_endpoint = _opentelemetry_endpoint(config)
+    _start_tracer(opentelemetry_endpoint, config.option("log_level") == "trace")
+    _start_metrics(opentelemetry_endpoint)
 
     add_instrumentations(config)
 
 
-def _otlp_span_processor(opentelemetry_port: str | int) -> BatchSpanProcessor:
-    otlp_exporter = OTLPSpanExporter(
-        endpoint=f"http://localhost:{opentelemetry_port}/v1/traces"
-    )
+def _otlp_span_processor(opentelemetry_endpoint: str) -> BatchSpanProcessor:
+    otlp_exporter = OTLPSpanExporter(endpoint=f"{opentelemetry_endpoint}/v1/traces")
     return BatchSpanProcessor(otlp_exporter)
 
 
@@ -202,8 +200,8 @@ def _console_span_processor() -> SimpleSpanProcessor:
     return SimpleSpanProcessor(console_exporter)
 
 
-def _start_tracer(opentelemetry_port: str | int, should_trace: bool = False) -> None:
-    otlp_span_processor = _otlp_span_processor(opentelemetry_port)
+def _start_tracer(opentelemetry_endpoint: str, should_trace: bool = False) -> None:
+    otlp_span_processor = _otlp_span_processor(opentelemetry_endpoint)
     provider = TracerProvider()
 
     if should_trace:
@@ -227,9 +225,9 @@ METRICS_PREFERRED_TEMPORALITY: dict[type, AggregationTemporality] = {
 }
 
 
-def _start_metrics(opentelemetry_port: str | int) -> None:
+def _start_metrics(opentelemetry_endpoint: str) -> None:
     metric_exporter = OTLPMetricExporter(
-        endpoint=f"http://localhost:{opentelemetry_port}/v1/metrics",
+        endpoint=f"{opentelemetry_endpoint}/v1/metrics",
         preferred_temporality=METRICS_PREFERRED_TEMPORALITY,
     )
     metric_reader = PeriodicExportingMetricReader(
@@ -239,6 +237,17 @@ def _start_metrics(opentelemetry_port: str | int) -> None:
     resource = Resource(attributes={"appsignal.service.process_id": os.getpid()})
     provider = MeterProvider(resource=resource, metric_readers=[metric_reader])
     metrics.set_meter_provider(provider)
+
+
+def _opentelemetry_endpoint(config: Config) -> str:
+    collector_endpoint = config.options.get("collector_endpoint")
+    if collector_endpoint:
+        # Remove trailing slashes (it will be concatenated
+        # with /v1/traces and /v1/metrics later)
+        return collector_endpoint.rstrip("/")
+
+    opentelemetry_port = config.option("opentelemetry_port")
+    return f"http://localhost:{opentelemetry_port}"
 
 
 def add_instrumentations(
