@@ -1,10 +1,14 @@
 from __future__ import annotations
 
+import os
+import signal
 import subprocess
+import time
 from dataclasses import dataclass
 from pathlib import Path
 
 from .config import Config
+from .internal_logger import logger
 
 
 @dataclass
@@ -38,6 +42,18 @@ class Agent:
             output, _ = p.communicate()
             out = output.decode("utf-8")
             print(f"AppSignal agent is unable to start ({returncode}): ", out)
+
+    def stop(self, config: Config) -> None:
+        working_dir = config.option("working_directory_path") or "/tmp/appsignal"
+        lock_path = os.path.join(working_dir, "agent.lock")
+        try:
+            with open(lock_path) as file:
+                line = file.readline()
+                pid = int(line.split(";")[2])
+                os.kill(pid, signal.SIGTERM)
+                time.sleep(2)
+        except FileNotFoundError:
+            logger.info("Agent lock file not found; not stopping the agent")
 
     def diagnose(self, config: Config) -> bytes:
         config.set_private_environ()
