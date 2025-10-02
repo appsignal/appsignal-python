@@ -49,6 +49,7 @@ class Options(TypedDict, total=False):
     send_environment_metadata: bool | None
     send_params: bool | None
     send_session_data: bool | None
+    service_name: str | None
     statsd_port: str | int | None
     working_directory_path: str | None
 
@@ -201,6 +202,7 @@ class Config:
             ),
             send_params=parse_bool(os.environ.get("APPSIGNAL_SEND_PARAMS")),
             send_session_data=parse_bool(os.environ.get("APPSIGNAL_SEND_SESSION_DATA")),
+            service_name=os.environ.get("APPSIGNAL_SERVICE_NAME"),
             statsd_port=os.environ.get("APPSIGNAL_STATSD_PORT"),
             working_directory_path=os.environ.get("APPSIGNAL_WORKING_DIRECTORY_PATH"),
         )

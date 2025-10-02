@@ -183,15 +183,16 @@ def start(config: Config) -> None:
             request_headers
         )
 
-    opentelemetry_endpoint = _opentelemetry_endpoint(config)
-    _start_tracer(opentelemetry_endpoint, config.option("log_level") == "trace")
-    _start_metrics(opentelemetry_endpoint)
+    _start_tracer(config)
+    _start_metrics(config)
 
     add_instrumentations(config)
 
 
-def _otlp_span_processor(opentelemetry_endpoint: str) -> BatchSpanProcessor:
-    otlp_exporter = OTLPSpanExporter(endpoint=f"{opentelemetry_endpoint}/v1/traces")
+def _otlp_span_processor(config: Config) -> BatchSpanProcessor:
+    otlp_exporter = OTLPSpanExporter(
+        endpoint=f"{_opentelemetry_endpoint(config)}/v1/traces",
+    )
     return BatchSpanProcessor(otlp_exporter)
 
 
@@ -200,9 +201,11 @@ def _console_span_processor() -> SimpleSpanProcessor:
     return SimpleSpanProcessor(console_exporter)
 
 
-def _start_tracer(opentelemetry_endpoint: str, should_trace: bool = False) -> None:
-    otlp_span_processor = _otlp_span_processor(opentelemetry_endpoint)
-    provider = TracerProvider()
+def _start_tracer(config: Config) -> None:
+    otlp_span_processor = _otlp_span_processor(config)
+    provider = TracerProvider(resource=_resource(config))
+
+    should_trace = config.option("log_level") == "trace"
 
     if should_trace:
         multi_span_processor = ConcurrentMultiSpanProcessor()
@@ -225,18 +228,36 @@ METRICS_PREFERRED_TEMPORALITY: dict[type, AggregationTemporality] = {
 }
 
 
-def _start_metrics(opentelemetry_endpoint: str) -> None:
+def _start_metrics(config: Config) -> None:
     metric_exporter = OTLPMetricExporter(
-        endpoint=f"{opentelemetry_endpoint}/v1/metrics",
+        endpoint=f"{_opentelemetry_endpoint(config)}/v1/metrics",
         preferred_temporality=METRICS_PREFERRED_TEMPORALITY,
     )
     metric_reader = PeriodicExportingMetricReader(
         metric_exporter, export_interval_millis=10000
     )
 
-    resource = Resource(attributes={"appsignal.service.process_id": os.getpid()})
-    provider = MeterProvider(resource=resource, metric_readers=[metric_reader])
+    provider = MeterProvider(resource=_resource(config), metric_readers=[metric_reader])
     metrics.set_meter_provider(provider)
+
+
+def _resource(config: Config) -> Resource:
+    attributes = {
+        key: str(value)
+        for key, value in {
+            "appsignal.config.name": config.options.get("name"),
+            "appsignal.config.environment": config.options.get("environment"),
+            "appsignal.config.push_api_key": config.options.get("push_api_key"),
+            "appsignal.config.revision": config.options.get("revision", "unknown"),
+            "appsignal.config.language_integration": "python",
+            "service.name": config.options.get("service_name", "unknown"),
+            "host.name": config.options.get("hostname", os.uname().nodename),
+            "appsignal.service.process_id": os.getpid(),
+        }.items()
+        if value is not None
+    }
+
+    return Resource(attributes=attributes)
 
 
 def _opentelemetry_endpoint(config: Config) -> str:
