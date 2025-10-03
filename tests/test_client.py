@@ -4,7 +4,8 @@ import os
 import signal
 from unittest.mock import call, mock_open, patch
 
-from appsignal.agent import agent
+from appsignal.agent import Agent
+from appsignal.binary import NoopBinary
 from appsignal.client import Client
 
 
@@ -23,7 +24,8 @@ def test_client_agent_inactive():
     client.start()
 
     assert os.environ.get("_APPSIGNAL_ACTIVE") is None
-    assert agent.active is False
+    assert type(client._binary) is Agent
+    assert client._binary.active is False
 
 
 def test_client_agent_active():
@@ -33,7 +35,8 @@ def test_client_agent_active():
     client.start()
 
     assert os.environ.get("_APPSIGNAL_ACTIVE") == "true"
-    assert agent.active is True
+    assert type(client._binary) is Agent
+    assert client._binary.active is True
 
 
 def test_client_agent_active_invalid():
@@ -43,7 +46,34 @@ def test_client_agent_active_invalid():
     client.start()
 
     assert os.environ.get("_APPSIGNAL_ACTIVE") is None
-    assert agent.active is False
+    assert type(client._binary) is Agent
+    assert client._binary.active is False
+
+
+def test_client_active_noopbinary_when_collector_endpoint_set():
+    client = Client(
+        active=True,
+        name="MyApp",
+        push_api_key="0000-0000-0000-0000",
+        request_headers=["accept", "x-custom-header"],
+        collector_endpoint="https://custom-endpoint.appsignal.com",
+    )
+
+    client.start()
+
+    assert type(client._binary) is NoopBinary
+    assert client._binary.active
+
+    # Does not set the private config environment variables
+    assert os.environ.get("_APPSIGNAL_ACTIVE") is None
+    assert os.environ.get("_APPSIGNAL_APP_NAME") is None
+    assert os.environ.get("_APPSIGNAL_PUSH_API_KEY") is None
+
+    # Sets the OpenTelemetry config environment variables
+    assert (
+        os.environ.get("OTEL_INSTRUMENTATION_HTTP_CAPTURE_HEADERS_SERVER_REQUEST")
+        == "accept,x-custom-header"
+    )
 
 
 def test_client_active():
@@ -64,11 +94,15 @@ def test_client_active():
     assert os.environ.get("_APPSIGNAL_ACTIVE") == "true"
     assert os.environ.get("_APPSIGNAL_APP_NAME") == "MyApp"
     assert os.environ.get("_APPSIGNAL_PUSH_API_KEY") == "0000-0000-0000-0000"
+
+    # Sets the OpenTelemetry config environment variables
     assert (
         os.environ.get("OTEL_INSTRUMENTATION_HTTP_CAPTURE_HEADERS_SERVER_REQUEST")
         == "accept,x-custom-header"
     )
-    assert agent.active
+
+    assert type(client._binary) is Agent
+    assert client._binary.active
 
 
 def test_client_active_without_request_headers():

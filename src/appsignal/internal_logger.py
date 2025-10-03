@@ -67,6 +67,9 @@ def _configure_logger() -> tuple[logging.Logger, str]:
 
     logger = logging.getLogger("appsignal")
     logger.setLevel(_LOG_LEVEL_MAPPING[level])
+    # Prevent internal logger messages from propagating to the root logger
+    # (which will have an OpenTelemetry handler attached)
+    logger.propagate = False
 
     if config.option("log") == "file":
         log_file_path = config.log_file_path()

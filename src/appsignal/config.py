@@ -13,6 +13,7 @@ class Options(TypedDict, total=False):
     app_path: str | None
     bind_address: str | None
     ca_file_path: str | None
+    collector_endpoint: str | None
     cpu_count: float | None
     diagnose_endpoint: str | None
     disable_default_instrumentations: None | (
@@ -48,6 +49,7 @@ class Options(TypedDict, total=False):
     send_environment_metadata: bool | None
     send_params: bool | None
     send_session_data: bool | None
+    service_name: str | None
     statsd_port: str | int | None
     working_directory_path: str | None
 
@@ -97,22 +99,23 @@ class Config:
     )
 
     DefaultInstrumentation = Literal[
-        "opentelemetry.instrumentation.aiopg",
-        "opentelemetry.instrumentation.asyncpg",
-        "opentelemetry.instrumentation.celery",
-        "opentelemetry.instrumentation.django",
-        "opentelemetry.instrumentation.flask",
-        "opentelemetry.instrumentation.jinja2",
-        "opentelemetry.instrumentation.mysql",
-        "opentelemetry.instrumentation.mysqlclient",
-        "opentelemetry.instrumentation.pika",
-        "opentelemetry.instrumentation.psycopg",
-        "opentelemetry.instrumentation.psycopg2",
-        "opentelemetry.instrumentation.pymysql",
-        "opentelemetry.instrumentation.redis",
-        "opentelemetry.instrumentation.requests",
-        "opentelemetry.instrumentation.sqlite3",
-        "opentelemetry.instrumentation.sqlalchemy",
+        "aiopg",
+        "asyncpg",
+        "celery",
+        "django",
+        "flask",
+        "jinja2",
+        "mysql",
+        "mysqlclient",
+        "pika",
+        "psycopg",
+        "psycopg2",
+        "pymysql",
+        "redis",
+        "requests",
+        "sqlite3",
+        "sqlalchemy",
+        "logging",
     ]
     DEFAULT_INSTRUMENTATIONS = cast(
         List[DefaultInstrumentation], list(get_args(DefaultInstrumentation))
@@ -140,6 +143,17 @@ class Config:
     def option(self, option: str) -> Any:
         return self.options.get(option)
 
+    # Whether it should instrument logging.
+    def should_instrument_logging(self) -> bool:
+        # The agent does not support logging, so this is equivalent
+        # to whether it should use an external collector.
+        return self.should_use_external_collector()
+
+    # Whether it should use a collector to send data to AppSignal
+    # which is booted externally to this integration.
+    def should_use_external_collector(self) -> bool:
+        return self.option("collector_endpoint") is not None
+
     @staticmethod
     def load_from_system() -> Options:
         return Options(app_path=os.getcwd())
@@ -150,6 +164,7 @@ class Config:
             active=parse_bool(os.environ.get("APPSIGNAL_ACTIVE")),
             bind_address=os.environ.get("APPSIGNAL_BIND_ADDRESS"),
             ca_file_path=os.environ.get("APPSIGNAL_CA_FILE_PATH"),
+            collector_endpoint=os.environ.get("APPSIGNAL_COLLECTOR_ENDPOINT"),
             cpu_count=parse_float(os.environ.get("APPSIGNAL_CPU_COUNT")),
             diagnose_endpoint=os.environ.get("APPSIGNAL_DIAGNOSE_ENDPOINT"),
             disable_default_instrumentations=parse_disable_default_instrumentations(
@@ -199,6 +214,7 @@ class Config:
             ),
             send_params=parse_bool(os.environ.get("APPSIGNAL_SEND_PARAMS")),
             send_session_data=parse_bool(os.environ.get("APPSIGNAL_SEND_SESSION_DATA")),
+            service_name=os.environ.get("APPSIGNAL_SERVICE_NAME"),
             statsd_port=os.environ.get("APPSIGNAL_STATSD_PORT"),
             working_directory_path=os.environ.get("APPSIGNAL_WORKING_DIRECTORY_PATH"),
         )
