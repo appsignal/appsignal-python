@@ -3,9 +3,13 @@ from __future__ import annotations
 import os
 from typing import TYPE_CHECKING, Callable, Mapping
 
+from opentelemetry import _logs as logs
 from opentelemetry import metrics, trace
+from opentelemetry.exporter.otlp.proto.http._log_exporter import OTLPLogExporter
 from opentelemetry.exporter.otlp.proto.http.metric_exporter import OTLPMetricExporter
 from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
+from opentelemetry.sdk._logs import LoggerProvider
+from opentelemetry.sdk._logs.export import BatchLogRecordProcessor
 from opentelemetry.sdk.metrics import (
     Counter,
     Histogram,
@@ -35,25 +39,25 @@ if TYPE_CHECKING:
     from opentelemetry.trace.span import Span
 
 
-def add_aiopg_instrumentation() -> None:
+def add_aiopg_instrumentation(_config: Config) -> None:
     from opentelemetry.instrumentation.aiopg import AiopgInstrumentor
 
     AiopgInstrumentor().instrument()
 
 
-def add_asyncpg_instrumentation() -> None:
+def add_asyncpg_instrumentation(_config: Config) -> None:
     from opentelemetry.instrumentation.asyncpg import AsyncPGInstrumentor
 
     AsyncPGInstrumentor().instrument()
 
 
-def add_celery_instrumentation() -> None:
+def add_celery_instrumentation(_config: Config) -> None:
     from opentelemetry.instrumentation.celery import CeleryInstrumentor
 
     CeleryInstrumentor().instrument()
 
 
-def add_django_instrumentation() -> None:
+def add_django_instrumentation(_config: Config) -> None:
     import json
 
     from django.http.request import HttpRequest
@@ -69,7 +73,7 @@ def add_django_instrumentation() -> None:
     DjangoInstrumentor().instrument(response_hook=response_hook)
 
 
-def add_flask_instrumentation() -> None:
+def add_flask_instrumentation(_config: Config) -> None:
     import json
     from urllib.parse import parse_qs
 
@@ -85,73 +89,89 @@ def add_flask_instrumentation() -> None:
     FlaskInstrumentor().instrument(request_hook=request_hook)
 
 
-def add_jinja2_instrumentation() -> None:
+def add_jinja2_instrumentation(_config: Config) -> None:
     from opentelemetry.instrumentation.jinja2 import Jinja2Instrumentor
 
     Jinja2Instrumentor().instrument()
 
 
-def add_mysql_instrumentation() -> None:
+def add_mysql_instrumentation(_config: Config) -> None:
     from opentelemetry.instrumentation.mysql import MySQLInstrumentor
 
     MySQLInstrumentor().instrument()
 
 
-def add_mysqlclient_instrumentation() -> None:
+def add_mysqlclient_instrumentation(_config: Config) -> None:
     from opentelemetry.instrumentation.mysqlclient import MySQLClientInstrumentor
 
     MySQLClientInstrumentor().instrument()
 
 
-def add_pika_instrumentation() -> None:
+def add_pika_instrumentation(_config: Config) -> None:
     from opentelemetry.instrumentation.pika import PikaInstrumentor
 
     PikaInstrumentor().instrument()
 
 
-def add_psycopg2_instrumentation() -> None:
+def add_psycopg2_instrumentation(_config: Config) -> None:
     from opentelemetry.instrumentation.psycopg2 import Psycopg2Instrumentor
 
     Psycopg2Instrumentor().instrument()
 
 
-def add_psycopg_instrumentation() -> None:
+def add_psycopg_instrumentation(_config: Config) -> None:
     from opentelemetry.instrumentation.psycopg import PsycopgInstrumentor
 
     PsycopgInstrumentor().instrument()
 
 
-def add_pymysql_instrumentation() -> None:
+def add_pymysql_instrumentation(_config: Config) -> None:
     from opentelemetry.instrumentation.pymysql import PyMySQLInstrumentor
 
     PyMySQLInstrumentor().instrument()
 
 
-def add_redis_instrumentation() -> None:
+def add_redis_instrumentation(_config: Config) -> None:
     from opentelemetry.instrumentation.redis import RedisInstrumentor
 
     RedisInstrumentor().instrument(sanitize_query=True)
 
 
-def add_requests_instrumentation() -> None:
+def add_requests_instrumentation(_config: Config) -> None:
     from opentelemetry.instrumentation.requests import RequestsInstrumentor
 
     RequestsInstrumentor().instrument()
 
 
-def add_sqlalchemy_instrumentation() -> None:
+def add_sqlalchemy_instrumentation(_config: Config) -> None:
     from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
 
     SQLAlchemyInstrumentor().instrument()
 
 
-def add_sqlite3_instrumentation() -> None:
+def add_sqlite3_instrumentation(_config: Config) -> None:
     from opentelemetry.instrumentation.sqlite3 import SQLite3Instrumentor
 
     SQLite3Instrumentor().instrument()
 
 
-DefaultInstrumentationAdder = Callable[[], None]
+def add_logging_instrumentation(config: Config) -> None:
+    # Do not add a root logging handler if we should not support
+    # instrumenting logging.
+    if not config.should_instrument_logging():
+        return
+
+    import logging
+
+    from opentelemetry.sdk._logs import LoggingHandler
+
+    # Attach OTel LoggingHandler to the root logger
+    handler = LoggingHandler(level=logging.NOTSET)
+    logger = logging.getLogger()
+    logger.addHandler(handler)
+
+
+DefaultInstrumentationAdder = Callable[[Config], None]
 
 DEFAULT_INSTRUMENTATION_ADDERS: Mapping[
     Config.DefaultInstrumentation, DefaultInstrumentationAdder
@@ -172,6 +192,7 @@ DEFAULT_INSTRUMENTATION_ADDERS: Mapping[
     "opentelemetry.instrumentation.requests": add_requests_instrumentation,
     "opentelemetry.instrumentation.sqlalchemy": add_sqlalchemy_instrumentation,
     "opentelemetry.instrumentation.sqlite3": add_sqlite3_instrumentation,
+    "opentelemetry.sdk._logs": add_logging_instrumentation,
 }
 
 
@@ -185,6 +206,11 @@ def start(config: Config) -> None:
 
     _start_tracer(config)
     _start_metrics(config)
+
+    # Configure OpenTelemetry logging only if a collector is used
+    # (it is not currently supported by the agent)
+    if config.should_instrument_logging():
+        _start_logging(config)
 
     add_instrumentations(config)
 
@@ -241,6 +267,16 @@ def _start_metrics(config: Config) -> None:
     metrics.set_meter_provider(provider)
 
 
+def _start_logging(config: Config) -> None:
+    log_exporter = OTLPLogExporter(
+        endpoint=f"{_opentelemetry_endpoint(config)}/v1/logs",
+    )
+    provider = LoggerProvider(resource=_resource(config))
+    provider.add_log_record_processor(BatchLogRecordProcessor(log_exporter))
+
+    logs.set_logger_provider(provider)
+
+
 def _resource(config: Config) -> Resource:
     attributes = {
         key: str(value)
@@ -264,7 +300,7 @@ def _opentelemetry_endpoint(config: Config) -> str:
     collector_endpoint = config.options.get("collector_endpoint")
     if collector_endpoint:
         # Remove trailing slashes (it will be concatenated
-        # with /v1/traces and /v1/metrics later)
+        # with /v1/{traces,metrics,logs} later)
         return collector_endpoint.rstrip("/")
 
     opentelemetry_port = config.option("opentelemetry_port")
@@ -285,7 +321,7 @@ def add_instrumentations(
     for name, adder in _adders.items():
         if name not in disable_list:
             try:
-                adder()
+                adder(config)
                 logger.info(f"Instrumented {name}")
             except ModuleNotFoundError:
                 pass

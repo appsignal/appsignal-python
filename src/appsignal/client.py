@@ -66,7 +66,7 @@ class Client:
             start_probes()
 
     def _set_binary(self) -> None:
-        if self._config.option("collector_endpoint") is not None:
+        if self._config.should_use_external_collector():
             # When a custom collector endpoint is set, use a `NoopBinary`
             # set to active, so that OpenTelemetry and probes are started,
             # but the agent is not started.

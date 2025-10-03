@@ -115,6 +115,7 @@ class Config:
         "opentelemetry.instrumentation.requests",
         "opentelemetry.instrumentation.sqlite3",
         "opentelemetry.instrumentation.sqlalchemy",
+        "opentelemetry.sdk._logs",
     ]
     DEFAULT_INSTRUMENTATIONS = cast(
         List[DefaultInstrumentation], list(get_args(DefaultInstrumentation))
@@ -141,6 +142,17 @@ class Config:
 
     def option(self, option: str) -> Any:
         return self.options.get(option)
+
+    # Whether it should instrument logging.
+    def should_instrument_logging(self) -> bool:
+        # The agent does not support logging, so this is equivalent
+        # to whether it should use an external collector.
+        return self.should_use_external_collector()
+
+    # Whether it should use a collector to send data to AppSignal
+    # which is booted externally to this integration.
+    def should_use_external_collector(self) -> bool:
+        return self.option("collector_endpoint") is not None
 
     @staticmethod
     def load_from_system() -> Options:
