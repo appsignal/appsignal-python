@@ -176,23 +176,23 @@ DefaultInstrumentationAdder = Callable[[Config], None]
 DEFAULT_INSTRUMENTATION_ADDERS: Mapping[
     Config.DefaultInstrumentation, DefaultInstrumentationAdder
 ] = {
-    "opentelemetry.instrumentation.aiopg": add_aiopg_instrumentation,
-    "opentelemetry.instrumentation.asyncpg": add_asyncpg_instrumentation,
-    "opentelemetry.instrumentation.celery": add_celery_instrumentation,
-    "opentelemetry.instrumentation.django": add_django_instrumentation,
-    "opentelemetry.instrumentation.flask": add_flask_instrumentation,
-    "opentelemetry.instrumentation.jinja2": add_jinja2_instrumentation,
-    "opentelemetry.instrumentation.mysql": add_mysql_instrumentation,
-    "opentelemetry.instrumentation.mysqlclient": add_mysqlclient_instrumentation,
-    "opentelemetry.instrumentation.pika": add_pika_instrumentation,
-    "opentelemetry.instrumentation.psycopg2": add_psycopg2_instrumentation,
-    "opentelemetry.instrumentation.psycopg": add_psycopg_instrumentation,
-    "opentelemetry.instrumentation.pymysql": add_pymysql_instrumentation,
-    "opentelemetry.instrumentation.redis": add_redis_instrumentation,
-    "opentelemetry.instrumentation.requests": add_requests_instrumentation,
-    "opentelemetry.instrumentation.sqlalchemy": add_sqlalchemy_instrumentation,
-    "opentelemetry.instrumentation.sqlite3": add_sqlite3_instrumentation,
-    "opentelemetry.sdk._logs": add_logging_instrumentation,
+    "aiopg": add_aiopg_instrumentation,
+    "asyncpg": add_asyncpg_instrumentation,
+    "celery": add_celery_instrumentation,
+    "django": add_django_instrumentation,
+    "flask": add_flask_instrumentation,
+    "jinja2": add_jinja2_instrumentation,
+    "mysql": add_mysql_instrumentation,
+    "mysqlclient": add_mysqlclient_instrumentation,
+    "pika": add_pika_instrumentation,
+    "psycopg2": add_psycopg2_instrumentation,
+    "psycopg": add_psycopg_instrumentation,
+    "pymysql": add_pymysql_instrumentation,
+    "redis": add_redis_instrumentation,
+    "requests": add_requests_instrumentation,
+    "sqlalchemy": add_sqlalchemy_instrumentation,
+    "sqlite3": add_sqlite3_instrumentation,
+    "logging": add_logging_instrumentation,
 }
 
 
@@ -319,7 +319,10 @@ def add_instrumentations(
         return
 
     for name, adder in _adders.items():
-        if name not in disable_list:
+        if (
+            name not in disable_list
+            and f"opentelemetry.instrumentation.{name}" not in disable_list
+        ):
             try:
                 adder(config)
                 logger.info(f"Instrumented {name}")
