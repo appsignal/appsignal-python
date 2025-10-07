@@ -46,6 +46,7 @@ class Client:
 
         if self._config.is_active():
             logger.info("Starting AppSignal")
+            self._config.warn()
             self._binary.start(self._config)
             if not self._binary.active:
                 return

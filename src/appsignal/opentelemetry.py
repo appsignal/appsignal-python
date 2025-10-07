@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import os
-from typing import TYPE_CHECKING, Callable, Mapping
+from typing import TYPE_CHECKING, Callable, List, Mapping, Union, cast
 
 from opentelemetry import _logs as logs
 from opentelemetry import metrics, trace
@@ -279,7 +279,7 @@ def _start_logging(config: Config) -> None:
 
 def _resource(config: Config) -> Resource:
     attributes = {
-        key: str(value)
+        key: value
         for key, value in {
             "appsignal.config.name": config.options.get("name"),
             "appsignal.config.environment": config.options.get("environment"),
@@ -287,13 +287,47 @@ def _resource(config: Config) -> Resource:
             "appsignal.config.revision": config.options.get("revision", "unknown"),
             "appsignal.config.language_integration": "python",
             "service.name": config.options.get("service_name", "unknown"),
-            "host.name": config.options.get("hostname", os.uname().nodename),
+            "host.name": config.options.get("hostname", "unknown"),
             "appsignal.service.process_id": os.getpid(),
+            "appsignal.config.filter_attributes": config.options.get(
+                "filter_attributes"
+            ),
+            "appsignal.config.filter_function_parameters": config.options.get(
+                "filter_function_parameters"
+            ),
+            "appsignal.config.filter_request_query_parameters": config.options.get(
+                "filter_request_query_parameters"
+            ),
+            "appsignal.config.filter_request_payload": config.options.get(
+                "filter_request_payload"
+            ),
+            "appsignal.config.filter_request_session_data": config.options.get(
+                "filter_session_data"
+            ),
+            "appsignal.config.ignore_actions": config.options.get("ignore_actions"),
+            "appsignal.config.ignore_errors": config.options.get("ignore_errors"),
+            "appsignal.config.ignore_namespaces": config.options.get(
+                "ignore_namespaces"
+            ),
+            "appsignal.config.response_headers": config.options.get("response_headers"),
+            "appsignal.config.request_headers": config.options.get("request_headers"),
+            "appsignal.config.send_function_parameters": config.options.get(
+                "send_function_parameters"
+            ),
+            "appsignal.config.send_request_query_parameters": config.options.get(
+                "send_request_query_parameters"
+            ),
+            "appsignal.config.send_request_payload": config.options.get(
+                "send_request_payload"
+            ),
+            "appsignal.config.send_request_session_data": config.options.get(
+                "send_session_data"
+            ),
         }.items()
         if value is not None
     }
 
-    return Resource(attributes=attributes)
+    return Resource(attributes=cast(Mapping[str, Union[str, List[str]]], attributes))
 
 
 def _opentelemetry_endpoint(config: Config) -> str:
