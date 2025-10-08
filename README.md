@@ -91,7 +91,7 @@ hatch run build:for <triple> # for a specific agent triple
 hatch run build:me /path/to/agent
 # or place the desired agent binary at
 # `src/appsignal/appsignal-agent`, and then:
-hatch run build:me --keep-agent
+ _APPSIGNAL_BUILD_AGENT_PATH="--keep-agent" hatch run build:me
 ```
 
 ### Clean up build artifacts
