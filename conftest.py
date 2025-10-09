@@ -16,7 +16,6 @@ from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanE
 from opentelemetry.trace import set_tracer_provider
 
 from appsignal import probes
-from appsignal.agent import agent
 from appsignal.check_in.heartbeat import (
     _kill_continuous_heartbeats,
     _reset_heartbeat_continuous_interval_seconds,
@@ -103,11 +102,6 @@ def stop_and_clear_probes_after_tests() -> Any:
 
     probes.stop()
     probes.clear()
-
-
-@pytest.fixture(scope="function", autouse=True)
-def reset_agent_active_state() -> Any:
-    agent.active = False
 
 
 @pytest.fixture(scope="function", autouse=True)

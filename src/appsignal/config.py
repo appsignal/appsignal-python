@@ -2,9 +2,11 @@ from __future__ import annotations
 
 import os
 import platform
+import socket
 import tempfile
 from typing import Any, ClassVar, List, Literal, TypedDict, cast, get_args
 
+from . import internal_logger as logger
 from .__about__ import __version__
 
 
@@ -13,6 +15,7 @@ class Options(TypedDict, total=False):
     app_path: str | None
     bind_address: str | None
     ca_file_path: str | None
+    collector_endpoint: str | None
     cpu_count: float | None
     diagnose_endpoint: str | None
     disable_default_instrumentations: None | (
@@ -26,7 +29,11 @@ class Options(TypedDict, total=False):
     endpoint: str | None
     environment: str | None
     files_world_accessible: bool | None
+    filter_attributes: list[str] | None
+    filter_function_parameters: list[str] | None
     filter_parameters: list[str] | None
+    filter_request_payload: list[str] | None
+    filter_request_query_parameters: list[str] | None
     filter_session_data: list[str] | None
     hostname: str | None
     host_role: str | None
@@ -44,10 +51,15 @@ class Options(TypedDict, total=False):
     push_api_key: str | None
     revision: str | None
     request_headers: list[str] | None
+    response_headers: list[str] | None
     running_in_container: bool | None
     send_environment_metadata: bool | None
+    send_function_parameters: bool | None
     send_params: bool | None
+    send_request_payload: bool | None
+    send_request_query_parameters: bool | None
     send_session_data: bool | None
+    service_name: str | None
     statsd_port: str | int | None
     working_directory_path: str | None
 
@@ -97,22 +109,23 @@ class Config:
     )
 
     DefaultInstrumentation = Literal[
-        "opentelemetry.instrumentation.aiopg",
-        "opentelemetry.instrumentation.asyncpg",
-        "opentelemetry.instrumentation.celery",
-        "opentelemetry.instrumentation.django",
-        "opentelemetry.instrumentation.flask",
-        "opentelemetry.instrumentation.jinja2",
-        "opentelemetry.instrumentation.mysql",
-        "opentelemetry.instrumentation.mysqlclient",
-        "opentelemetry.instrumentation.pika",
-        "opentelemetry.instrumentation.psycopg",
-        "opentelemetry.instrumentation.psycopg2",
-        "opentelemetry.instrumentation.pymysql",
-        "opentelemetry.instrumentation.redis",
-        "opentelemetry.instrumentation.requests",
-        "opentelemetry.instrumentation.sqlite3",
-        "opentelemetry.instrumentation.sqlalchemy",
+        "aiopg",
+        "asyncpg",
+        "celery",
+        "django",
+        "flask",
+        "jinja2",
+        "mysql",
+        "mysqlclient",
+        "pika",
+        "psycopg",
+        "psycopg2",
+        "pymysql",
+        "redis",
+        "requests",
+        "sqlite3",
+        "sqlalchemy",
+        "logging",
     ]
     DEFAULT_INSTRUMENTATIONS = cast(
         List[DefaultInstrumentation], list(get_args(DefaultInstrumentation))
@@ -140,9 +153,29 @@ class Config:
     def option(self, option: str) -> Any:
         return self.options.get(option)
 
+    # Whether it should instrument logging.
+    def should_instrument_logging(self) -> bool:
+        # The agent does not support logging, so this is equivalent
+        # to whether it should use a collector.
+        return self.should_use_collector()
+
+    # Whether it should use a collector to send data to AppSignal.
+    def should_use_collector(self) -> bool:
+        # This is currently equivalent to whether it should use an
+        # external collector.
+        return self.should_use_external_collector()
+
+    # Whether it should use a collector to send data to AppSignal
+    # which is booted externally to this integration.
+    def should_use_external_collector(self) -> bool:
+        return self.option("collector_endpoint") is not None
+
     @staticmethod
     def load_from_system() -> Options:
-        return Options(app_path=os.getcwd())
+        return Options(
+            app_path=os.getcwd(),
+            hostname=os.environ.get("HOSTNAME") or socket.gethostname(),
+        )
 
     @staticmethod
     def load_from_environment() -> Options:
@@ -150,6 +183,7 @@ class Config:
             active=parse_bool(os.environ.get("APPSIGNAL_ACTIVE")),
             bind_address=os.environ.get("APPSIGNAL_BIND_ADDRESS"),
             ca_file_path=os.environ.get("APPSIGNAL_CA_FILE_PATH"),
+            collector_endpoint=os.environ.get("APPSIGNAL_COLLECTOR_ENDPOINT"),
             cpu_count=parse_float(os.environ.get("APPSIGNAL_CPU_COUNT")),
             diagnose_endpoint=os.environ.get("APPSIGNAL_DIAGNOSE_ENDPOINT"),
             disable_default_instrumentations=parse_disable_default_instrumentations(
@@ -171,7 +205,17 @@ class Config:
             files_world_accessible=parse_bool(
                 os.environ.get("APPSIGNAL_FILES_WORLD_ACCESSIBLE")
             ),
+            filter_attributes=parse_list(os.environ.get("APPSIGNAL_FILTER_ATTRIBUTES")),
+            filter_function_parameters=parse_list(
+                os.environ.get("APPSIGNAL_FILTER_FUNCTION_PARAMETERS")
+            ),
             filter_parameters=parse_list(os.environ.get("APPSIGNAL_FILTER_PARAMETERS")),
+            filter_request_payload=parse_list(
+                os.environ.get("APPSIGNAL_FILTER_REQUEST_PAYLOAD")
+            ),
+            filter_request_query_parameters=parse_list(
+                os.environ.get("APPSIGNAL_FILTER_REQUEST_QUERY_PARAMETERS")
+            ),
             filter_session_data=parse_list(
                 os.environ.get("APPSIGNAL_FILTER_SESSION_DATA")
             ),
@@ -191,14 +235,25 @@ class Config:
             push_api_key=os.environ.get("APPSIGNAL_PUSH_API_KEY"),
             revision=os.environ.get("APP_REVISION"),
             request_headers=parse_list(os.environ.get("APPSIGNAL_REQUEST_HEADERS")),
+            response_headers=parse_list(os.environ.get("APPSIGNAL_RESPONSE_HEADERS")),
             running_in_container=parse_bool(
                 os.environ.get("APPSIGNAL_RUNNING_IN_CONTAINER")
             ),
             send_environment_metadata=parse_bool(
                 os.environ.get("APPSIGNAL_SEND_ENVIRONMENT_METADATA")
             ),
+            send_function_parameters=parse_bool(
+                os.environ.get("APPSIGNAL_SEND_FUNCTION_PARAMETERS")
+            ),
             send_params=parse_bool(os.environ.get("APPSIGNAL_SEND_PARAMS")),
+            send_request_payload=parse_bool(
+                os.environ.get("APPSIGNAL_SEND_REQUEST_PAYLOAD")
+            ),
+            send_request_query_parameters=parse_bool(
+                os.environ.get("APPSIGNAL_SEND_REQUEST_QUERY_PARAMETERS")
+            ),
             send_session_data=parse_bool(os.environ.get("APPSIGNAL_SEND_SESSION_DATA")),
+            service_name=os.environ.get("APPSIGNAL_SERVICE_NAME"),
             statsd_port=os.environ.get("APPSIGNAL_STATSD_PORT"),
             working_directory_path=os.environ.get("APPSIGNAL_WORKING_DIRECTORY_PATH"),
         )
@@ -312,6 +367,122 @@ class Config:
         push_api_key = self.option("push_api_key") or ""
         if len(push_api_key.strip()) > 0:
             self.valid = True
+
+    def warn(self) -> None:
+        if self.should_use_collector():
+            self._warn_agent_exclusive_options()
+        else:
+            self._warn_collector_exclusive_options()
+
+    # Emit a warning if agent-exclusive configuration options are used.
+    def _warn_agent_exclusive_options(self) -> None:
+        exclusive_options = [
+            "bind_address",
+            "cpu_count",
+            "dns_servers",
+            "enable_host_metrics",
+            "enable_nginx_metrics",
+            "enable_statsd",
+            "files_world_accessible",
+            "filter_parameters",
+            "host_role",
+            "nginx_port",
+            "opentelemetry_port",
+            "running_in_container",
+            "send_environment_metadata",
+            "send_params",
+            "working_directory_path",
+            "statsd_port",
+        ]
+
+        option_specific_warnings = {
+            "filter_parameters": (
+                "Use the 'filter_attributes', 'filter_function_parameters',"
+                " 'filter_request_payload' and 'filter_request_query_parameters'"
+                " configuration options instead."
+            ),
+            "send_params": (
+                "Use the 'send_function_parameters', 'send_request_payload'"
+                " and 'send_request_query_parameters' configuration options instead."
+            ),
+            "opentelemetry_port": (
+                "Set the collector's OpenTelemetry port as part of the"
+                " 'collector_endpoint' configuration option."
+            ),
+        }
+
+        user_modified_options = self._filter_user_modified_options(exclusive_options)
+
+        for option in user_modified_options:
+            logger.warning(
+                f"The collector is in use. The '{option}' configuration option"
+                " is only used by the agent and will be ignored."
+            )
+            if option in option_specific_warnings:
+                logger.warning(option_specific_warnings[option])
+
+        if user_modified_options:
+            logger.info(
+                "To use the agent, unset the 'collector_endpoint' configuration option."
+            )
+
+    # Emit a warning if collector-exclusive configuration options are used.
+    def _warn_collector_exclusive_options(self) -> None:
+        exclusive_options = [
+            "filter_attributes",
+            "filter_function_parameters",
+            "filter_request_payload",
+            "filter_request_query_parameters",
+            "response_headers",
+            "send_function_parameters",
+            "send_request_payload",
+            "send_request_query_parameters",
+            "service_name",
+        ]
+
+        filter_warning = "Use the 'filter_parameters' option instead."
+        send_warning = "Use the 'send_params' option instead."
+
+        option_specific_warnings = {
+            "filter_attributes": filter_warning,
+            "filter_function_parameters": filter_warning,
+            "filter_request_payload": filter_warning,
+            "filter_request_query_parameters": filter_warning,
+            "send_function_parameters": send_warning,
+            "send_request_payload": send_warning,
+            "send_request_query_parameters": send_warning,
+        }
+
+        user_modified_options = self._filter_user_modified_options(exclusive_options)
+
+        for option in user_modified_options:
+            logger.warning(
+                f"The agent is in use. The '{option}' configuration option"
+                " is only used by the collector and will be ignored."
+            )
+            if option in option_specific_warnings:
+                logger.warning(option_specific_warnings[option])
+
+        if user_modified_options:
+            logger.info(
+                "To use the collector, set the 'collector_endpoint' configuration option."
+            )
+
+    # Filter a list of options, returning a list of those options for which
+    # a value has been set by the user (through the initialiser or in the
+    # environment) which differs from that of the default configuration.
+    def _filter_user_modified_options(self, options: list[str]) -> list[str]:
+        return [
+            option
+            for option in options
+            if (
+                (
+                    option in self.sources["initial"]
+                    or option in self.sources["environment"]
+                )
+                and self.option(option) != self.sources["default"].get(option)
+            )
+        ]
 
 
 def parse_bool(value: str | None) -> bool | None:
