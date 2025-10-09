@@ -170,6 +170,14 @@ def add_logging_instrumentation(config: Config) -> None:
     logger = logging.getLogger()
     logger.addHandler(handler)
 
+    # Configure the OpenTelemetry loggers and the AppSignal internal
+    # logger to not propagate to the root logger. This prevents
+    # internal logs from being sent to AppSignal.
+    opentelemetry_logger = logging.getLogger("opentelemetry")
+    opentelemetry_logger.propagate = False
+    appsignal_logger = logging.getLogger("appsignal")
+    appsignal_logger.propagate = False
+
 
 DefaultInstrumentationAdder = Callable[[Config], None]
 
