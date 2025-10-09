@@ -1,5 +1,28 @@
 # AppSignal for Python Changelog
 
+## 1.6.0
+
+_Published on 2025-10-09._
+
+### Added
+
+- Support logging through the external collector experimental feature. When the `collector_endpoint` configuration option is provided, the OpenTelemetry stack will be automatically configured to instrument logs.
+
+  The `logging` module will be automatically instrumented, such that log lines emitted through loggers that propagate to the root logger will be automatically sent to AppSignal. To disable this behaviour, add `"logging"` to the `disable_default_instrumentations` configuration option list.
+
+  (minor [c7ac2bd](https://github.com/appsignal/appsignal-python/commit/c7ac2bdd20d33321fcc8c6e58da95c5550b2f67c))
+- Support usage with external collector. When the `collector_endpoint` configuration option is provided, instead of booting up the AppSignal agent bundled with the application, the OpenTelemetry stack will be configured to send data to the given collector.
+
+  This is an **experimental** feature. The following functionality is not currently supported when using the collector:
+
+  - NGINX metrics
+  - StatsD metrics
+  - Host metrics
+
+  Some configuration options are only supported when using the agent or when using the collector. A warning will be emitted if a configuration option that is only supported by one is set while using the other.
+
+  (minor [c7ac2bd](https://github.com/appsignal/appsignal-python/commit/c7ac2bdd20d33321fcc8c6e58da95c5550b2f67c))
+
 ## 1.5.4
 
 _Published on 2025-06-06._
