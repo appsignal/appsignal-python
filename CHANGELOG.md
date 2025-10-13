@@ -1,5 +1,13 @@
 # AppSignal for Python Changelog
 
+## 1.6.1
+
+_Published on 2025-10-13._
+
+### Fixed
+
+- Fix parsing of OpenTelemetry spans emitted by `FastAPI` and popular database libraries. (patch [8209230](https://github.com/appsignal/appsignal-python/commit/8209230267a26585c64ea69ddfcf930af2c2fd22))
+
 ## 1.6.0
 
 _Published on 2025-10-09._
