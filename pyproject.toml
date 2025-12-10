@@ -150,6 +150,9 @@ for = "_APPSIGNAL_BUILD_TRIPLE=\"{args}\" hatch build -t wheel"
 path = "src/scripts/build_hook.py"
 dependencies = ["requests"]
 
+[tool.hatch.envs.hatch-build]
+dependencies = ["requests"]
+
 [tool.hatch.build.targets.sdist.hooks.custom]
 path = "src/scripts/sdist_hook.py"
 
