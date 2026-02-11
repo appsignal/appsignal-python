@@ -1,5 +1,13 @@
 # AppSignal for Python Changelog
 
+## 1.6.3
+
+_Published on 2026-02-11._
+
+### Fixed
+
+- Fix an issue where using check-ins blocks the application from shutting down. (patch [f1b7d18](https://github.com/appsignal/appsignal-python/commit/f1b7d1816dd9e021c3b31d3c445fa90f6d69eca7))
+
 ## 1.6.2
 
 _Published on 2026-02-11._
