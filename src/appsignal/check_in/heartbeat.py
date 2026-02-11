@@ -44,7 +44,7 @@ def _start_continuous_heartbeat(name: str) -> None:
 
             heartbeat(name)
 
-    thread = Thread(target=_run_continuous_heartbeat)
+    thread = Thread(target=_run_continuous_heartbeat, daemon=True)
     thread.start()
     _started_continuous_heartbeats.append((kill, thread))
 
