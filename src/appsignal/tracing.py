@@ -91,7 +91,7 @@ def set_root_name(root_name: str, span: Span | None = None) -> None:
 def set_error(error: Exception, span: Span | None = None) -> None:
     span = span or trace.get_current_span()
     span.set_status(Status(StatusCode.ERROR))
-    span.record_exception(error)
+    span.record_exception(error, attributes={"appsignal.alert_this_error": True})
 
 
 def send_error(error: Exception) -> None:
