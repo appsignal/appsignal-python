@@ -55,7 +55,7 @@ class Scheduler:
             logger.debug(f"Scheduling {describe([event])} to be transmitted")
 
             if self.thread is None:
-                self.thread = Thread(target=self._run)
+                self.thread = Thread(target=self._run, daemon=True)
                 self.thread.start()
 
     def stop(self) -> None:
@@ -118,7 +118,7 @@ class Scheduler:
         self._stop_waker()
 
         kill = ThreadEvent()
-        thread = Thread(target=self._run_waker, args=(debounce, kill))
+        thread = Thread(target=self._run_waker, daemon=True, args=(debounce, kill))
         thread.start()
         self.waker = kill
 
