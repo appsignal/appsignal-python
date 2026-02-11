@@ -1,5 +1,14 @@
 # AppSignal for Python Changelog
 
+## 1.6.2
+
+_Published on 2026-02-11._
+
+### Fixed
+
+- Fix 'unknown' events being reported for some HTTP routes. (patch [d83efa6](https://github.com/appsignal/appsignal-python/commit/d83efa678b02d54bb7203ac453d9d9073bbbbca5))
+- Fix an issue where usage of continuous heartbeats would stop an application from winding down unless `appsignal.stop()` was called. (patch [b0408d5](https://github.com/appsignal/appsignal-python/commit/b0408d568c05ef7eef93b8833c1b73dc7e24e9c6))
+
 ## 1.6.1
 
 _Published on 2025-10-13._
