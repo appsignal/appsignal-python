@@ -1,5 +1,13 @@
 # AppSignal for Python Changelog
 
+## 1.6.4
+
+_Published on 2026-02-18._
+
+### Fixed
+
+- Fix an issue where errors set with the `set_error` helper would not always be reported as errors in AppSignal when using collector mode. (patch [9d12d9b](https://github.com/appsignal/appsignal-python/commit/9d12d9b50ddf171183b5779a4d2bc49334bb22e8))
+
 ## 1.6.3
 
 _Published on 2026-02-11._
