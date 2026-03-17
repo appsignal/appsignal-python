@@ -104,3 +104,6 @@ jobs:
         with:
           fetch-depth: 0 # Fetch depth is required
       - uses: lintje/action@v0.11
+
+  validate-changesets:
+    uses: ./.github/workflows/validate_changesets.yml
