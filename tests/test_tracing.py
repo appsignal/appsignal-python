@@ -82,6 +82,22 @@ def test_set_root_name_collector_mode(spans):
     assert "appsignal.root_name" not in attributes
 
 
+def test_set_name_collector_mode(spans):
+    Client(
+        active=True,
+        name="MyApp",
+        push_api_key="0000-0000-0000-0000",
+        collector_endpoint="https://custom-endpoint.appsignal.com",
+    )
+
+    with tracer.start_as_current_span("span"):
+        set_name("New name")
+
+    span = spans()[0]
+    assert span.name == "New name"
+    assert "appsignal.name" not in dict(span.attributes)
+
+
 def test_set_attributes_on_span(spans):
     with tracer.start_as_current_span("parent span") as span:
         with tracer.start_as_current_span("child span"):

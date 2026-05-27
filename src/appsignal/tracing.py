@@ -44,6 +44,16 @@ def _set_prefixed_attribute(
         _set_attribute(f"{prefix}.{suffix}", value, span)
 
 
+def _update_span_name(name: str, span: Span | None = None) -> None:
+    span = span or trace.get_current_span()
+
+    if span is trace.INVALID_SPAN:
+        logger.debug("There is no active span, cannot set `name`")
+        return
+
+    span.update_name(name)
+
+
 def _use_collector() -> bool:
     # Imported here to avoid an import cycle with the client module.
     from .client import Client
@@ -73,7 +83,13 @@ def set_header(header: str, value: Any, span: Span | None = None) -> None:
 
 
 def set_name(name: str, span: Span | None = None) -> None:
-    _set_attribute("appsignal.name", name, span)
+    # The collector uses the span name directly, and its enrichers cannot
+    # override it, so update the span name. The agent derives the name from
+    # semantic conventions, so set an attribute it honors as a hard override.
+    if _use_collector():
+        _update_span_name(name, span)
+    else:
+        _set_attribute("appsignal.name", name, span)
 
 
 def set_category(category: str, span: Span | None = None) -> None:

@@ -1,7 +1,6 @@
 ---
 bump: patch
 type: fix
-integrations: all
 ---
 
 Emit the `appsignal.action_name` attribute instead of `appsignal.root_name`
