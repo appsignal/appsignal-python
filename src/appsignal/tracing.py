@@ -44,6 +44,14 @@ def _set_prefixed_attribute(
         _set_attribute(f"{prefix}.{suffix}", value, span)
 
 
+def _use_collector() -> bool:
+    # Imported here to avoid an import cycle with the client module.
+    from .client import Client
+
+    config = Client.config()
+    return config is not None and config.should_use_collector()
+
+
 def set_params(params: Any, span: Span | None = None) -> None:
     _set_serialised_attribute("appsignal.request.parameters", params, span)
 
@@ -85,7 +93,12 @@ def set_namespace(namespace: str, span: Span | None = None) -> None:
 
 
 def set_root_name(root_name: str, span: Span | None = None) -> None:
-    _set_attribute("appsignal.root_name", root_name, span)
+    # The collector reads the action name from `appsignal.action_name`, while
+    # the agent reads it from `appsignal.root_name`.
+    if _use_collector():
+        _set_attribute("appsignal.action_name", root_name, span)
+    else:
+        _set_attribute("appsignal.root_name", root_name, span)
 
 
 def set_error(error: Exception, span: Span | None = None) -> None:
