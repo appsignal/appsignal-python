@@ -101,7 +101,14 @@ def set_body(body: str, span: Span | None = None) -> None:
 
 
 def set_sql_body(body: str, span: Span | None = None) -> None:
-    _set_attribute("appsignal.sql_body", body, span)
+    # The collector sanitizes SQL via the `db.query.text` attribute, gated on
+    # `db.system.name` being set to a recognized SQL system. The agent
+    # sanitizes via the `appsignal.sql_body` magic attribute.
+    if _use_collector():
+        _set_attribute("db.system.name", "other_sql", span)
+        _set_attribute("db.query.text", body, span)
+    else:
+        _set_attribute("appsignal.sql_body", body, span)
 
 
 def set_namespace(namespace: str, span: Span | None = None) -> None:

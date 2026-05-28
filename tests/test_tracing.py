@@ -3,8 +3,6 @@ from __future__ import annotations
 from opentelemetry import trace
 from opentelemetry.trace import StatusCode
 
-from appsignal.client import Client
-
 from appsignal import (
     send_error,
     send_error_with_context,
@@ -21,6 +19,7 @@ from appsignal import (
     set_sql_body,
     set_tag,
 )
+from appsignal.client import Client
 
 
 tracer = trace.get_tracer("appsignal/tests")
@@ -96,6 +95,23 @@ def test_set_name_collector_mode(spans):
     span = spans()[0]
     assert span.name == "New name"
     assert "appsignal.name" not in dict(span.attributes)
+
+
+def test_set_sql_body_collector_mode(spans):
+    Client(
+        active=True,
+        name="MyApp",
+        push_api_key="0000-0000-0000-0000",
+        collector_endpoint="https://custom-endpoint.appsignal.com",
+    )
+
+    with tracer.start_as_current_span("span"):
+        set_sql_body("SELECT * FROM users")
+
+    attributes = dict(spans()[0].attributes)
+    assert attributes["db.system.name"] == "other_sql"
+    assert attributes["db.query.text"] == "SELECT * FROM users"
+    assert "appsignal.sql_body" not in attributes
 
 
 def test_set_attributes_on_span(spans):
