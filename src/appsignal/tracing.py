@@ -44,6 +44,24 @@ def _set_prefixed_attribute(
         _set_attribute(f"{prefix}.{suffix}", value, span)
 
 
+def _update_span_name(name: str, span: Span | None = None) -> None:
+    span = span or trace.get_current_span()
+
+    if span is trace.INVALID_SPAN:
+        logger.debug("There is no active span, cannot set `name`")
+        return
+
+    span.update_name(name)
+
+
+def _use_collector() -> bool:
+    # Imported here to avoid an import cycle with the client module.
+    from .client import Client
+
+    config = Client.config()
+    return config is not None and config.should_use_collector()
+
+
 def set_params(params: Any, span: Span | None = None) -> None:
     _set_serialised_attribute("appsignal.request.parameters", params, span)
 
@@ -65,7 +83,13 @@ def set_header(header: str, value: Any, span: Span | None = None) -> None:
 
 
 def set_name(name: str, span: Span | None = None) -> None:
-    _set_attribute("appsignal.name", name, span)
+    # The collector uses the span name directly, and its enrichers cannot
+    # override it, so update the span name. The agent derives the name from
+    # semantic conventions, so set an attribute it honors as a hard override.
+    if _use_collector():
+        _update_span_name(name, span)
+    else:
+        _set_attribute("appsignal.name", name, span)
 
 
 def set_category(category: str, span: Span | None = None) -> None:
@@ -77,7 +101,14 @@ def set_body(body: str, span: Span | None = None) -> None:
 
 
 def set_sql_body(body: str, span: Span | None = None) -> None:
-    _set_attribute("appsignal.sql_body", body, span)
+    # The collector sanitizes SQL via the `db.query.text` attribute, gated on
+    # `db.system.name` being set to a recognized SQL system. The agent
+    # sanitizes via the `appsignal.sql_body` magic attribute.
+    if _use_collector():
+        _set_attribute("db.system.name", "other_sql", span)
+        _set_attribute("db.query.text", body, span)
+    else:
+        _set_attribute("appsignal.sql_body", body, span)
 
 
 def set_namespace(namespace: str, span: Span | None = None) -> None:
@@ -85,7 +116,12 @@ def set_namespace(namespace: str, span: Span | None = None) -> None:
 
 
 def set_root_name(root_name: str, span: Span | None = None) -> None:
-    _set_attribute("appsignal.root_name", root_name, span)
+    # The collector reads the action name from `appsignal.action_name`, while
+    # the agent reads it from `appsignal.root_name`.
+    if _use_collector():
+        _set_attribute("appsignal.action_name", root_name, span)
+    else:
+        _set_attribute("appsignal.root_name", root_name, span)
 
 
 def set_error(error: Exception, span: Span | None = None) -> None:

@@ -19,6 +19,7 @@ from appsignal import (
     set_sql_body,
     set_tag,
 )
+from appsignal.client import Client
 
 
 tracer = trace.get_tracer("appsignal/tests")
@@ -62,6 +63,55 @@ def test_set_attributes(spans):
         "appsignal.namespace": "web",
         "appsignal.root_name": "Root name",
     }
+
+
+def test_set_root_name_collector_mode(spans):
+    Client(
+        active=True,
+        name="MyApp",
+        push_api_key="0000-0000-0000-0000",
+        collector_endpoint="https://custom-endpoint.appsignal.com",
+    )
+
+    with tracer.start_as_current_span("span"):
+        set_root_name("Root name")
+
+    attributes = dict(spans()[0].attributes)
+    assert attributes["appsignal.action_name"] == "Root name"
+    assert "appsignal.root_name" not in attributes
+
+
+def test_set_name_collector_mode(spans):
+    Client(
+        active=True,
+        name="MyApp",
+        push_api_key="0000-0000-0000-0000",
+        collector_endpoint="https://custom-endpoint.appsignal.com",
+    )
+
+    with tracer.start_as_current_span("span"):
+        set_name("New name")
+
+    span = spans()[0]
+    assert span.name == "New name"
+    assert "appsignal.name" not in dict(span.attributes)
+
+
+def test_set_sql_body_collector_mode(spans):
+    Client(
+        active=True,
+        name="MyApp",
+        push_api_key="0000-0000-0000-0000",
+        collector_endpoint="https://custom-endpoint.appsignal.com",
+    )
+
+    with tracer.start_as_current_span("span"):
+        set_sql_body("SELECT * FROM users")
+
+    attributes = dict(spans()[0].attributes)
+    assert attributes["db.system.name"] == "other_sql"
+    assert attributes["db.query.text"] == "SELECT * FROM users"
+    assert "appsignal.sql_body" not in attributes
 
 
 def test_set_attributes_on_span(spans):
