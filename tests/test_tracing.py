@@ -97,6 +97,38 @@ def test_set_name_collector_mode(spans):
     assert "appsignal.name" not in dict(span.attributes)
 
 
+def test_set_params_collector_mode(spans):
+    Client(
+        active=True,
+        name="MyApp",
+        push_api_key="0000-0000-0000-0000",
+        collector_endpoint="https://custom-endpoint.appsignal.com",
+    )
+
+    with tracer.start_as_current_span("span"):
+        set_params({"id": 123})
+
+    attributes = dict(spans()[0].attributes)
+    assert attributes["appsignal.request.payload"] == '{"id": 123}'
+    assert "appsignal.request.parameters" not in attributes
+
+
+def test_set_header_collector_mode(spans):
+    Client(
+        active=True,
+        name="MyApp",
+        push_api_key="0000-0000-0000-0000",
+        collector_endpoint="https://custom-endpoint.appsignal.com",
+    )
+
+    with tracer.start_as_current_span("span"):
+        set_header("content-type", "application/json")
+
+    attributes = dict(spans()[0].attributes)
+    assert attributes["http.request.header.content-type"] == "application/json"
+    assert "appsignal.request.headers.content-type" not in attributes
+
+
 def test_set_sql_body_collector_mode(spans):
     Client(
         active=True,

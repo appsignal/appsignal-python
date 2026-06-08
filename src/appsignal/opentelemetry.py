@@ -58,33 +58,29 @@ def add_celery_instrumentation(_config: Config) -> None:
 
 
 def add_django_instrumentation(_config: Config) -> None:
-    import json
-
     from django.http.request import HttpRequest
     from django.http.response import HttpResponse
     from opentelemetry.instrumentation.django import DjangoInstrumentor
 
+    from .tracing import set_params
+
     def response_hook(span: Span, request: HttpRequest, response: HttpResponse) -> None:
-        span.set_attribute(
-            "appsignal.request.parameters",
-            json.dumps({"GET": request.GET, "POST": request.POST}),
-        )
+        set_params({"GET": request.GET, "POST": request.POST}, span)
 
     DjangoInstrumentor().instrument(response_hook=response_hook)
 
 
 def add_flask_instrumentation(_config: Config) -> None:
-    import json
     from urllib.parse import parse_qs
 
     from opentelemetry.instrumentation.flask import FlaskInstrumentor
 
+    from .tracing import set_params
+
     def request_hook(span: Span, environ: dict[str, str]) -> None:
         if span and span.is_recording():
             query_params = parse_qs(environ.get("QUERY_STRING", ""))
-            span.set_attribute(
-                "appsignal.request.parameters", json.dumps({"args": query_params})
-            )
+            set_params({"args": query_params}, span)
 
     FlaskInstrumentor().instrument(request_hook=request_hook)
 

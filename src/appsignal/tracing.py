@@ -63,7 +63,14 @@ def _use_collector() -> bool:
 
 
 def set_params(params: Any, span: Span | None = None) -> None:
-    _set_serialised_attribute("appsignal.request.parameters", params, span)
+    # The collector and server recognize `appsignal.request.payload` for request
+    # body / merged parameters; the agent recognizes `appsignal.request.parameters`.
+    attribute = (
+        "appsignal.request.payload"
+        if _use_collector()
+        else "appsignal.request.parameters"
+    )
+    _set_serialised_attribute(attribute, params, span)
 
 
 def set_session_data(session_data: Any, span: Span | None = None) -> None:
@@ -79,7 +86,11 @@ def set_tag(tag: str, value: Any, span: Span | None = None) -> None:
 
 
 def set_header(header: str, value: Any, span: Span | None = None) -> None:
-    _set_prefixed_attribute("appsignal.request.headers", header, value, span)
+    # The collector and server read request headers from the OpenTelemetry
+    # semantic-convention prefix `http.request.header`; the agent reads them
+    # from `appsignal.request.headers`.
+    prefix = "http.request.header" if _use_collector() else "appsignal.request.headers"
+    _set_prefixed_attribute(prefix, header, value, span)
 
 
 def set_name(name: str, span: Span | None = None) -> None:
