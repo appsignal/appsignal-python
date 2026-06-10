@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import pytest
 from opentelemetry import trace
 from opentelemetry.trace import StatusCode
 
@@ -245,3 +246,20 @@ def test_send_error_with_context(spans):
         assert event.name == "exception"
         assert event.attributes["exception.type"] == "tests.test_tracing.FooError"
         assert event.attributes["exception.message"] == "Whoops!"
+
+
+def test_send_error_with_context_closes_span_when_block_raises(spans):
+    # An error raised inside the `with` block bubbles out to the caller, but the
+    # error span is still ended and exported.
+    with pytest.raises(RuntimeError, match="Kaboom!"):
+        with send_error_with_context(raised_error()):
+            raise RuntimeError("Kaboom!")
+
+    span = spans()[0]
+    assert span.name == "FooError"
+    assert span.status.status_code == StatusCode.ERROR
+
+    event = span.events[0]
+    assert event.name == "exception"
+    assert event.attributes["exception.type"] == "tests.test_tracing.FooError"
+    assert event.attributes["exception.message"] == "Whoops!"
