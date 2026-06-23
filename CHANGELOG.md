@@ -1,5 +1,53 @@
 # AppSignal for Python Changelog
 
+## 1.6.5
+
+_Published on 2026-06-23._
+
+### Changed
+
+- Bundled certificates have been updated. (patch [0171bca](https://github.com/appsignal/appsignal-python/commit/0171bca5c5c3a1ed3b8f5cccddab10b61a0bb5c7))
+- Use system-specific operation name in messaging span names.
+
+  When `messaging.operation.name` is present (e.g. `Queue.add`), it is used directly as the span name prefix: `Queue.add (myQueue)`. When only the generic `messaging.operation.type` is available (e.g. `send`), the word "message" is added for clarity: `send message (myQueue)`.
+
+  (patch [bf0756d](https://github.com/appsignal/appsignal-python/commit/bf0756d2a24fb6b7f01648481db9013043e3ccf6))
+
+### Fixed
+
+- Continue reporting non-disk host metrics when a mount is frozen. (patch [142a6a1](https://github.com/appsignal/appsignal-python/commit/142a6a10e20871ae394010ba3fb58997d32c10f8))
+- Emit the `appsignal.action_name` attribute instead of `appsignal.root_name`
+  when `set_root_name` is used in collector mode. The collector only reads the
+  action name from `appsignal.action_name`, so root names set this way were
+  previously ignored, falling back to the OpenTelemetry span name.
+
+  (patch [8ef2579](https://github.com/appsignal/appsignal-python/commit/8ef25799e905e958bfdd82bbba000c3b1213b7b5), [c4e330c](https://github.com/appsignal/appsignal-python/commit/c4e330cffe007ad8120355fcf363cc4bde427246))
+- Update the OpenTelemetry span name directly when `set_name` is used in
+  collector mode, instead of setting the `appsignal.name` attribute. The
+  collector uses the span name as-is, so names set this way were previously
+  ignored.
+
+  (patch [c4e330c](https://github.com/appsignal/appsignal-python/commit/c4e330cffe007ad8120355fcf363cc4bde427246))
+- Emit the `db.system.name` and `db.query.text` semantic-convention attributes
+  instead of `appsignal.sql_body` when `set_sql_body` is used in collector
+  mode. This fixes SQL query sanitization when using the experimental collector
+  mode.
+
+  (patch [2b413fb](https://github.com/appsignal/appsignal-python/commit/2b413fb11ec77984a16f826d16a139cee67d790a))
+- Fix host-metrics leaking zombie `[timeout]` processes in Alpine linux containers.
+
+  Before this release AppSignal agent relied on a proper init process that reaps child processes killed by system `timeout`. Now the agent terminates and reaps unresponsive child processes in host-metrics collection and a subreaper is no longer required.
+
+  (patch [2355082](https://github.com/appsignal/appsignal-python/commit/2355082bce3b45e077ce3b53c3dee9db9260158c))
+- Emit request parameters and headers using the attribute names the collector
+  recognizes when in collector mode. `set_params` now emits
+  `appsignal.request.payload` instead of `appsignal.request.parameters`, and
+  `set_header` uses the `http.request.header` prefix instead of
+  `appsignal.request.headers`. The collector and server do not recognize the
+  previous names, so this sample data was previously dropped in collector mode.
+
+  (patch [bc559b4](https://github.com/appsignal/appsignal-python/commit/bc559b41ddcbd4bfba66d77bb9fadf699ccd6054))
+
 ## 1.6.4
 
 _Published on 2026-02-18._
