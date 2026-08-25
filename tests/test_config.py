@@ -264,6 +264,7 @@ def test_opentelemetry_resource():
             environment="test",
             push_api_key="test-key",
             revision="abc123",
+            app_path="/path/to/app",
             service_name="test-service",
             hostname="test-host",
             filter_attributes=["password", "secret"],
@@ -290,6 +291,7 @@ def test_opentelemetry_resource():
     assert resource.attributes["appsignal.config.environment"] == "test"
     assert resource.attributes["appsignal.config.push_api_key"] == "test-key"
     assert resource.attributes["appsignal.config.revision"] == "abc123"
+    assert resource.attributes["appsignal.config.app_path"] == "/path/to/app"
     assert resource.attributes["appsignal.config.language_integration"] == "python"
     assert resource.attributes["service.name"] == "test-service"
     assert resource.attributes["host.name"] == "test-host"
