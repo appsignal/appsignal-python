@@ -341,12 +341,23 @@ def test_opentelemetry_resource_with_defaults():
 
     # Test default values
     assert resource.attributes["appsignal.config.revision"] == "unknown"
-    assert resource.attributes["service.name"] == "unknown"
+    assert resource.attributes["service.name"] == "app"
     assert resource.attributes["appsignal.config.language_integration"] == "python"
 
     # Test that None values are excluded
     assert "appsignal.config.name" not in resource.attributes
     assert "appsignal.config.push_api_key" not in resource.attributes
+
+
+def test_opentelemetry_resource_with_none_values():
+    from appsignal.opentelemetry import _resource
+
+    config = Config(Options(revision=None, service_name=None, hostname=None))
+    resource = _resource(config)
+
+    assert resource.attributes["appsignal.config.revision"] == "unknown"
+    assert resource.attributes["service.name"] == "app"
+    assert resource.attributes["host.name"] == "unknown"
 
 
 def test_set_private_environ_valid_log_path():
