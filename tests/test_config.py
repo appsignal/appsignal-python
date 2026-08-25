@@ -349,13 +349,15 @@ def test_opentelemetry_resource_with_defaults():
     assert "appsignal.config.push_api_key" not in resource.attributes
 
 
-def test_opentelemetry_resource_with_none_service_name():
+def test_opentelemetry_resource_with_none_values():
     from appsignal.opentelemetry import _resource
 
-    config = Config(Options(service_name=None))
+    config = Config(Options(revision=None, service_name=None, hostname=None))
     resource = _resource(config)
 
+    assert resource.attributes["appsignal.config.revision"] == "unknown"
     assert resource.attributes["service.name"] == "app"
+    assert resource.attributes["host.name"] == "unknown"
 
 
 def test_set_private_environ_valid_log_path():

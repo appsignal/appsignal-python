@@ -288,10 +288,10 @@ def _resource(config: Config) -> Resource:
             "appsignal.config.name": config.options.get("name"),
             "appsignal.config.environment": config.options.get("environment"),
             "appsignal.config.push_api_key": config.options.get("push_api_key"),
-            "appsignal.config.revision": config.options.get("revision", "unknown"),
+            "appsignal.config.revision": config.options.get("revision") or "unknown",
             "appsignal.config.language_integration": "python",
             "service.name": config.options.get("service_name") or "app",
-            "host.name": config.options.get("hostname", "unknown"),
+            "host.name": config.options.get("hostname") or "unknown",
             "appsignal.service.process_id": os.getpid(),
             "appsignal.config.filter_attributes": config.options.get(
                 "filter_attributes"
