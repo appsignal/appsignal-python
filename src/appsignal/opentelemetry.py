@@ -311,6 +311,7 @@ def _resource(config: Config) -> Resource:
             ),
             "appsignal.config.ignore_actions": config.options.get("ignore_actions"),
             "appsignal.config.ignore_errors": config.options.get("ignore_errors"),
+            "appsignal.config.ignore_logs": config.options.get("ignore_logs"),
             "appsignal.config.ignore_namespaces": config.options.get(
                 "ignore_namespaces"
             ),

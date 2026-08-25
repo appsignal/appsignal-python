@@ -62,6 +62,7 @@ def test_environ_source():
     os.environ["APPSIGNAL_HTTP_PROXY"] = "http://proxy.local:9999"
     os.environ["APPSIGNAL_IGNORE_ACTIONS"] = "action1,action2"
     os.environ["APPSIGNAL_IGNORE_ERRORS"] = "error1,error2"
+    os.environ["APPSIGNAL_IGNORE_LOGS"] = "^log1,^log2"
     os.environ["APPSIGNAL_IGNORE_NAMESPACES"] = "namespace1,namespace2"
     os.environ["APPSIGNAL_LOG_LEVEL"] = "trace"
     os.environ["APPSIGNAL_LOG_PATH"] = "/path/to/log_dir"
@@ -99,6 +100,7 @@ def test_environ_source():
         http_proxy="http://proxy.local:9999",
         ignore_actions=["action1", "action2"],
         ignore_errors=["error1", "error2"],
+        ignore_logs=["^log1", "^log2"],
         ignore_namespaces=["namespace1", "namespace2"],
         log_level="trace",
         log_path="/path/to/log_dir",
@@ -274,6 +276,7 @@ def test_opentelemetry_resource():
             filter_session_data=["session1"],
             ignore_actions=["action1", "action2"],
             ignore_errors=["error1"],
+            ignore_logs=["^log1"],
             ignore_namespaces=["namespace1"],
             response_headers=["x-response"],
             request_headers=["x-request"],
@@ -321,6 +324,7 @@ def test_opentelemetry_resource():
         "action2",
     )
     assert resource.attributes["appsignal.config.ignore_errors"] == ("error1",)
+    assert resource.attributes["appsignal.config.ignore_logs"] == ("^log1",)
     assert resource.attributes["appsignal.config.ignore_namespaces"] == ("namespace1",)
 
     # Test header attributes
@@ -530,6 +534,7 @@ def test_warn_all_collector_exclusive_options(mocker):
                 filter_function_parameters=["param1"],
                 filter_request_payload=["payload1"],
                 filter_request_query_parameters=["query1"],
+                ignore_logs=["^log1"],
                 response_headers=["x-response"],
                 send_function_parameters=True,
                 send_request_payload=True,
@@ -558,6 +563,7 @@ def test_warn_all_collector_exclusive_options(mocker):
             "filter_function_parameters",
             "filter_request_payload",
             "filter_request_query_parameters",
+            "ignore_logs",
             "response_headers",
             "send_function_parameters",
             "send_request_payload",

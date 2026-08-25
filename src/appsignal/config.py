@@ -40,6 +40,7 @@ class Options(TypedDict, total=False):
     http_proxy: str | None
     ignore_actions: list[str] | None
     ignore_errors: list[str] | None
+    ignore_logs: list[str] | None
     ignore_namespaces: list[str] | None
     log: str | None
     log_level: str | None
@@ -224,6 +225,7 @@ class Config:
             http_proxy=os.environ.get("APPSIGNAL_HTTP_PROXY"),
             ignore_actions=parse_list(os.environ.get("APPSIGNAL_IGNORE_ACTIONS")),
             ignore_errors=parse_list(os.environ.get("APPSIGNAL_IGNORE_ERRORS")),
+            ignore_logs=parse_list(os.environ.get("APPSIGNAL_IGNORE_LOGS")),
             ignore_namespaces=parse_list(os.environ.get("APPSIGNAL_IGNORE_NAMESPACES")),
             log=os.environ.get("APPSIGNAL_LOG"),
             log_level=os.environ.get("APPSIGNAL_LOG_LEVEL"),
@@ -433,6 +435,7 @@ class Config:
             "filter_function_parameters",
             "filter_request_payload",
             "filter_request_query_parameters",
+            "ignore_logs",
             "response_headers",
             "send_function_parameters",
             "send_request_payload",
