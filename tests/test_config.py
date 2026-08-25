@@ -2,8 +2,30 @@ from __future__ import annotations
 
 import os
 
+import pytest
+
 from appsignal.__about__ import __version__
 from appsignal.config import Config, Options
+
+
+# The system source detects configuration from these environment variables, so
+# a value that happens to be set where the tests run changes what it detects.
+DETECTED_ENVIRONMENT_VARIABLES = [
+    "APP_REVISION",
+    "CONTAINER_VERSION",
+    "DOKKU_ROOT",
+    "DYNO",
+    "HEROKU_SLUG_COMMIT",
+    "HOSTNAME",
+    "KAMAL_VERSION",
+    "RENDER_GIT_COMMIT",
+]
+
+
+@pytest.fixture(autouse=True)
+def clear_detected_environment_variables():
+    for variable in DETECTED_ENVIRONMENT_VARIABLES:
+        os.environ.pop(variable, None)
 
 
 def test_option():
@@ -41,6 +63,52 @@ def test_system_source():
     assert list(config.sources["system"].keys()) == ["app_path", "hostname"]
     assert "app_path" in list(config.options.keys())
     assert "hostname" in list(config.options.keys())
+
+
+def test_system_source_revision():
+    config = Config()
+
+    assert "revision" not in config.sources["system"]
+
+
+def test_system_source_revision_from_platform():
+    for variable in [
+        "HEROKU_SLUG_COMMIT",
+        "RENDER_GIT_COMMIT",
+        "KAMAL_VERSION",
+        "CONTAINER_VERSION",
+    ]:
+        os.environ[variable] = "abc123"
+        config = Config()
+
+        assert config.sources["system"]["revision"] == "abc123"
+        assert config.option("revision") == "abc123"
+
+        del os.environ[variable]
+
+
+def test_system_source_revision_reads_variables_in_order():
+    os.environ["RENDER_GIT_COMMIT"] = "from-render"
+    os.environ["KAMAL_VERSION"] = "from-kamal"
+    config = Config()
+
+    assert config.option("revision") == "from-render"
+
+
+def test_system_source_revision_ignores_empty_variables():
+    os.environ["HEROKU_SLUG_COMMIT"] = ""
+    os.environ["RENDER_GIT_COMMIT"] = "from-render"
+    config = Config()
+
+    assert config.option("revision") == "from-render"
+
+
+def test_system_source_revision_is_overridden_by_app_revision():
+    os.environ["RENDER_GIT_COMMIT"] = "from-render"
+    os.environ["APP_REVISION"] = "from-app-revision"
+    config = Config()
+
+    assert config.option("revision") == "from-app-revision"
 
 
 def test_environ_source():

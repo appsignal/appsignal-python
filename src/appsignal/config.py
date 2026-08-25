@@ -171,12 +171,38 @@ class Config:
     def should_use_external_collector(self) -> bool:
         return self.option("collector_endpoint") is not None
 
+    # Environment variables that deployment platforms set to the revision that
+    # is being deployed, in the order the agent reads them. The agent detects
+    # the revision this way as well, but only for the data it reports itself,
+    # so the package has to do it for collector mode.
+    PLATFORM_REVISION_ENVIRONMENT_VARIABLES: ClassVar[list[str]] = [
+        "HEROKU_SLUG_COMMIT",
+        "RENDER_GIT_COMMIT",
+        "KAMAL_VERSION",
+        "CONTAINER_VERSION",  # Scalingo
+    ]
+
     @staticmethod
     def load_from_system() -> Options:
-        return Options(
+        options = Options(
             app_path=os.getcwd(),
             hostname=os.environ.get("HOSTNAME") or socket.gethostname(),
         )
+
+        revision = Config.detect_revision()
+        if revision is not None:
+            options["revision"] = revision
+
+        return options
+
+    @staticmethod
+    def detect_revision() -> str | None:
+        for variable in Config.PLATFORM_REVISION_ENVIRONMENT_VARIABLES:
+            revision = os.environ.get(variable)
+            if revision:
+                return revision
+
+        return None
 
     @staticmethod
     def load_from_environment() -> Options:
