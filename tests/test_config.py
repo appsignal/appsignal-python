@@ -87,6 +87,34 @@ def test_system_source_hostname_prefers_the_dyno_name():
     assert config.option("hostname") == "web.1"
 
 
+def test_system_source_platform():
+    config = Config()
+
+    assert "platform" not in config.sources["system"]
+
+
+def test_system_source_platform_dokku():
+    os.environ["DOKKU_ROOT"] = "~dokku"
+    config = Config()
+
+    assert config.option("platform") == "dokku"
+
+
+def test_system_source_platform_heroku():
+    os.environ["DYNO"] = "web.1"
+    config = Config()
+
+    assert config.option("platform") == "heroku"
+
+
+def test_system_source_platform_prefers_dokku():
+    os.environ["DOKKU_ROOT"] = "~dokku"
+    os.environ["DYNO"] = "web.1"
+    config = Config()
+
+    assert config.option("platform") == "dokku"
+
+
 def test_system_source_revision():
     config = Config()
 
@@ -294,6 +322,7 @@ def test_set_private_environ():
             nginx_port=8080,
             opentelemetry_port=9002,
             name="MyApp",
+            platform="heroku",
             push_api_key="some-api-key",
             revision="abc123",
             running_in_container=True,
@@ -322,6 +351,7 @@ def test_set_private_environ():
     assert os.environ["_APPSIGNAL_FILTER_PARAMETERS"] == "password,secret"
     assert os.environ["_APPSIGNAL_FILTER_SESSION_DATA"] == "key1,key2"
     assert os.environ["_APPSIGNAL_HOSTNAME"] == "Test hostname"
+    assert os.environ["_APPSIGNAL_PLATFORM"] == "heroku"
     assert os.environ["_APPSIGNAL_HOST_ROLE"] == "a role"
     assert os.environ["_APPSIGNAL_HTTP_PROXY"] == "http://proxy.local:9999"
     assert os.environ["_APPSIGNAL_IGNORE_ACTIONS"] == "action1,action2"
@@ -357,6 +387,7 @@ def test_opentelemetry_resource():
             push_api_key="test-key",
             revision="abc123",
             app_path="/path/to/app",
+            platform="heroku",
             service_name="test-service",
             hostname="test-host",
             filter_attributes=["password", "secret"],
@@ -385,6 +416,7 @@ def test_opentelemetry_resource():
     assert resource.attributes["appsignal.config.push_api_key"] == "test-key"
     assert resource.attributes["appsignal.config.revision"] == "abc123"
     assert resource.attributes["appsignal.config.app_path"] == "/path/to/app"
+    assert resource.attributes["appsignal.config.platform"] == "heroku"
     assert resource.attributes["appsignal.config.language_integration"] == "python"
     assert resource.attributes["service.name"] == "test-service"
     assert resource.attributes["host.name"] == "test-host"

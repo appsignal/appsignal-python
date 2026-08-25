@@ -49,6 +49,7 @@ class Options(TypedDict, total=False):
     nginx_port: str | int | None
     opentelemetry_port: str | int | None
     name: str | None
+    platform: str | None
     push_api_key: str | None
     revision: str | None
     request_headers: list[str] | None
@@ -198,6 +199,10 @@ class Config:
         if revision is not None:
             options["revision"] = revision
 
+        detected_platform = Config.detect_platform()
+        if detected_platform is not None:
+            options["platform"] = detected_platform
+
         return options
 
     @staticmethod
@@ -206,6 +211,21 @@ class Config:
             revision = os.environ.get(variable)
             if revision:
                 return revision
+
+        return None
+
+    # Detect the platform the application is deployed on, the way the agent
+    # does. The agent only detects it for the data it reports itself, so the
+    # package has to do it for collector mode. It is detected rather than
+    # configured: it has no environment variable of its own, and it is not
+    # documented as an option.
+    @staticmethod
+    def detect_platform() -> str | None:
+        if os.environ.get("DOKKU_ROOT"):
+            return "dokku"
+
+        if os.environ.get("DYNO"):
+            return "heroku"
 
         return None
 
@@ -344,6 +364,7 @@ class Config:
             "_APPSIGNAL_LOGGING_ENDPOINT": options.get("logging_endpoint"),
             "_APPSIGNAL_NGINX_PORT": options.get("nginx_port"),
             "_APPSIGNAL_OPENTELEMETRY_PORT": options.get("opentelemetry_port"),
+            "_APPSIGNAL_PLATFORM": options.get("platform"),
             "_APPSIGNAL_PUSH_API_KEY": options.get("push_api_key"),
             "_APPSIGNAL_PUSH_API_ENDPOINT": options.get("endpoint"),
             "_APPSIGNAL_RUNNING_IN_CONTAINER": bool_to_env_str(
