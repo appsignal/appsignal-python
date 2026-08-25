@@ -135,10 +135,11 @@ class Config:
 
     def __init__(self, options: Options | None = None) -> None:
         self.valid = False
+        system = Config.load_from_system()
         self.sources = Sources(
             default=self.DEFAULT_CONFIG,
-            system=Config.load_from_system(),
-            initial=options or Options(),
+            system=system,
+            initial=without_none_overrides(options or Options(), system),
             environment=Config.load_from_environment(),
         )
         final_options = Options()
@@ -551,6 +552,20 @@ def parse_bool(value: str | None) -> bool | None:
         return False
 
     return None
+
+
+# An option passed to the client as None carries no value, so it must not erase
+# one that was detected from the system. It does still override a default: that
+# is how `request_headers=None` turns off request header collection.
+def without_none_overrides(options: Options, system: Options) -> Options:
+    return cast(
+        Options,
+        {
+            key: value
+            for key, value in options.items()
+            if value is not None or key not in system
+        },
+    )
 
 
 def parse_list(value: str | None) -> list[str] | None:

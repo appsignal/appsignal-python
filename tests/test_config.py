@@ -87,6 +87,20 @@ def test_system_source_hostname_prefers_the_dyno_name():
     assert config.option("hostname") == "web.1"
 
 
+def test_initial_options_none_does_not_override_detected_values():
+    os.environ["RENDER_GIT_COMMIT"] = "abc123"
+    config = Config(Options(hostname=None, revision=None))
+
+    assert config.option("hostname") == socket.gethostname()
+    assert config.option("revision") == "abc123"
+
+
+def test_initial_options_none_still_overrides_defaults():
+    config = Config(Options(request_headers=None))
+
+    assert config.option("request_headers") is None
+
+
 def test_system_source_platform():
     config = Config()
 
@@ -485,7 +499,7 @@ def test_opentelemetry_resource_with_none_values():
 
     assert resource.attributes["appsignal.config.revision"] == "unknown"
     assert resource.attributes["service.name"] == "app"
-    assert resource.attributes["host.name"] == "unknown"
+    assert resource.attributes["host.name"] == socket.gethostname()
 
 
 def test_set_private_environ_valid_log_path():
