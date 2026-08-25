@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import socket
 
 import pytest
 
@@ -63,6 +64,27 @@ def test_system_source():
     assert list(config.sources["system"].keys()) == ["app_path", "hostname"]
     assert "app_path" in list(config.options.keys())
     assert "hostname" in list(config.options.keys())
+
+
+def test_system_source_hostname():
+    config = Config()
+
+    assert config.option("hostname") == socket.gethostname()
+
+
+def test_system_source_hostname_from_hostname_variable():
+    os.environ["HOSTNAME"] = "from-hostname"
+    config = Config()
+
+    assert config.option("hostname") == "from-hostname"
+
+
+def test_system_source_hostname_prefers_the_dyno_name():
+    os.environ["DYNO"] = "web.1"
+    os.environ["HOSTNAME"] = "from-hostname"
+    config = Config()
+
+    assert config.option("hostname") == "web.1"
 
 
 def test_system_source_revision():

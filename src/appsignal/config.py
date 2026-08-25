@@ -186,7 +186,12 @@ class Config:
     def load_from_system() -> Options:
         options = Options(
             app_path=os.getcwd(),
-            hostname=os.environ.get("HOSTNAME") or socket.gethostname(),
+            # The Heroku dyno name comes first, the way the agent detects the
+            # hostname. Heroku sets the container hostname as well, and the
+            # dyno name is the more useful of the two.
+            hostname=os.environ.get("DYNO")
+            or os.environ.get("HOSTNAME")
+            or socket.gethostname(),
         )
 
         revision = Config.detect_revision()
