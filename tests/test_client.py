@@ -4,6 +4,7 @@ import os
 import signal
 from unittest.mock import call, mock_open, patch
 
+from appsignal import probes
 from appsignal.agent import Agent
 from appsignal.binary import NoopBinary
 from appsignal.client import Client
@@ -150,6 +151,50 @@ def test_client_stop_kills_agent(mock_open, mock_kill, mock_sleep):
             call(123, signal.SIGTERM),
         ]
     )
+
+
+def test_client_stop_stops_probes(mocker):
+    mocker.patch("appsignal.probes._initial_wait_time").return_value = 0.001
+    mocker.patch("appsignal.probes._wait_time").return_value = 0.001
+
+    client = Client(active=True, name="MyApp", push_api_key="0000-0000-0000-0000")
+    client.start()
+
+    assert probes._thread is not None
+
+    client.stop()
+
+    assert probes._thread is None
+
+
+def test_client_stop_stops_probes_before_opentelemetry(mocker):
+    # Probes report through the metric helpers, which write to the meter
+    # provider, so they have to stop before it is shut down.
+    calls = []
+
+    mocker.patch(
+        "appsignal.client.stop_probes",
+        side_effect=lambda: calls.append("probes"),
+    )
+    mocker.patch(
+        "appsignal.client.stop_opentelemetry",
+        side_effect=lambda: calls.append("opentelemetry"),
+    )
+
+    client = Client(active=True, name="MyApp", push_api_key="0000-0000-0000-0000")
+    client.start()
+
+    client.stop()
+
+    assert calls == ["probes", "opentelemetry"]
+
+
+def test_client_stop_without_started_probes():
+    client = Client(active=True, name="MyApp", push_api_key="0000-0000-0000-0000")
+
+    client.stop()
+
+    assert probes._thread is None
 
 
 def test_client_stop_shuts_down_opentelemetry_before_the_agent(mocker):

@@ -8,6 +8,7 @@ from .config import Config, Options
 from .opentelemetry import start as start_opentelemetry
 from .opentelemetry import stop as stop_opentelemetry
 from .probes import start as start_probes
+from .probes import stop as stop_probes
 
 
 if TYPE_CHECKING:
@@ -61,6 +62,10 @@ class Client:
 
         logger.info("Stopping AppSignal")
         scheduler().stop()
+        # Stop the probes before shutting OpenTelemetry down. Probes report
+        # through the metric helpers, which write to the meter provider, so a
+        # probe running after it is shut down has nowhere to put its metrics.
+        stop_probes()
         # Flush the OpenTelemetry data before stopping the agent. When the
         # agent is used, it is the endpoint that data is sent to, so it must
         # still be running to receive it.
