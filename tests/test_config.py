@@ -1,9 +1,32 @@
 from __future__ import annotations
 
 import os
+import socket
+
+import pytest
 
 from appsignal.__about__ import __version__
 from appsignal.config import Config, Options
+
+
+# The system source detects configuration from these environment variables, so
+# a value that happens to be set where the tests run changes what it detects.
+DETECTED_ENVIRONMENT_VARIABLES = [
+    "APP_REVISION",
+    "CONTAINER_VERSION",
+    "DOKKU_ROOT",
+    "DYNO",
+    "HEROKU_SLUG_COMMIT",
+    "HOSTNAME",
+    "KAMAL_VERSION",
+    "RENDER_GIT_COMMIT",
+]
+
+
+@pytest.fixture(autouse=True)
+def clear_detected_environment_variables():
+    for variable in DETECTED_ENVIRONMENT_VARIABLES:
+        os.environ.pop(variable, None)
 
 
 def test_option():
@@ -41,6 +64,115 @@ def test_system_source():
     assert list(config.sources["system"].keys()) == ["app_path", "hostname"]
     assert "app_path" in list(config.options.keys())
     assert "hostname" in list(config.options.keys())
+
+
+def test_system_source_hostname():
+    config = Config()
+
+    assert config.option("hostname") == socket.gethostname()
+
+
+def test_system_source_hostname_from_hostname_variable():
+    os.environ["HOSTNAME"] = "from-hostname"
+    config = Config()
+
+    assert config.option("hostname") == "from-hostname"
+
+
+def test_system_source_hostname_prefers_the_dyno_name():
+    os.environ["DYNO"] = "web.1"
+    os.environ["HOSTNAME"] = "from-hostname"
+    config = Config()
+
+    assert config.option("hostname") == "web.1"
+
+
+def test_initial_options_none_does_not_override_detected_values():
+    os.environ["RENDER_GIT_COMMIT"] = "abc123"
+    config = Config(Options(hostname=None, revision=None))
+
+    assert config.option("hostname") == socket.gethostname()
+    assert config.option("revision") == "abc123"
+
+
+def test_initial_options_none_still_overrides_defaults():
+    config = Config(Options(request_headers=None))
+
+    assert config.option("request_headers") is None
+
+
+def test_system_source_platform():
+    config = Config()
+
+    assert "platform" not in config.sources["system"]
+
+
+def test_system_source_platform_dokku():
+    os.environ["DOKKU_ROOT"] = "~dokku"
+    config = Config()
+
+    assert config.option("platform") == "dokku"
+
+
+def test_system_source_platform_heroku():
+    os.environ["DYNO"] = "web.1"
+    config = Config()
+
+    assert config.option("platform") == "heroku"
+
+
+def test_system_source_platform_prefers_dokku():
+    os.environ["DOKKU_ROOT"] = "~dokku"
+    os.environ["DYNO"] = "web.1"
+    config = Config()
+
+    assert config.option("platform") == "dokku"
+
+
+def test_system_source_revision():
+    config = Config()
+
+    assert "revision" not in config.sources["system"]
+
+
+def test_system_source_revision_from_platform():
+    for variable in [
+        "HEROKU_SLUG_COMMIT",
+        "RENDER_GIT_COMMIT",
+        "KAMAL_VERSION",
+        "CONTAINER_VERSION",
+    ]:
+        os.environ[variable] = "abc123"
+        config = Config()
+
+        assert config.sources["system"]["revision"] == "abc123"
+        assert config.option("revision") == "abc123"
+
+        del os.environ[variable]
+
+
+def test_system_source_revision_reads_variables_in_order():
+    os.environ["RENDER_GIT_COMMIT"] = "from-render"
+    os.environ["KAMAL_VERSION"] = "from-kamal"
+    config = Config()
+
+    assert config.option("revision") == "from-render"
+
+
+def test_system_source_revision_ignores_empty_variables():
+    os.environ["HEROKU_SLUG_COMMIT"] = ""
+    os.environ["RENDER_GIT_COMMIT"] = "from-render"
+    config = Config()
+
+    assert config.option("revision") == "from-render"
+
+
+def test_system_source_revision_is_overridden_by_app_revision():
+    os.environ["RENDER_GIT_COMMIT"] = "from-render"
+    os.environ["APP_REVISION"] = "from-app-revision"
+    config = Config()
+
+    assert config.option("revision") == "from-app-revision"
 
 
 def test_environ_source():
@@ -204,6 +336,7 @@ def test_set_private_environ():
             nginx_port=8080,
             opentelemetry_port=9002,
             name="MyApp",
+            platform="heroku",
             push_api_key="some-api-key",
             revision="abc123",
             running_in_container=True,
@@ -232,6 +365,7 @@ def test_set_private_environ():
     assert os.environ["_APPSIGNAL_FILTER_PARAMETERS"] == "password,secret"
     assert os.environ["_APPSIGNAL_FILTER_SESSION_DATA"] == "key1,key2"
     assert os.environ["_APPSIGNAL_HOSTNAME"] == "Test hostname"
+    assert os.environ["_APPSIGNAL_PLATFORM"] == "heroku"
     assert os.environ["_APPSIGNAL_HOST_ROLE"] == "a role"
     assert os.environ["_APPSIGNAL_HTTP_PROXY"] == "http://proxy.local:9999"
     assert os.environ["_APPSIGNAL_IGNORE_ACTIONS"] == "action1,action2"
@@ -267,6 +401,7 @@ def test_opentelemetry_resource():
             push_api_key="test-key",
             revision="abc123",
             app_path="/path/to/app",
+            platform="heroku",
             service_name="test-service",
             hostname="test-host",
             filter_attributes=["password", "secret"],
@@ -295,6 +430,7 @@ def test_opentelemetry_resource():
     assert resource.attributes["appsignal.config.push_api_key"] == "test-key"
     assert resource.attributes["appsignal.config.revision"] == "abc123"
     assert resource.attributes["appsignal.config.app_path"] == "/path/to/app"
+    assert resource.attributes["appsignal.config.platform"] == "heroku"
     assert resource.attributes["appsignal.config.language_integration"] == "python"
     assert resource.attributes["service.name"] == "test-service"
     assert resource.attributes["host.name"] == "test-host"
@@ -363,7 +499,7 @@ def test_opentelemetry_resource_with_none_values():
 
     assert resource.attributes["appsignal.config.revision"] == "unknown"
     assert resource.attributes["service.name"] == "app"
-    assert resource.attributes["host.name"] == "unknown"
+    assert resource.attributes["host.name"] == socket.gethostname()
 
 
 def test_set_private_environ_valid_log_path():
