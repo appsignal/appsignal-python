@@ -4,7 +4,15 @@ from typing import List, cast
 from unittest.mock import Mock
 
 from appsignal.config import Config, Options
-from appsignal.opentelemetry import _providers, add_instrumentations, stop
+from appsignal.opentelemetry import (
+    _exporter_session,
+    _providers,
+    _start_logging,
+    _start_metrics,
+    _start_tracer,
+    add_instrumentations,
+    stop,
+)
 
 
 def raise_module_not_found_error(_config: Config) -> None:
@@ -93,3 +101,53 @@ def test_stop_without_started_providers():
     stop()
 
     assert _providers == []
+
+
+def test_exporter_session_without_a_proxy():
+    assert _exporter_session(Config()) is None
+
+
+def test_exporter_session_with_a_proxy():
+    config = Config(Options(http_proxy="http://proxy.example:3128"))
+
+    session = _exporter_session(config)
+
+    assert session is not None
+    assert session.proxies == {
+        "http": "http://proxy.example:3128",
+        "https": "http://proxy.example:3128",
+    }
+
+
+def test_exporter_sessions_are_not_shared():
+    # Each exporter sends from its own thread, and a session is not thread
+    # safe, so they must not share one.
+    config = Config(Options(http_proxy="http://proxy.example:3128"))
+
+    assert _exporter_session(config) is not _exporter_session(config)
+
+
+def test_exporters_are_given_the_ca_file_and_the_proxy(mocker):
+    span_exporter = mocker.patch("appsignal.opentelemetry.OTLPSpanExporter")
+    metric_exporter = mocker.patch("appsignal.opentelemetry.OTLPMetricExporter")
+    log_exporter = mocker.patch("appsignal.opentelemetry.OTLPLogExporter")
+
+    config = Config(
+        Options(
+            ca_file_path="/path/to/cacert.pem",
+            http_proxy="http://proxy.example:3128",
+            collector_endpoint="https://collector.example",
+        )
+    )
+
+    _start_tracer(config)
+    _start_metrics(config)
+    _start_logging(config)
+
+    for exporter in [span_exporter, metric_exporter, log_exporter]:
+        kwargs = exporter.call_args.kwargs
+        assert kwargs["certificate_file"] == "/path/to/cacert.pem"
+        assert kwargs["session"].proxies == {
+            "http": "http://proxy.example:3128",
+            "https": "http://proxy.example:3128",
+        }
