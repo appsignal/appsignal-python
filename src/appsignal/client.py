@@ -6,6 +6,7 @@ from . import internal_logger as logger
 from .binary import NoopBinary
 from .config import Config, Options
 from .opentelemetry import start as start_opentelemetry
+from .opentelemetry import stop as stop_opentelemetry
 from .probes import start as start_probes
 
 
@@ -60,6 +61,10 @@ class Client:
 
         logger.info("Stopping AppSignal")
         scheduler().stop()
+        # Flush the OpenTelemetry data before stopping the agent. When the
+        # agent is used, it is the endpoint that data is sent to, so it must
+        # still be running to receive it.
+        stop_opentelemetry()
         self._binary.stop(self._config)
 
     def _start_probes(self) -> None:

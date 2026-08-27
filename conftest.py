@@ -24,13 +24,20 @@ from appsignal.check_in.scheduler import _reset_scheduler
 from appsignal.client import _reset_client
 from appsignal.heartbeat import _heartbeat_class_warning, _heartbeat_helper_warning
 from appsignal.internal_logger import _reset_logger
-from appsignal.opentelemetry import METRICS_PREFERRED_TEMPORALITY
+from appsignal.opentelemetry import METRICS_PREFERRED_TEMPORALITY, _providers
 
 
 @pytest.fixture(scope="function", autouse=True)
 def disable_start_opentelemetry(mocker: Any) -> Any:
     mocker.patch("appsignal.opentelemetry._start_tracer")
     mocker.patch("appsignal.opentelemetry._start_metrics")
+
+
+@pytest.fixture(scope="function", autouse=True)
+def reset_opentelemetry_providers() -> Any:
+    yield
+
+    _providers.clear()
 
 
 @pytest.fixture(scope="session", autouse=True)

@@ -4,7 +4,7 @@ from typing import List, cast
 from unittest.mock import Mock
 
 from appsignal.config import Config, Options
-from appsignal.opentelemetry import add_instrumentations
+from appsignal.opentelemetry import _providers, add_instrumentations, stop
 
 
 def raise_module_not_found_error(_config: Config) -> None:
@@ -63,3 +63,33 @@ def test_add_instrumentations_disable_all_default_instrumentations():
 
     for adder in adders.values():
         adder.assert_not_called()
+
+
+def test_stop_shuts_down_the_started_providers():
+    tracer_provider = Mock()
+    meter_provider = Mock()
+    _providers.extend([tracer_provider, meter_provider])
+
+    stop()
+
+    tracer_provider.shutdown.assert_called_once()
+    meter_provider.shutdown.assert_called_once()
+    assert _providers == []
+
+
+def test_stop_shuts_down_the_other_providers_when_one_fails():
+    failing_provider = Mock()
+    failing_provider.shutdown.side_effect = Exception("Something went wrong")
+    other_provider = Mock()
+    _providers.extend([failing_provider, other_provider])
+
+    stop()
+
+    other_provider.shutdown.assert_called_once()
+    assert _providers == []
+
+
+def test_stop_without_started_providers():
+    stop()
+
+    assert _providers == []
