@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 from typing import TYPE_CHECKING, Callable, List, Mapping, Union, cast
 
+import requests
 from opentelemetry import _logs as logs
 from opentelemetry import metrics, trace
 from opentelemetry.exporter.otlp.proto.http._log_exporter import OTLPLogExporter
@@ -243,9 +244,28 @@ def stop() -> None:
     _providers.clear()
 
 
+# Build the session an exporter sends its requests through, so that the
+# `http_proxy` option applies to them. Returns `None` when no proxy is
+# configured, which leaves the exporter to build its own session.
+#
+# Each exporter needs its own session, because they each send from their own
+# thread and a `requests` session is not thread safe.
+def _exporter_session(config: Config) -> requests.Session | None:
+    http_proxy = config.option("http_proxy")
+
+    if not http_proxy:
+        return None
+
+    session = requests.Session()
+    session.proxies = {"http": http_proxy, "https": http_proxy}
+    return session
+
+
 def _otlp_span_processor(config: Config) -> BatchSpanProcessor:
     otlp_exporter = OTLPSpanExporter(
         endpoint=f"{_opentelemetry_endpoint(config)}/v1/traces",
+        certificate_file=config.option("ca_file_path"),
+        session=_exporter_session(config),
     )
     return BatchSpanProcessor(otlp_exporter)
 
@@ -286,6 +306,8 @@ METRICS_PREFERRED_TEMPORALITY: dict[type, AggregationTemporality] = {
 def _start_metrics(config: Config) -> None:
     metric_exporter = OTLPMetricExporter(
         endpoint=f"{_opentelemetry_endpoint(config)}/v1/metrics",
+        certificate_file=config.option("ca_file_path"),
+        session=_exporter_session(config),
         preferred_temporality=METRICS_PREFERRED_TEMPORALITY,
     )
     metric_reader = PeriodicExportingMetricReader(
@@ -300,6 +322,8 @@ def _start_metrics(config: Config) -> None:
 def _start_logging(config: Config) -> None:
     log_exporter = OTLPLogExporter(
         endpoint=f"{_opentelemetry_endpoint(config)}/v1/logs",
+        certificate_file=config.option("ca_file_path"),
+        session=_exporter_session(config),
     )
     provider = LoggerProvider(resource=_resource(config))
     provider.add_log_record_processor(BatchLogRecordProcessor(log_exporter))
