@@ -40,6 +40,7 @@ class Options(TypedDict, total=False):
     http_proxy: str | None
     ignore_actions: list[str] | None
     ignore_errors: list[str] | None
+    ignore_logs: list[str] | None
     ignore_namespaces: list[str] | None
     log: str | None
     log_level: str | None
@@ -48,6 +49,7 @@ class Options(TypedDict, total=False):
     nginx_port: str | int | None
     opentelemetry_port: str | int | None
     name: str | None
+    platform: str | None
     push_api_key: str | None
     revision: str | None
     request_headers: list[str] | None
@@ -133,10 +135,11 @@ class Config:
 
     def __init__(self, options: Options | None = None) -> None:
         self.valid = False
+        system = Config.load_from_system()
         self.sources = Sources(
             default=self.DEFAULT_CONFIG,
-            system=Config.load_from_system(),
-            initial=options or Options(),
+            system=system,
+            initial=without_none_overrides(options or Options(), system),
             environment=Config.load_from_environment(),
         )
         final_options = Options()
@@ -170,12 +173,62 @@ class Config:
     def should_use_external_collector(self) -> bool:
         return self.option("collector_endpoint") is not None
 
+    # Environment variables that deployment platforms set to the revision that
+    # is being deployed, in the order the agent reads them. The agent detects
+    # the revision this way as well, but only for the data it reports itself,
+    # so the package has to do it for collector mode.
+    PLATFORM_REVISION_ENVIRONMENT_VARIABLES: ClassVar[list[str]] = [
+        "HEROKU_SLUG_COMMIT",
+        "RENDER_GIT_COMMIT",
+        "KAMAL_VERSION",
+        "CONTAINER_VERSION",  # Scalingo
+    ]
+
     @staticmethod
     def load_from_system() -> Options:
-        return Options(
+        options = Options(
             app_path=os.getcwd(),
-            hostname=os.environ.get("HOSTNAME") or socket.gethostname(),
+            # The Heroku dyno name comes first, the way the agent detects the
+            # hostname. Heroku sets the container hostname as well, and the
+            # dyno name is the more useful of the two.
+            hostname=os.environ.get("DYNO")
+            or os.environ.get("HOSTNAME")
+            or socket.gethostname(),
         )
+
+        revision = Config.detect_revision()
+        if revision is not None:
+            options["revision"] = revision
+
+        detected_platform = Config.detect_platform()
+        if detected_platform is not None:
+            options["platform"] = detected_platform
+
+        return options
+
+    @staticmethod
+    def detect_revision() -> str | None:
+        for variable in Config.PLATFORM_REVISION_ENVIRONMENT_VARIABLES:
+            revision = os.environ.get(variable)
+            if revision:
+                return revision
+
+        return None
+
+    # Detect the platform the application is deployed on, the way the agent
+    # does. The agent only detects it for the data it reports itself, so the
+    # package has to do it for collector mode. It is detected rather than
+    # configured: it has no environment variable of its own, and it is not
+    # documented as an option.
+    @staticmethod
+    def detect_platform() -> str | None:
+        if os.environ.get("DOKKU_ROOT"):
+            return "dokku"
+
+        if os.environ.get("DYNO"):
+            return "heroku"
+
+        return None
 
     @staticmethod
     def load_from_environment() -> Options:
@@ -224,6 +277,7 @@ class Config:
             http_proxy=os.environ.get("APPSIGNAL_HTTP_PROXY"),
             ignore_actions=parse_list(os.environ.get("APPSIGNAL_IGNORE_ACTIONS")),
             ignore_errors=parse_list(os.environ.get("APPSIGNAL_IGNORE_ERRORS")),
+            ignore_logs=parse_list(os.environ.get("APPSIGNAL_IGNORE_LOGS")),
             ignore_namespaces=parse_list(os.environ.get("APPSIGNAL_IGNORE_NAMESPACES")),
             log=os.environ.get("APPSIGNAL_LOG"),
             log_level=os.environ.get("APPSIGNAL_LOG_LEVEL"),
@@ -311,6 +365,7 @@ class Config:
             "_APPSIGNAL_LOGGING_ENDPOINT": options.get("logging_endpoint"),
             "_APPSIGNAL_NGINX_PORT": options.get("nginx_port"),
             "_APPSIGNAL_OPENTELEMETRY_PORT": options.get("opentelemetry_port"),
+            "_APPSIGNAL_PLATFORM": options.get("platform"),
             "_APPSIGNAL_PUSH_API_KEY": options.get("push_api_key"),
             "_APPSIGNAL_PUSH_API_ENDPOINT": options.get("endpoint"),
             "_APPSIGNAL_RUNNING_IN_CONTAINER": bool_to_env_str(
@@ -433,6 +488,7 @@ class Config:
             "filter_function_parameters",
             "filter_request_payload",
             "filter_request_query_parameters",
+            "ignore_logs",
             "response_headers",
             "send_function_parameters",
             "send_request_payload",
@@ -496,6 +552,20 @@ def parse_bool(value: str | None) -> bool | None:
         return False
 
     return None
+
+
+# An option passed to the client as None carries no value, so it must not erase
+# one that was detected from the system. It does still override a default: that
+# is how `request_headers=None` turns off request header collection.
+def without_none_overrides(options: Options, system: Options) -> Options:
+    return cast(
+        Options,
+        {
+            key: value
+            for key, value in options.items()
+            if value is not None or key not in system
+        },
+    )
 
 
 def parse_list(value: str | None) -> list[str] | None:
