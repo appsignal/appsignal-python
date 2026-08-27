@@ -320,7 +320,6 @@ class Config:
 
     CONSTANT_PRIVATE_ENVIRON: ClassVar[dict[str, str]] = {
         "_APPSIGNAL_LANGUAGE_INTEGRATION_VERSION": f"python-{__version__}",
-        "_APPSIGNAL_ENABLE_OPENTELEMETRY_HTTP": "true",
     }
 
     def set_private_environ(self) -> None:
@@ -340,6 +339,13 @@ class Config:
             ),
             "_APPSIGNAL_ENABLE_NGINX_METRICS": bool_to_env_str(
                 options.get("enable_nginx_metrics")
+            ),
+            # The agent receives OpenTelemetry data over HTTP when it is the
+            # one sending it to AppSignal. When a collector is used, the data
+            # goes there instead, and the agent's port would clash with the
+            # collector's, which defaults to the same number.
+            "_APPSIGNAL_ENABLE_OPENTELEMETRY_HTTP": bool_to_env_str(
+                not self.should_use_collector()
             ),
             "_APPSIGNAL_ENABLE_STATSD": bool_to_env_str(options.get("enable_statsd")),
             "_APPSIGNAL_FILES_WORLD_ACCESSIBLE": bool_to_env_str(
@@ -430,24 +436,15 @@ class Config:
             self._warn_collector_exclusive_options()
 
     # Emit a warning if agent-exclusive configuration options are used.
+    #
+    # The agent runs when a collector is used as well, so most of its options
+    # still apply. Only those that configure how it handles trace data do
+    # nothing, because the collector receives that data instead.
     def _warn_agent_exclusive_options(self) -> None:
         exclusive_options = [
-            "bind_address",
-            "cpu_count",
-            "dns_servers",
-            "enable_host_metrics",
-            "enable_nginx_metrics",
-            "enable_statsd",
-            "files_world_accessible",
             "filter_parameters",
-            "host_role",
-            "nginx_port",
             "opentelemetry_port",
-            "running_in_container",
-            "send_environment_metadata",
             "send_params",
-            "working_directory_path",
-            "statsd_port",
         ]
 
         option_specific_warnings = {
@@ -471,14 +468,15 @@ class Config:
         for option in user_modified_options:
             logger.warning(
                 f"The collector is in use. The '{option}' configuration option"
-                " is only used by the agent and will be ignored."
+                " is only used by the agent for trace data and will be ignored."
             )
             if option in option_specific_warnings:
                 logger.warning(option_specific_warnings[option])
 
         if user_modified_options:
             logger.info(
-                "To use the agent, unset the 'collector_endpoint' configuration option."
+                "To use the agent for trace data, unset the 'collector_endpoint'"
+                " configuration option."
             )
 
     # Emit a warning if collector-exclusive configuration options are used.
