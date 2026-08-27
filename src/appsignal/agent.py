@@ -8,12 +8,11 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from . import internal_logger as logger
-from .binary import Binary
 from .config import Config
 
 
 @dataclass
-class Agent(Binary):
+class Agent:
     package_path: Path = Path(__file__).parent
     agent_path: Path = package_path / "appsignal-agent"
     platform_path: Path = package_path / "_appsignal_platform"
@@ -27,11 +26,16 @@ class Agent(Binary):
         config.set_private_environ()
 
         if self.architecture_and_platform() == ["any"]:
-            print(
-                "AppSignal agent is not available for this platform. "
-                "The integration is now running in no-op mode therefore "
-                "no data will be sent to AppSignal."
-            )
+            message = "AppSignal agent is not available for this platform."
+            # When a collector is used, the data still reaches it without the
+            # agent, so only what the agent reports itself is lost. The client
+            # names that, and saying nothing is sent would be wrong.
+            if not config.should_use_collector():
+                message += (
+                    " The integration is now running in no-op mode therefore"
+                    " no data will be sent to AppSignal."
+                )
+            print(message)
             return
 
         p = subprocess.Popen(
@@ -56,9 +60,17 @@ class Agent(Binary):
                 line = file.readline()
                 pid = int(line.split(";")[2])
                 os.kill(pid, signal.SIGTERM)
-                time.sleep(2)
+                # Give the agent time to send what it holds before this
+                # process exits, which matters where the whole environment is
+                # frozen once it does. When a collector is used the agent only
+                # holds host, NGINX and StatsD metrics, so losing its last
+                # batch is worth a shutdown that is two seconds quicker.
+                if not config.should_use_collector():
+                    time.sleep(2)
         except FileNotFoundError:
             logger.info("Agent lock file not found; not stopping the agent")
+
+        self._active = False
 
     def diagnose(self, config: Config) -> bytes:
         config.set_private_environ()

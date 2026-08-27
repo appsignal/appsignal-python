@@ -586,6 +586,34 @@ def test_warn_no_warnings_when_using_default_values(mocker):
     assert mock_warning.call_count == 0
 
 
+def test_warn_no_warnings_for_options_the_agent_still_uses(mocker):
+    mock_warning = mocker.patch("appsignal.internal_logger.warning")
+
+    # The agent runs when a collector is used too, so the options that
+    # configure the rest of what it does still apply.
+    config = Config(
+        Options(
+            collector_endpoint="http://localhost:4318",
+            bind_address="0.0.0.0",
+            cpu_count=2.0,
+            dns_servers=["8.8.8.8"],
+            enable_host_metrics=False,
+            enable_nginx_metrics=True,
+            enable_statsd=True,
+            files_world_accessible=False,
+            host_role="web",
+            nginx_port="8080",
+            running_in_container=True,
+            send_environment_metadata=False,
+            working_directory_path="/app",
+            statsd_port="8125",
+        )
+    )
+    config.warn()
+
+    assert mock_warning.call_count == 0
+
+
 def test_warn_all_agent_exclusive_options(mocker):
     mock_warning = mocker.patch("appsignal.internal_logger.warning")
     mock_info = mocker.patch("appsignal.internal_logger.info")
@@ -594,22 +622,9 @@ def test_warn_all_agent_exclusive_options(mocker):
         return Config(
             Options(
                 collector_endpoint="http://localhost:4318",
-                bind_address="0.0.0.0",
-                cpu_count=2.0,
-                dns_servers=["8.8.8.8"],
-                enable_host_metrics=False,
-                enable_nginx_metrics=True,
-                enable_statsd=True,
-                files_world_accessible=False,
                 filter_parameters=["password"],
-                host_role="web",
-                nginx_port="8080",
                 opentelemetry_port="9999",
-                running_in_container=True,
-                send_environment_metadata=False,
                 send_params=False,
-                working_directory_path="/app",
-                statsd_port="8125",
             )
         )
 
@@ -629,33 +644,22 @@ def test_warn_all_agent_exclusive_options(mocker):
         warning_messages = [call.args[0] for call in mock_warning.call_args_list]
 
         agent_exclusive_options = [
-            "bind_address",
-            "cpu_count",
-            "dns_servers",
-            "enable_host_metrics",
-            "enable_nginx_metrics",
-            "enable_statsd",
-            "files_world_accessible",
             "filter_parameters",
-            "host_role",
-            "nginx_port",
             "opentelemetry_port",
-            "running_in_container",
-            "send_environment_metadata",
             "send_params",
-            "working_directory_path",
-            "statsd_port",
         ]
 
         for option in agent_exclusive_options:
             assert any(
-                f"'{option}' configuration option is only used by the agent" in msg
+                f"'{option}' configuration option is only used by the agent"
+                " for trace data" in msg
                 for msg in warning_messages
             ), f"Expected warning for '{option}' not found"
 
         # Info log about using the agent should only be emitted once
         mock_info.assert_called_once_with(
-            "To use the agent, unset the 'collector_endpoint' configuration option."
+            "To use the agent for trace data, unset the 'collector_endpoint'"
+            " configuration option."
         )
 
 

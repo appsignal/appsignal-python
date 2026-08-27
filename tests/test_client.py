@@ -6,7 +6,6 @@ from unittest.mock import call, mock_open, patch
 
 from appsignal import probes
 from appsignal.agent import Agent
-from appsignal.binary import NoopBinary
 from appsignal.client import Client
 
 
@@ -25,8 +24,8 @@ def test_client_agent_inactive():
     client.start()
 
     assert os.environ.get("_APPSIGNAL_ACTIVE") is None
-    assert type(client._binary) is Agent
-    assert client._binary.active is False
+    assert type(client._agent) is Agent
+    assert client._agent.active is False
 
 
 def test_client_agent_active():
@@ -36,8 +35,8 @@ def test_client_agent_active():
     client.start()
 
     assert os.environ.get("_APPSIGNAL_ACTIVE") == "true"
-    assert type(client._binary) is Agent
-    assert client._binary.active is True
+    assert type(client._agent) is Agent
+    assert client._agent.active is True
 
 
 def test_client_agent_active_invalid():
@@ -47,11 +46,11 @@ def test_client_agent_active_invalid():
     client.start()
 
     assert os.environ.get("_APPSIGNAL_ACTIVE") is None
-    assert type(client._binary) is Agent
-    assert client._binary.active is False
+    assert type(client._agent) is Agent
+    assert client._agent.active is False
 
 
-def test_client_active_noopbinary_when_collector_endpoint_set():
+def test_client_active_when_collector_endpoint_set():
     client = Client(
         active=True,
         name="MyApp",
@@ -62,19 +61,91 @@ def test_client_active_noopbinary_when_collector_endpoint_set():
 
     client.start()
 
-    assert type(client._binary) is NoopBinary
-    assert client._binary.active
+    # Starts the agent, which reports what the collector does not
+    assert type(client._agent) is Agent
+    assert client._agent.active
 
-    # Does not set the private config environment variables
-    assert os.environ.get("_APPSIGNAL_ACTIVE") is None
-    assert os.environ.get("_APPSIGNAL_APP_NAME") is None
-    assert os.environ.get("_APPSIGNAL_PUSH_API_KEY") is None
+    # Sets the private config environment variables
+    assert os.environ.get("_APPSIGNAL_ACTIVE") == "true"
+    assert os.environ.get("_APPSIGNAL_APP_NAME") == "MyApp"
+    assert os.environ.get("_APPSIGNAL_PUSH_API_KEY") == "0000-0000-0000-0000"
+
+    # Does not let the agent listen for OpenTelemetry data, because it is sent
+    # to the collector instead, on a port that defaults to the same number
+    assert os.environ.get("_APPSIGNAL_ENABLE_OPENTELEMETRY_HTTP") == "false"
 
     # Sets the OpenTelemetry config environment variables
     assert (
         os.environ.get("OTEL_INSTRUMENTATION_HTTP_CAPTURE_HEADERS_SERVER_REQUEST")
         == "accept,x-custom-header"
     )
+
+
+def test_client_starts_opentelemetry_in_collector_mode_without_the_agent(mocker):
+    mocker.patch("appsignal.agent.Agent.start")
+    start_opentelemetry = mocker.patch("appsignal.client.start_opentelemetry")
+    warning = mocker.patch("appsignal.internal_logger.warning")
+
+    client = Client(
+        active=True,
+        name="MyApp",
+        push_api_key="0000-0000-0000-0000",
+        collector_endpoint="https://custom-endpoint.appsignal.com",
+    )
+
+    client.start()
+
+    assert client._agent.active is False
+    start_opentelemetry.assert_called_once()
+    assert any(
+        "The AppSignal agent did not start" in call.args[0]
+        for call in warning.call_args_list
+    )
+
+
+def test_client_agent_unavailable_message_in_collector_mode(mocker, capsys):
+    mocker.patch(
+        "appsignal.agent.Agent.architecture_and_platform", return_value=["any"]
+    )
+
+    client = Client(
+        active=True,
+        name="MyApp",
+        push_api_key="0000-0000-0000-0000",
+        collector_endpoint="https://custom-endpoint.appsignal.com",
+    )
+    client.start()
+
+    # Data still reaches the collector without the agent, so the message must
+    # not say that nothing is sent.
+    output = capsys.readouterr().out
+    assert "AppSignal agent is not available for this platform." in output
+    assert "no data will be sent to AppSignal" not in output
+
+
+def test_client_agent_unavailable_message_in_agent_mode(mocker, capsys):
+    mocker.patch(
+        "appsignal.agent.Agent.architecture_and_platform", return_value=["any"]
+    )
+
+    client = Client(active=True, name="MyApp", push_api_key="0000-0000-0000-0000")
+    client.start()
+
+    output = capsys.readouterr().out
+    assert "AppSignal agent is not available for this platform." in output
+    assert "no data will be sent to AppSignal" in output
+
+
+def test_client_does_not_start_opentelemetry_without_the_agent(mocker):
+    mocker.patch("appsignal.agent.Agent.start")
+    start_opentelemetry = mocker.patch("appsignal.client.start_opentelemetry")
+
+    client = Client(active=True, name="MyApp", push_api_key="0000-0000-0000-0000")
+
+    client.start()
+
+    assert client._agent.active is False
+    start_opentelemetry.assert_not_called()
 
 
 def test_client_active():
@@ -96,14 +167,17 @@ def test_client_active():
     assert os.environ.get("_APPSIGNAL_APP_NAME") == "MyApp"
     assert os.environ.get("_APPSIGNAL_PUSH_API_KEY") == "0000-0000-0000-0000"
 
+    # Lets the agent listen for OpenTelemetry data, because it is sent there
+    assert os.environ.get("_APPSIGNAL_ENABLE_OPENTELEMETRY_HTTP") == "true"
+
     # Sets the OpenTelemetry config environment variables
     assert (
         os.environ.get("OTEL_INSTRUMENTATION_HTTP_CAPTURE_HEADERS_SERVER_REQUEST")
         == "accept,x-custom-header"
     )
 
-    assert type(client._binary) is Agent
-    assert client._binary.active
+    assert type(client._agent) is Agent
+    assert client._agent.active
 
 
 def test_client_active_without_request_headers():
@@ -151,6 +225,59 @@ def test_client_stop_kills_agent(mock_open, mock_kill, mock_sleep):
             call(123, signal.SIGTERM),
         ]
     )
+    # Waits for the agent to send the trace data it still holds
+    assert call(2) in mock_sleep.call_args_list
+
+
+@patch("time.sleep", return_value=None)
+@patch("os.kill", return_value=None)
+@patch("builtins.open", new_callable=mock_open, read_data="123456;running;123\n")
+def test_client_stop_does_not_wait_for_the_agent_in_collector_mode(
+    mock_open, mock_kill, mock_sleep
+):
+    client = Client(
+        active=True,
+        name="MyApp",
+        push_api_key="0000-0000-0000-0000",
+        collector_endpoint="https://custom-endpoint.appsignal.com",
+    )
+    client.start()
+
+    client.stop()
+
+    mock_kill.assert_has_calls(
+        [
+            call(123, signal.SIGTERM),
+        ]
+    )
+    # Does not wait for the agent, which only holds host, NGINX and StatsD
+    # metrics when a collector is used
+    assert call(2) not in mock_sleep.call_args_list
+
+
+@patch("time.sleep", return_value=None)
+@patch("os.kill", return_value=None)
+@patch("builtins.open", new_callable=mock_open, read_data="123456;running;123\n")
+def test_client_stop_only_stops_the_agent_once(mock_open, mock_kill, mock_sleep):
+    client = Client(active=True, name="MyApp", push_api_key="0000-0000-0000-0000")
+    client.start()
+
+    client.stop()
+    client.stop()
+
+    # The second stop has no agent left to signal, and the process it would
+    # signal may belong to something else by then.
+    assert mock_kill.call_count == 1
+
+
+def test_client_stop_does_not_kill_an_agent_it_did_not_start(mocker):
+    kill = mocker.patch("os.kill")
+
+    client = Client(active=True, name="MyApp", push_api_key="0000-0000-0000-0000")
+
+    client.stop()
+
+    kill.assert_not_called()
 
 
 def test_client_stop_stops_probes(mocker):
