@@ -152,6 +152,28 @@ def test_client_stop_kills_agent(mock_open, mock_kill, mock_sleep):
     )
 
 
+def test_client_stop_shuts_down_opentelemetry_before_the_agent(mocker):
+    # When the agent is used, it is the endpoint that OpenTelemetry data is
+    # sent to, so it has to still be running when that data is flushed.
+    calls = []
+
+    mocker.patch(
+        "appsignal.client.stop_opentelemetry",
+        side_effect=lambda: calls.append("opentelemetry"),
+    )
+    mocker.patch(
+        "appsignal.agent.Agent.stop",
+        side_effect=lambda config: calls.append("agent"),
+    )
+
+    client = Client(active=True, name="MyApp", push_api_key="0000-0000-0000-0000")
+    client.start()
+
+    client.stop()
+
+    assert calls == ["opentelemetry", "agent"]
+
+
 def test_client_stop_stops_scheduler(mocker):
     # use mocker to check that the `stop` method in the `_scheduler` global variable
     # in `check_in.scheduler._scheduler` is called

@@ -200,6 +200,16 @@ DEFAULT_INSTRUMENTATION_ADDERS: Mapping[
 }
 
 
+Provider = Union[TracerProvider, MeterProvider, LoggerProvider]
+
+# The providers started by this module. We keep our own references rather than
+# reading the global providers back when stopping: no logger provider is set
+# when the agent is used, an unset tracer provider is a proxy object with no
+# `shutdown` method, and a provider the application set before ours is not ours
+# to shut down.
+_providers: list[Provider] = []
+
+
 def start(config: Config) -> None:
     # Configure OpenTelemetry request headers config
     request_headers = list_to_env_str(config.option("request_headers"))
@@ -217,6 +227,20 @@ def start(config: Config) -> None:
         _start_logging(config)
 
     add_instrumentations(config)
+
+
+def stop() -> None:
+    # Shutting a provider down flushes what it has buffered. Each provider
+    # unregisters its own `atexit` handler as part of shutting down, so this
+    # does not cause them to be shut down twice.
+    for provider in _providers:
+        try:
+            provider.shutdown()
+        except Exception as error:
+            name = type(provider).__name__
+            logger.error(f"Failed to shut down the OpenTelemetry {name}: {error}")
+
+    _providers.clear()
 
 
 def _otlp_span_processor(config: Config) -> BatchSpanProcessor:
@@ -246,6 +270,7 @@ def _start_tracer(config: Config) -> None:
         provider.add_span_processor(otlp_span_processor)
 
     trace.set_tracer_provider(provider)
+    _providers.append(provider)
 
 
 METRICS_PREFERRED_TEMPORALITY: dict[type, AggregationTemporality] = {
@@ -269,6 +294,7 @@ def _start_metrics(config: Config) -> None:
 
     provider = MeterProvider(resource=_resource(config), metric_readers=[metric_reader])
     metrics.set_meter_provider(provider)
+    _providers.append(provider)
 
 
 def _start_logging(config: Config) -> None:
@@ -279,6 +305,7 @@ def _start_logging(config: Config) -> None:
     provider.add_log_record_processor(BatchLogRecordProcessor(log_exporter))
 
     logs.set_logger_provider(provider)
+    _providers.append(provider)
 
 
 def _resource(config: Config) -> Resource:
