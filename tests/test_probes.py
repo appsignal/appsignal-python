@@ -1,6 +1,8 @@
-from time import sleep
+from threading import Event
+from time import sleep, time
 from typing import Any, Callable, cast
 
+from appsignal import probes
 from appsignal.probes import (
     _probe_states,
     _probes,
@@ -136,3 +138,34 @@ def test_start_stop(mocker):
     sleep(0.05)
 
     assert probe.call_count == call_count
+
+
+def test_stop_gives_up_on_a_probe_that_does_not_finish(mocker):
+    mocker.patch("appsignal.probes._initial_wait_time").return_value = 0.001
+    mocker.patch("appsignal.probes._wait_time").return_value = 0.001
+    mocker.patch("appsignal.probes.STOP_TIMEOUT_SECONDS", 0.05)
+    warning = mocker.patch("appsignal.probes.logger.warning")
+
+    release = Event()
+
+    def blocking_probe() -> None:
+        release.wait(timeout=5)
+
+    register("blocking_probe", blocking_probe)
+    start()
+
+    sleep(0.05)
+
+    started_at = time()
+    stop()
+    elapsed = time() - started_at
+
+    # It gives up rather than waiting for the probe to return.
+    assert elapsed < 1
+    warning.assert_called_once()
+
+    # The thread is left in place, because it only breaks out of its loop
+    # once the probe returns.
+    assert probes._thread is not None
+
+    release.set()

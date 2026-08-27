@@ -12,6 +12,11 @@ T = TypeVar("T")
 
 Probe = Union[Callable[[], None], Callable[[Optional[T]], Optional[T]]]
 
+# How long to wait for the probe thread to finish when stopping. Setting the
+# stop event wakes the thread immediately, so it only takes this long when a
+# probe is running, because the thread cannot finish until that probe returns.
+STOP_TIMEOUT_SECONDS = 1.0
+
 _probes: dict[str, Probe] = {}
 _probe_states: dict[str, Any] = {}
 _lock: Lock = Lock()
@@ -95,11 +100,25 @@ def unregister(name: str) -> None:
 
 def stop() -> None:
     global _thread
-    if _thread is not None:
-        _stop_event.set()
-        _thread.join()
-        _thread = None
-        _stop_event.clear()
+    if _thread is None:
+        return
+
+    _stop_event.set()
+    _thread.join(timeout=STOP_TIMEOUT_SECONDS)
+
+    if _thread.is_alive():
+        # Leave the stop event set and the thread in place. The thread breaks
+        # out of its loop as soon as the probe it is running returns, and
+        # clearing the event here would send it back to waiting instead.
+        logger.warning(
+            "Timed out waiting for the minutely probes to stop. A probe is "
+            "taking longer to run than AppSignal waits for it. Avoid blocking "
+            "for long periods inside a minutely probe function."
+        )
+        return
+
+    _thread = None
+    _stop_event.clear()
 
 
 def clear() -> None:
