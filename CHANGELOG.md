@@ -1,5 +1,40 @@
 # AppSignal for Python Changelog
 
+## 1.7.0
+
+_Published on 2026-09-08._
+
+### Added
+
+- Add an `ignore_logs` option, which takes a list of patterns. Log lines that match any of the patterns are not sent to AppSignal. Set it with the `APPSIGNAL_IGNORE_LOGS` environment variable, or as an option on the `Appsignal` client. Read our [ignore logs guide](https://docs.appsignal.com/guides/filter-data/ignore-logs.html) for the patterns that are supported.
+
+  This option only has an effect in collector mode, because that is the only mode in which this package sends logs.
+
+  (minor [6d1c01e](https://github.com/appsignal/appsignal-python/commit/6d1c01eb253e594a62e7a6c17e977aa93263597b))
+- Report host metrics, NGINX metrics, StatsD metrics and environment metadata when using a collector. These are sent by the AppSignal agent, which now runs alongside the collector instead of being replaced by it. (minor [2b9b24f](https://github.com/appsignal/appsignal-python/commit/2b9b24f484690a9d64ea6773f2a5ba9dcec55154))
+- Detect the revision that is being deployed from the environment variables set by Heroku, Render, Kamal and Scalingo: `HEROKU_SLUG_COMMIT`, `RENDER_GIT_COMMIT`, `KAMAL_VERSION` and `CONTAINER_VERSION`. Applications deployed on those platforms now report their revision without setting the `revision` configuration option.
+
+  This affects collector mode, where deploys were reported as `unknown` when the revision was not configured.
+
+  (patch [6d1c01e](https://github.com/appsignal/appsignal-python/commit/6d1c01eb253e594a62e7a6c17e977aa93263597b))
+
+### Changed
+
+- Report `app` instead of `unknown` as the OpenTelemetry service name when the
+  `service_name` configuration option is not set and collector mode is in use.
+
+  (patch [fcf33d8](https://github.com/appsignal/appsignal-python/commit/fcf33d89d916aedd1fcf8488599f13df2e8df2f8))
+- On Heroku, report the name of the dyno as the hostname. Before, the hostname of the container that the dyno runs in was reported, so applications running on Heroku will see their data reported under a new host name. (patch [6d1c01e](https://github.com/appsignal/appsignal-python/commit/6d1c01eb253e594a62e7a6c17e977aa93263597b))
+- Update the agent to handle high traffic apps. On high-traffic apps that would exceed the maximum accepted internal payload size, send data to the Push API more frequently. (patch [b84582b](https://github.com/appsignal/appsignal-python/commit/b84582b595924d4cc891f86c88762541c3a22c6b))
+
+### Fixed
+
+- An option set to `None` when initializing the `Appsignal` client no longer replaces a value that AppSignal detected itself. For example, `Appsignal(hostname=None)` now reports the detected hostname, instead of reporting no hostname at all. Options that AppSignal does not detect are unchanged: setting `request_headers` to `None`, for example, still turns off request header collection. (patch [6d1c01e](https://github.com/appsignal/appsignal-python/commit/6d1c01eb253e594a62e7a6c17e977aa93263597b))
+- In collector mode, backtrace lines from your own application are now shown as paths relative to your application's root, and are recognized as your application's code. (patch [6d1c01e](https://github.com/appsignal/appsignal-python/commit/6d1c01eb253e594a62e7a6c17e977aa93263597b))
+- Send the traces, metrics and logs that are still buffered when `stop` is called, instead of dropping them. (patch [1351912](https://github.com/appsignal/appsignal-python/commit/13519126b66b429e079f1bc6ef68f76570f56023))
+- Apply the `ca_file_path` and `http_proxy` configuration options to the data sent to a collector. Before this change both options were only applied to the data sent by the agent, so a custom certificate authority file or a proxy had no effect when a collector was used. (patch [e1024a3](https://github.com/appsignal/appsignal-python/commit/e1024a317c716431e0b4f2fc6d1d8a9f20ae4ed4))
+- Stop running minutely probes when `stop` is called. Before this change they kept running and kept reporting metrics after AppSignal was stopped. (patch [86145fb](https://github.com/appsignal/appsignal-python/commit/86145fbcc60b4b9e3fa3fe80e08a31b488c9668a))
+
 ## 1.6.5
 
 _Published on 2026-06-23._
