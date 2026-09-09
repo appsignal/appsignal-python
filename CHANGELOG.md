@@ -1,5 +1,17 @@
 # AppSignal for Python Changelog
 
+## 1.7.1
+
+_Published on 2026-09-09._
+
+### Fixed
+
+- Fix the sanitization of function arguments in SQL statements.
+
+  Before this release, SQL sanitization of function arguments stripped out parts of the SQL statement after the function argument list.
+
+  (patch [d6352f3](https://github.com/appsignal/appsignal-python/commit/d6352f3ac9e7c5d84d7550177191f46b7a747d06))
+
 ## 1.7.0
 
 _Published on 2026-09-08._
