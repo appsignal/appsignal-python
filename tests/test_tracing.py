@@ -11,10 +11,13 @@ from appsignal import (
     set_category,
     set_custom_data,
     set_error,
+    set_function_parameters,
     set_header,
     set_name,
     set_namespace,
     set_params,
+    set_request_payload,
+    set_request_query_parameters,
     set_root_name,
     set_session_data,
     set_sql_body,
@@ -112,6 +115,51 @@ def test_set_params_collector_mode(spans):
     attributes = dict(spans()[0].attributes)
     assert attributes["appsignal.request.payload"] == '{"id": 123}'
     assert "appsignal.request.parameters" not in attributes
+
+
+def test_set_each_kind_of_params_collector_mode(spans):
+    Client(
+        active=True,
+        name="MyApp",
+        push_api_key="0000-0000-0000-0000",
+        collector_endpoint="https://custom-endpoint.appsignal.com",
+    )
+
+    with tracer.start_as_current_span("span"):
+        set_request_payload({"id": 123})
+        set_request_query_parameters({"page": 2})
+        set_function_parameters({"job": "argument"})
+
+    attributes = dict(spans()[0].attributes)
+    assert attributes["appsignal.request.payload"] == '{"id": 123}'
+    assert attributes["appsignal.request.query_parameters"] == '{"page": 2}'
+    assert attributes["appsignal.function.parameters"] == '{"job": "argument"}'
+    assert "appsignal.request.parameters" not in attributes
+
+
+def test_set_each_kind_of_params_agent_mode(spans):
+    # The agent has one slot for every kind of parameters, so the last helper
+    # to write to it is the one that is reported.
+    with tracer.start_as_current_span("span"):
+        set_request_payload({"id": 123})
+
+    assert dict(spans()[0].attributes) == {
+        "appsignal.request.parameters": '{"id": 123}'
+    }
+
+    with tracer.start_as_current_span("span"):
+        set_request_query_parameters({"page": 2})
+
+    assert dict(spans()[0].attributes) == {
+        "appsignal.request.parameters": '{"page": 2}'
+    }
+
+    with tracer.start_as_current_span("span"):
+        set_function_parameters({"job": "argument"})
+
+    assert dict(spans()[0].attributes) == {
+        "appsignal.request.parameters": '{"job": "argument"}'
+    }
 
 
 def test_set_header_collector_mode(spans):
