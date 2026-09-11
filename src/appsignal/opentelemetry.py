@@ -215,13 +215,23 @@ Provider = Union[TracerProvider, MeterProvider, LoggerProvider]
 _providers: list[Provider] = []
 
 
+# The HTTP instrumentation reports a header only when it is named in one of
+# these environment variables.
+CAPTURE_HEADERS_ENVIRONMENT_VARIABLES: Mapping[str, str] = {
+    "request_headers": "OTEL_INSTRUMENTATION_HTTP_CAPTURE_HEADERS_SERVER_REQUEST",
+    "response_headers": "OTEL_INSTRUMENTATION_HTTP_CAPTURE_HEADERS_SERVER_RESPONSE",
+}
+
+
+def _set_capture_headers(config: Config) -> None:
+    for option, variable in CAPTURE_HEADERS_ENVIRONMENT_VARIABLES.items():
+        headers = list_to_env_str(config.option(option))
+        if headers:
+            os.environ[variable] = headers
+
+
 def start(config: Config) -> None:
-    # Configure OpenTelemetry request headers config
-    request_headers = list_to_env_str(config.option("request_headers"))
-    if request_headers:
-        os.environ["OTEL_INSTRUMENTATION_HTTP_CAPTURE_HEADERS_SERVER_REQUEST"] = (
-            request_headers
-        )
+    _set_capture_headers(config)
 
     _start_tracer(config)
     _start_metrics(config)
