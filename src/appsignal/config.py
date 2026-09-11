@@ -524,6 +524,7 @@ class Config:
 
     def warn(self) -> None:
         if self.should_use_collector():
+            self._warn_deprecated_collector_options()
             self._warn_agent_exclusive_options()
         else:
             self._warn_collector_exclusive_options()
@@ -535,21 +536,10 @@ class Config:
     # nothing, because the collector receives that data instead.
     def _warn_agent_exclusive_options(self) -> None:
         exclusive_options = [
-            "filter_parameters",
             "opentelemetry_port",
-            "send_params",
         ]
 
         option_specific_warnings = {
-            "filter_parameters": (
-                "Use the 'filter_attributes', 'filter_function_parameters',"
-                " 'filter_request_payload' and 'filter_request_query_parameters'"
-                " configuration options instead."
-            ),
-            "send_params": (
-                "Use the 'send_function_parameters', 'send_request_payload'"
-                " and 'send_request_query_parameters' configuration options instead."
-            ),
             "opentelemetry_port": (
                 "Set the collector's OpenTelemetry port as part of the"
                 " 'collector_endpoint' configuration option."
@@ -572,6 +562,44 @@ class Config:
                 " configuration option."
             )
 
+    # Emit a warning for each configuration option that is deprecated in
+    # collector mode, naming the options that replace it. Collector mode still
+    # reads these options, so the warning is about what to set instead rather
+    # than about the option being ignored.
+    def _warn_deprecated_collector_options(self) -> None:
+        deprecated_options = self._filter_user_modified_options(
+            list(self.DEPRECATED_COLLECTOR_OPTIONS)
+        )
+
+        for option in deprecated_options:
+            logger.warning(self._deprecated_collector_option_message(option))
+
+    # The warning for an option that is deprecated in collector mode. Names the
+    # options that replace it and, for each one AppSignal worked out a value
+    # for, the value to set to keep reporting what the application reports now.
+    def _deprecated_collector_option_message(self, option: str) -> str:
+        replacements = self.DEPRECATED_COLLECTOR_OPTIONS[option]
+        message = (
+            f"The collector is in use. The '{option}' configuration option is"
+            " deprecated in collector mode. It is replaced by"
+            f" {quoted_option_list(replacements)}."
+        )
+
+        derived = cast(dict, self.sources["derived"])
+        # A line per option, so that a reader can find the one they are after
+        # without reading past the others.
+        values = [
+            f"\n  {name}: {derived[name]!r}" for name in replacements if name in derived
+        ]
+
+        if not values:
+            return message
+
+        return (
+            f"{message} Set these options to keep reporting what this"
+            f" application reports now:{''.join(values)}"
+        )
+
     # Emit a warning if collector-exclusive configuration options are used.
     def _warn_collector_exclusive_options(self) -> None:
         exclusive_options = [
@@ -590,8 +618,9 @@ class Config:
         filter_warning = "Use the 'filter_parameters' option instead."
         send_warning = "Use the 'send_params' option instead."
 
+        # `filter_attributes` has no agent equivalent, so there is nothing to
+        # point an application in agent mode at.
         option_specific_warnings = {
-            "filter_attributes": filter_warning,
             "filter_function_parameters": filter_warning,
             "filter_request_payload": filter_warning,
             "filter_request_query_parameters": filter_warning,
@@ -626,6 +655,16 @@ class Config:
             if self._user_set(option)
             and self.option(option) != self.sources["default"].get(option)
         ]
+
+
+# Joins names for a message: "'a'", "'a' and 'b'", "'a', 'b' and 'c'".
+def quoted_option_list(names: list[str]) -> str:
+    quoted = [f"'{name}'" for name in names]
+
+    if len(quoted) == 1:
+        return quoted[0]
+
+    return f"{', '.join(quoted[:-1])} and {quoted[-1]}"
 
 
 def parse_bool(value: str | None) -> bool | None:
