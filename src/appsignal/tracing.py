@@ -62,15 +62,29 @@ def _use_collector() -> bool:
     return config is not None and config.should_use_collector()
 
 
-def set_params(params: Any, span: Span | None = None) -> None:
-    # The collector and server recognize `appsignal.request.payload` for request
-    # body / merged parameters; the agent recognizes `appsignal.request.parameters`.
+def _set_params(collector_attribute: str, params: Any, span: Span | None) -> None:
     attribute = (
-        "appsignal.request.payload"
-        if _use_collector()
-        else "appsignal.request.parameters"
+        collector_attribute if _use_collector() else "appsignal.request.parameters"
     )
     _set_serialised_attribute(attribute, params, span)
+
+
+def set_request_payload(payload: Any, span: Span | None = None) -> None:
+    _set_params("appsignal.request.payload", payload, span)
+
+
+def set_request_query_parameters(
+    query_parameters: Any, span: Span | None = None
+) -> None:
+    _set_params("appsignal.request.query_parameters", query_parameters, span)
+
+
+def set_function_parameters(parameters: Any, span: Span | None = None) -> None:
+    _set_params("appsignal.function.parameters", parameters, span)
+
+
+def set_params(params: Any, span: Span | None = None) -> None:
+    set_request_payload(params, span)
 
 
 def set_session_data(session_data: Any, span: Span | None = None) -> None:
