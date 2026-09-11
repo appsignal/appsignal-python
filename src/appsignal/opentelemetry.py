@@ -58,15 +58,22 @@ def add_celery_instrumentation(_config: Config) -> None:
     CeleryInstrumentor().instrument()
 
 
-def add_django_instrumentation(_config: Config) -> None:
+def add_django_instrumentation(config: Config) -> None:
     from django.http.request import HttpRequest
     from django.http.response import HttpResponse
     from opentelemetry.instrumentation.django import DjangoInstrumentor
 
-    from .tracing import set_params
+    from .tracing import set_params, set_request_payload, set_request_query_parameters
 
     def response_hook(span: Span, request: HttpRequest, response: HttpResponse) -> None:
-        set_params({"GET": request.GET, "POST": request.POST}, span)
+        # Django's `GET` holds the parsed query string and its `POST` holds the
+        # request body, which are two kinds of parameters to a collector and
+        # one to the agent.
+        if config.should_use_collector():
+            set_request_query_parameters(request.GET, span)
+            set_request_payload(request.POST, span)
+        else:
+            set_params({"GET": request.GET, "POST": request.POST}, span)
 
     DjangoInstrumentor().instrument(response_hook=response_hook)
 
@@ -76,12 +83,12 @@ def add_flask_instrumentation(_config: Config) -> None:
 
     from opentelemetry.instrumentation.flask import FlaskInstrumentor
 
-    from .tracing import set_params
+    from .tracing import set_request_query_parameters
 
     def request_hook(span: Span, environ: dict[str, str]) -> None:
         if span and span.is_recording():
             query_params = parse_qs(environ.get("QUERY_STRING", ""))
-            set_params({"args": query_params}, span)
+            set_request_query_parameters(query_params, span)
 
     FlaskInstrumentor().instrument(request_hook=request_hook)
 
