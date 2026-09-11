@@ -694,9 +694,7 @@ def test_warn_all_agent_exclusive_options(mocker):
         return Config(
             Options(
                 collector_endpoint="http://localhost:4318",
-                filter_parameters=["password"],
                 opentelemetry_port="9999",
-                send_params=False,
             )
         )
 
@@ -716,9 +714,7 @@ def test_warn_all_agent_exclusive_options(mocker):
         warning_messages = [call.args[0] for call in mock_warning.call_args_list]
 
         agent_exclusive_options = [
-            "filter_parameters",
             "opentelemetry_port",
-            "send_params",
         ]
 
         for option in agent_exclusive_options:
@@ -795,7 +791,7 @@ def test_warn_all_collector_exclusive_options(mocker):
         )
 
 
-def test_warn_filter_parameters_emits_specific_advice(mocker):
+def test_warn_filter_parameters_is_deprecated(mocker):
     mock_warning = mocker.patch("appsignal.internal_logger.warning")
 
     config = Config(
@@ -809,15 +805,19 @@ def test_warn_filter_parameters_emits_specific_advice(mocker):
 
     warning_messages = [call.args[0] for call in mock_warning.call_args_list]
 
-    assert any(
-        "Use the 'filter_attributes', 'filter_function_parameters',"
-        " 'filter_request_payload' and 'filter_request_query_parameters'"
-        " configuration options instead." in msg
-        for msg in warning_messages
-    ), "Expected specific advice for 'filter_parameters' not found"
+    assert warning_messages == [
+        "The collector is in use. The 'filter_parameters' configuration option"
+        " is deprecated in collector mode. It is replaced by"
+        " 'filter_request_payload', 'filter_function_parameters' and"
+        " 'filter_request_query_parameters'. Set these options to keep"
+        " reporting what this application reports now:"
+        "\n  filter_request_payload: ['password']"
+        "\n  filter_function_parameters: ['password']"
+        "\n  filter_request_query_parameters: ['password']"
+    ]
 
 
-def test_warn_send_params_emits_specific_advice(mocker):
+def test_warn_send_params_is_deprecated(mocker):
     mock_warning = mocker.patch("appsignal.internal_logger.warning")
 
     config = Config(
@@ -831,11 +831,41 @@ def test_warn_send_params_emits_specific_advice(mocker):
 
     warning_messages = [call.args[0] for call in mock_warning.call_args_list]
 
-    assert any(
-        "Use the 'send_function_parameters', 'send_request_payload'"
-        " and 'send_request_query_parameters' configuration options instead." in msg
-        for msg in warning_messages
-    ), "Expected specific advice for 'send_params' not found"
+    assert warning_messages == [
+        "The collector is in use. The 'send_params' configuration option is"
+        " deprecated in collector mode. It is replaced by"
+        " 'send_request_payload', 'send_request_query_parameters' and"
+        " 'send_function_parameters'. Set these options to keep reporting what"
+        " this application reports now:"
+        "\n  send_request_payload: False"
+        "\n  send_request_query_parameters: False"
+        "\n  send_function_parameters: False"
+    ]
+
+
+def test_warn_deprecated_option_without_derived_values(mocker):
+    mock_warning = mocker.patch("appsignal.internal_logger.warning")
+
+    config = Config(
+        Options(
+            collector_endpoint="http://localhost:4318",
+            send_params=False,
+            send_request_payload=True,
+            send_request_query_parameters=True,
+            send_function_parameters=True,
+        )
+    )
+
+    config.warn()
+
+    warning_messages = [call.args[0] for call in mock_warning.call_args_list]
+
+    assert warning_messages == [
+        "The collector is in use. The 'send_params' configuration option is"
+        " deprecated in collector mode. It is replaced by"
+        " 'send_request_payload', 'send_request_query_parameters' and"
+        " 'send_function_parameters'."
+    ]
 
 
 def test_warn_opentelemetry_port_emits_specific_advice(mocker):
@@ -884,7 +914,7 @@ def test_warn_collector_filter_options_emit_use_filter_parameters_advice(mocker)
 
     warning_messages = [call.args[0] for call in mock_warning.call_args_list]
 
-    assert warning_messages.count("Use the 'filter_parameters' option instead.") == 4
+    assert warning_messages.count("Use the 'filter_parameters' option instead.") == 3
 
 
 def test_warn_collector_send_options_emit_use_send_params_advice(mocker):
