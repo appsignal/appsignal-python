@@ -252,6 +252,7 @@ def test_environ_source():
     assert config.sources["environment"] == env_options
     final_options = Options()
     final_options.update(config.sources["default"])
+    final_options.update(config.sources["derived"])
     final_options.update(config.sources["system"])
     final_options.update(env_options)
     assert config.options == final_options
@@ -305,6 +306,77 @@ def test_environ_source_disable_default_instrumentations_bool():
         os.environ["APPSIGNAL_DISABLE_DEFAULT_INSTRUMENTATIONS"] = value
         config = Config()
         assert config.options["disable_default_instrumentations"] is expected
+
+
+def test_derived_source_is_empty_when_nothing_is_configured():
+    config = Config()
+
+    assert config.sources["derived"] == {}
+
+
+def test_derived_source_is_empty_when_an_option_is_set_to_its_default():
+    config = Config(Options(send_params=True))
+
+    assert config.sources["derived"] == {}
+
+
+def test_derives_the_filter_options_from_filter_parameters():
+    config = Config(Options(filter_parameters=["password", "secret"]))
+
+    assert config.sources["derived"] == Options(
+        filter_request_payload=["password", "secret"],
+        filter_function_parameters=["password", "secret"],
+        filter_request_query_parameters=["password", "secret"],
+    )
+    assert config.option("filter_request_payload") == ["password", "secret"]
+    assert config.option("filter_function_parameters") == ["password", "secret"]
+    assert config.option("filter_request_query_parameters") == ["password", "secret"]
+
+
+def test_derives_the_send_options_from_send_params():
+    os.environ["APPSIGNAL_SEND_PARAMS"] = "false"
+
+    config = Config()
+
+    assert config.sources["derived"] == Options(
+        send_request_payload=False,
+        send_request_query_parameters=False,
+        send_function_parameters=False,
+    )
+    assert config.option("send_request_payload") is False
+    assert config.option("send_request_query_parameters") is False
+    assert config.option("send_function_parameters") is False
+
+
+def test_does_not_derive_an_option_the_initial_source_sets():
+    config = Config(
+        Options(
+            filter_parameters=["password"],
+            filter_request_payload=["token"],
+        )
+    )
+
+    assert "filter_request_payload" not in config.sources["derived"]
+    assert config.option("filter_request_payload") == ["token"]
+    assert config.option("filter_function_parameters") == ["password"]
+
+
+def test_does_not_derive_an_option_the_environment_source_sets():
+    os.environ["APPSIGNAL_FILTER_PARAMETERS"] = "password"
+    os.environ["APPSIGNAL_FILTER_FUNCTION_PARAMETERS"] = "token"
+
+    config = Config()
+
+    assert "filter_function_parameters" not in config.sources["derived"]
+    assert config.option("filter_function_parameters") == ["token"]
+    assert config.option("filter_request_payload") == ["password"]
+
+
+def test_derives_an_option_set_to_an_empty_list():
+    config = Config(Options(send_params=False, filter_request_payload=[]))
+
+    assert config.option("filter_request_payload") == []
+    assert config.option("send_request_payload") is False
 
 
 def test_set_private_environ():
@@ -785,6 +857,18 @@ def test_warn_opentelemetry_port_emits_specific_advice(mocker):
         " 'collector_endpoint' configuration option." in msg
         for msg in warning_messages
     ), "Expected specific advice for 'opentelemetry_port' not found"
+
+
+def test_warn_no_warnings_for_options_appsignal_derived(mocker):
+    mock_warning = mocker.patch("appsignal.internal_logger.warning")
+
+    # The agent is in use and the six collector-mode options hold values
+    # AppSignal worked out. Nobody asked for them, so there is nothing to warn
+    # about.
+    config = Config(Options(filter_parameters=["password"], send_params=False))
+    config.warn()
+
+    assert mock_warning.call_count == 0
 
 
 def test_warn_collector_filter_options_emit_use_filter_parameters_advice(mocker):
