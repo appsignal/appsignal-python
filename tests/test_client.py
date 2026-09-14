@@ -50,6 +50,12 @@ def test_client_agent_active_invalid():
     assert client._agent.active is False
 
 
+def test_client_is_active():
+    assert Client(active=True, name="MyApp", push_api_key="000").is_active is True
+    assert Client(active=False, name="MyApp", push_api_key="000").is_active is False
+    assert Client(active=True, name="MyApp", push_api_key="").is_active is False
+
+
 def test_client_active_when_collector_endpoint_set():
     client = Client(
         active=True,
