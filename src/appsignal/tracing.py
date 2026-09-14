@@ -9,6 +9,7 @@ from opentelemetry.context import Context
 from opentelemetry.trace import Status, StatusCode
 
 from . import internal_logger as logger
+from ._once import _Once, _warn_logger_and_stdout
 
 
 if TYPE_CHECKING:
@@ -87,9 +88,24 @@ def set_function_parameters(parameters: Any, span: Span | None = None) -> None:
     _set_params("appsignal.function.parameters", parameters, span)
 
 
+_set_params_warning = _Once(
+    _warn_logger_and_stdout,
+    "The helper `set_params` is deprecated when a collector is used. It does "
+    "not say which kind of parameters it is given, so everything it reports "
+    "becomes the request payload. Use `set_request_payload`, "
+    "`set_request_query_parameters` or `set_function_parameters` instead, in "
+    "order to remove this message.",
+)
+
+
 # Reports parameters without naming which kind they are. They are reported as
 # the request payload, which is the kind a web request's parameters are.
 def set_params(params: Any, span: Span | None = None) -> None:
+    # Only collector mode keeps the kinds apart, so only there does naming one
+    # make a difference to what is reported.
+    if _use_collector():
+        _set_params_warning()
+
     set_request_payload(params, span)
 
 

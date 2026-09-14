@@ -162,6 +162,37 @@ def test_set_each_kind_of_params_agent_mode(spans):
     }
 
 
+def test_set_params_warns_in_collector_mode(spans, mocker):
+    mock_warning = mocker.patch("appsignal.internal_logger.warning")
+
+    Client(
+        active=True,
+        name="MyApp",
+        push_api_key="0000-0000-0000-0000",
+        collector_endpoint="https://custom-endpoint.appsignal.com",
+    )
+
+    with tracer.start_as_current_span("span"):
+        set_params({"id": 123})
+        set_params({"id": 456})
+
+    warning_messages = [call.args[0] for call in mock_warning.call_args_list]
+
+    assert len(warning_messages) == 1
+    assert "`set_params` is deprecated when a collector is used" in (
+        warning_messages[0]
+    )
+
+
+def test_set_params_does_not_warn_in_agent_mode(spans, mocker):
+    mock_warning = mocker.patch("appsignal.internal_logger.warning")
+
+    with tracer.start_as_current_span("span"):
+        set_params({"id": 123})
+
+    assert mock_warning.call_count == 0
+
+
 def test_set_header_collector_mode(spans):
     Client(
         active=True,
