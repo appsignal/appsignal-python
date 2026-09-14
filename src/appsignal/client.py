@@ -41,6 +41,12 @@ class Client:
 
         return _client._config
 
+    # Whether AppSignal is configured to start. This is known as soon as the
+    # client is created, and does not change when `start` is called.
+    @property
+    def is_active(self) -> bool:
+        return self._config.is_active()
+
     def start(self) -> None:
         if self._config.is_active():
             logger.info("Starting AppSignal")
