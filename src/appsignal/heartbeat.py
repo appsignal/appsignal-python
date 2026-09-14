@@ -2,32 +2,11 @@ from __future__ import annotations
 
 from typing import Any, Callable, TypeVar
 
-from . import internal_logger as logger
+from ._once import _Once, _warn_logger_and_stdout
 from .check_in import Cron, cron
 
 
 T = TypeVar("T")
-
-
-class _Once:
-    def __init__(self, func: Callable[..., None], *args: Any, **kwargs: Any) -> None:
-        self.called = False
-        self.func = func
-        self.args = args
-        self.kwargs = kwargs
-
-    def __call__(self) -> None:
-        if not self.called:
-            self.called = True
-            self.func(*self.args, **self.kwargs)
-
-    def reset(self) -> None:
-        self.called = False
-
-
-def _warn_logger_and_stdout(msg: str) -> None:
-    logger.warning(msg)
-    print(f"appsignal WARNING: {msg}")
 
 
 _heartbeat_helper_warning = _Once(
