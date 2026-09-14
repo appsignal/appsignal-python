@@ -25,6 +25,7 @@ from appsignal.client import _reset_client
 from appsignal.heartbeat import _heartbeat_class_warning, _heartbeat_helper_warning
 from appsignal.internal_logger import _reset_logger
 from appsignal.opentelemetry import METRICS_PREFERRED_TEMPORALITY, _providers
+from appsignal.tracing import _set_params_warning
 
 
 @pytest.fixture(scope="function", autouse=True)
@@ -114,6 +115,11 @@ def stop_and_clear_probes_after_tests() -> Any:
 @pytest.fixture(scope="function", autouse=True)
 def reset_global_client() -> Any:
     _reset_client()
+
+
+@pytest.fixture(scope="function", autouse=True)
+def reset_set_params_warning() -> Any:
+    _set_params_warning.reset()
 
 
 @pytest.fixture(scope="function", autouse=True)
