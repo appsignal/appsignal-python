@@ -9,6 +9,7 @@ from opentelemetry.context import Context
 from opentelemetry.trace import Status, StatusCode
 
 from . import internal_logger as logger
+from ._headers import normalize_header
 from ._once import _Once, _warn_logger_and_stdout
 
 
@@ -125,8 +126,14 @@ def set_header(header: str, value: Any, span: Span | None = None) -> None:
     # The collector and server read request headers from the OpenTelemetry
     # semantic-convention prefix `http.request.header`; the agent reads them
     # from `appsignal.request.headers`.
-    prefix = "http.request.header" if _use_collector() else "appsignal.request.headers"
-    _set_prefixed_attribute(prefix, header, value, span)
+    if _use_collector():
+        # The collector matches the name against the header allowlist, so a
+        # header named any other way would be reported only to be filtered out.
+        _set_prefixed_attribute(
+            "http.request.header", normalize_header(header), value, span
+        )
+    else:
+        _set_prefixed_attribute("appsignal.request.headers", header, value, span)
 
 
 def set_name(name: str, span: Span | None = None) -> None:
