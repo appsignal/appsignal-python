@@ -75,9 +75,9 @@ class Sources(TypedDict):
 
 
 # The configuration sources, in the order they are merged, so the last one
-# holding an option is the one whose value it takes. Both the merge and the
-# deriving below walk this, so neither can disagree with the other about which
-# source outranks which.
+# holding an option is the one whose value it takes. The merge, the deriving
+# below and the diagnose report all walk this, so none of them can disagree
+# with the others about where a value came from.
 SOURCE_ORDER: list[str] = [
     "default",
     "derived",

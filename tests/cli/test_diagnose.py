@@ -116,3 +116,29 @@ def test_diagnose_with_missing_paths(mocker, capfd):
 
     out, err = capfd.readouterr()
     assert "Exists?: False" in out
+
+
+def test_diagnose_names_where_a_value_came_from(mocker, capfd):
+    os.environ["APPSIGNAL_APP_ENV"] = "production"
+    os.environ["APPSIGNAL_HOST_ROLE"] = "worker"
+
+    main(["diagnose", "--no-send-report"])
+
+    out, err = capfd.readouterr()
+    # One source holds it, so the option just says which.
+    assert "  host_role: 'worker' (Loaded from: environment)" in out
+    # The default holds a value too, so both are listed with what they hold.
+    assert (
+        "  environment: 'production'\n"
+        "    Sources:\n"
+        "      default:     'development'\n"
+        "      environment: 'production'\n"
+    ) in out
+
+
+def test_diagnose_says_nothing_about_an_option_left_at_its_default(mocker, capfd):
+    main(["diagnose", "--no-send-report"])
+
+    out, err = capfd.readouterr()
+    assert "  log: 'file'\n" in out
+    assert "  log: 'file' (Loaded from" not in out
