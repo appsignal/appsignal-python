@@ -33,6 +33,7 @@ from opentelemetry.sdk.trace.export import (
 )
 
 from . import internal_logger as logger
+from ._headers import normalize_headers
 from .config import Config, list_to_env_str
 
 
@@ -225,7 +226,7 @@ CAPTURE_HEADERS_ENVIRONMENT_VARIABLES: Mapping[str, str] = {
 
 def _set_capture_headers(config: Config) -> None:
     for option, variable in CAPTURE_HEADERS_ENVIRONMENT_VARIABLES.items():
-        headers = list_to_env_str(config.option(option))
+        headers = list_to_env_str(normalize_headers(config.option(option)))
         if headers:
             os.environ[variable] = headers
 
@@ -381,8 +382,12 @@ def _resource(config: Config) -> Resource:
             "appsignal.config.ignore_namespaces": config.options.get(
                 "ignore_namespaces"
             ),
-            "appsignal.config.response_headers": config.options.get("response_headers"),
-            "appsignal.config.request_headers": config.options.get("request_headers"),
+            "appsignal.config.response_headers": normalize_headers(
+                config.options.get("response_headers")
+            ),
+            "appsignal.config.request_headers": normalize_headers(
+                config.options.get("request_headers")
+            ),
             "appsignal.config.send_function_parameters": config.options.get(
                 "send_function_parameters"
             ),
