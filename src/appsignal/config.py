@@ -107,6 +107,21 @@ class Config:
     DEFAULT_CONFIG = Options(
         ca_file_path=CA_FILE_PATH,
         diagnose_endpoint="https://appsignal.com/diag",
+        # The lists of names to filter or ignore something by. Naming nothing
+        # filters and ignores nothing, which is what every one of these means
+        # when it is not configured, and what the Ruby gem defaults them to.
+        dns_servers=[],
+        filter_attributes=[],
+        filter_function_parameters=[],
+        filter_parameters=[],
+        filter_request_payload=[],
+        filter_request_query_parameters=[],
+        filter_session_data=[],
+        ignore_actions=[],
+        ignore_errors=[],
+        ignore_logs=[],
+        ignore_namespaces=[],
+        response_headers=[],
         enable_host_metrics=True,
         enable_minutely_probes=True,
         enable_nginx_metrics=False,
