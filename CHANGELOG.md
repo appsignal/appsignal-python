@@ -1,5 +1,26 @@
 # AppSignal for Python Changelog
 
+## 1.7.2
+
+_Published on 2026-09-15._
+
+### Added
+
+- Add an `is_active` attribute to the AppSignal client. It tells you whether AppSignal is configured to start, so you can use it to only run code that makes sense when AppSignal is active:
+
+  ```python
+  from appsignal import Appsignal
+
+  appsignal = Appsignal(name="My app name", push_api_key="my-push-api-key", active=True)
+
+  if appsignal.is_active:
+      # Only runs when AppSignal is active
+  ```
+
+  Before this change, the only way to check this was to read the client's private configuration object.
+
+  (patch [b745788](https://github.com/appsignal/appsignal-python/commit/b7457888668feee8bdd080c098c5bd0aed883ded), [aa52f5b](https://github.com/appsignal/appsignal-python/commit/aa52f5b1a1891cdb8f15470ccf289cb1913a95af))
+
 ## 1.7.1
 
 _Published on 2026-09-09._
