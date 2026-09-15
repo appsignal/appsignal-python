@@ -33,6 +33,7 @@ from opentelemetry.sdk.trace.export import (
 )
 
 from . import internal_logger as logger
+from ._headers import normalize_headers
 from .config import Config, list_to_env_str
 
 
@@ -58,15 +59,22 @@ def add_celery_instrumentation(_config: Config) -> None:
     CeleryInstrumentor().instrument()
 
 
-def add_django_instrumentation(_config: Config) -> None:
+def add_django_instrumentation(config: Config) -> None:
     from django.http.request import HttpRequest
     from django.http.response import HttpResponse
     from opentelemetry.instrumentation.django import DjangoInstrumentor
 
-    from .tracing import set_params
+    from .tracing import set_params, set_request_payload, set_request_query_parameters
 
     def response_hook(span: Span, request: HttpRequest, response: HttpResponse) -> None:
-        set_params({"GET": request.GET, "POST": request.POST}, span)
+        # Django's `GET` holds the parsed query string and its `POST` holds the
+        # request body, which are two kinds of parameters to a collector and
+        # one to the agent.
+        if config.should_use_collector():
+            set_request_query_parameters(request.GET, span)
+            set_request_payload(request.POST, span)
+        else:
+            set_params({"GET": request.GET, "POST": request.POST}, span)
 
     DjangoInstrumentor().instrument(response_hook=response_hook)
 
@@ -76,12 +84,12 @@ def add_flask_instrumentation(_config: Config) -> None:
 
     from opentelemetry.instrumentation.flask import FlaskInstrumentor
 
-    from .tracing import set_params
+    from .tracing import set_request_query_parameters
 
     def request_hook(span: Span, environ: dict[str, str]) -> None:
         if span and span.is_recording():
             query_params = parse_qs(environ.get("QUERY_STRING", ""))
-            set_params({"args": query_params}, span)
+            set_request_query_parameters(query_params, span)
 
     FlaskInstrumentor().instrument(request_hook=request_hook)
 
@@ -211,13 +219,24 @@ Provider = Union[TracerProvider, MeterProvider, LoggerProvider]
 _providers: list[Provider] = []
 
 
+# The HTTP instrumentation reports a request or response header only when the
+# header is named in one of these environment variables. Both hold the header
+# names the way the configuration options do, lowercase and dash-separated.
+CAPTURE_HEADERS_ENVIRONMENT_VARIABLES: Mapping[str, str] = {
+    "request_headers": "OTEL_INSTRUMENTATION_HTTP_CAPTURE_HEADERS_SERVER_REQUEST",
+    "response_headers": "OTEL_INSTRUMENTATION_HTTP_CAPTURE_HEADERS_SERVER_RESPONSE",
+}
+
+
+def _set_capture_headers(config: Config) -> None:
+    for option, variable in CAPTURE_HEADERS_ENVIRONMENT_VARIABLES.items():
+        headers = list_to_env_str(normalize_headers(config.option(option)))
+        if headers:
+            os.environ[variable] = headers
+
+
 def start(config: Config) -> None:
-    # Configure OpenTelemetry request headers config
-    request_headers = list_to_env_str(config.option("request_headers"))
-    if request_headers:
-        os.environ["OTEL_INSTRUMENTATION_HTTP_CAPTURE_HEADERS_SERVER_REQUEST"] = (
-            request_headers
-        )
+    _set_capture_headers(config)
 
     _start_tracer(config)
     _start_metrics(config)
@@ -367,8 +386,14 @@ def _resource(config: Config) -> Resource:
             "appsignal.config.ignore_namespaces": config.options.get(
                 "ignore_namespaces"
             ),
-            "appsignal.config.response_headers": config.options.get("response_headers"),
-            "appsignal.config.request_headers": config.options.get("request_headers"),
+            # The collector matches these against the names it receives the
+            # headers under, so they go as the names a header goes by there.
+            "appsignal.config.response_headers": normalize_headers(
+                config.options.get("response_headers")
+            ),
+            "appsignal.config.request_headers": normalize_headers(
+                config.options.get("request_headers")
+            ),
             "appsignal.config.send_function_parameters": config.options.get(
                 "send_function_parameters"
             ),

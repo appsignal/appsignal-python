@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from typing import List, cast
 from unittest.mock import Mock
 
@@ -7,12 +8,80 @@ from appsignal.config import Config, Options
 from appsignal.opentelemetry import (
     _exporter_session,
     _providers,
+    _resource,
+    _set_capture_headers,
     _start_logging,
     _start_metrics,
     _start_tracer,
     add_instrumentations,
     stop,
 )
+
+
+REQUEST_HEADERS_VARIABLE = "OTEL_INSTRUMENTATION_HTTP_CAPTURE_HEADERS_SERVER_REQUEST"
+RESPONSE_HEADERS_VARIABLE = "OTEL_INSTRUMENTATION_HTTP_CAPTURE_HEADERS_SERVER_RESPONSE"
+
+
+def test_set_capture_headers():
+    config = Config(
+        Options(
+            request_headers=["accept", "x-request-id"],
+            response_headers=["content-type"],
+        )
+    )
+
+    _set_capture_headers(config)
+
+    assert os.environ[REQUEST_HEADERS_VARIABLE] == "accept,x-request-id"
+    assert os.environ[RESPONSE_HEADERS_VARIABLE] == "content-type"
+
+
+def test_set_capture_headers_normalizes_the_names():
+    config = Config(
+        Options(
+            request_headers=["Accept_Charset", "X-Custom-Header"],
+            response_headers=["Content_Type"],
+        )
+    )
+
+    _set_capture_headers(config)
+
+    assert os.environ[REQUEST_HEADERS_VARIABLE] == "accept-charset,x-custom-header"
+    assert os.environ[RESPONSE_HEADERS_VARIABLE] == "content-type"
+
+
+def test_set_capture_headers_when_the_options_are_empty():
+    config = Config(Options(request_headers=[], response_headers=[]))
+
+    _set_capture_headers(config)
+
+    assert REQUEST_HEADERS_VARIABLE not in os.environ
+    assert RESPONSE_HEADERS_VARIABLE not in os.environ
+
+
+def test_set_capture_headers_when_the_options_are_unset():
+    config = Config(Options(request_headers=None))
+
+    _set_capture_headers(config)
+
+    assert REQUEST_HEADERS_VARIABLE not in os.environ
+    assert RESPONSE_HEADERS_VARIABLE not in os.environ
+
+
+def test_resource_normalizes_the_header_options():
+    config = Config(
+        Options(
+            name="MyApp",
+            push_api_key="0000-0000-0000-0000",
+            request_headers=["Accept_Charset"],
+            response_headers=["Content_Type"],
+        )
+    )
+
+    attributes = _resource(config).attributes
+
+    assert attributes["appsignal.config.request_headers"] == ("accept-charset",)
+    assert attributes["appsignal.config.response_headers"] == ("content-type",)
 
 
 def raise_module_not_found_error(_config: Config) -> None:

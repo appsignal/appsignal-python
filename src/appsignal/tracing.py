@@ -9,6 +9,8 @@ from opentelemetry.context import Context
 from opentelemetry.trace import Status, StatusCode
 
 from . import internal_logger as logger
+from ._headers import normalize_header
+from ._once import _Once, _warn_logger_and_stdout
 
 
 if TYPE_CHECKING:
@@ -62,15 +64,50 @@ def _use_collector() -> bool:
     return config is not None and config.should_use_collector()
 
 
-def set_params(params: Any, span: Span | None = None) -> None:
-    # The collector and server recognize `appsignal.request.payload` for request
-    # body / merged parameters; the agent recognizes `appsignal.request.parameters`.
+# The collector and server keep each kind of parameters in an attribute of
+# their own, and have an option per kind to filter it and to suppress it. The
+# agent has one slot for all of them, `appsignal.request.parameters`, so in
+# agent mode the kind a caller names says nothing about where the values go.
+def _set_params(collector_attribute: str, params: Any, span: Span | None) -> None:
     attribute = (
-        "appsignal.request.payload"
-        if _use_collector()
-        else "appsignal.request.parameters"
+        collector_attribute if _use_collector() else "appsignal.request.parameters"
     )
     _set_serialised_attribute(attribute, params, span)
+
+
+def set_request_payload(payload: Any, span: Span | None = None) -> None:
+    _set_params("appsignal.request.payload", payload, span)
+
+
+def set_request_query_parameters(
+    query_parameters: Any, span: Span | None = None
+) -> None:
+    _set_params("appsignal.request.query_parameters", query_parameters, span)
+
+
+def set_function_parameters(parameters: Any, span: Span | None = None) -> None:
+    _set_params("appsignal.function.parameters", parameters, span)
+
+
+_set_params_warning = _Once(
+    _warn_logger_and_stdout,
+    "The helper `set_params` is deprecated when a collector is used. It does "
+    "not say which kind of parameters it is given, so everything it reports "
+    "becomes the request payload. Use `set_request_payload`, "
+    "`set_request_query_parameters` or `set_function_parameters` instead, in "
+    "order to remove this message.",
+)
+
+
+# Reports parameters without naming which kind they are. They are reported as
+# the request payload, which is the kind a web request's parameters are.
+def set_params(params: Any, span: Span | None = None) -> None:
+    # Only collector mode keeps the kinds apart, so only there does naming one
+    # make a difference to what is reported.
+    if _use_collector():
+        _set_params_warning()
+
+    set_request_payload(params, span)
 
 
 def set_session_data(session_data: Any, span: Span | None = None) -> None:
@@ -89,8 +126,14 @@ def set_header(header: str, value: Any, span: Span | None = None) -> None:
     # The collector and server read request headers from the OpenTelemetry
     # semantic-convention prefix `http.request.header`; the agent reads them
     # from `appsignal.request.headers`.
-    prefix = "http.request.header" if _use_collector() else "appsignal.request.headers"
-    _set_prefixed_attribute(prefix, header, value, span)
+    if _use_collector():
+        # The collector matches the name against the header allowlist, so a
+        # header named any other way would be reported only to be filtered out.
+        _set_prefixed_attribute(
+            "http.request.header", normalize_header(header), value, span
+        )
+    else:
+        _set_prefixed_attribute("appsignal.request.headers", header, value, span)
 
 
 def set_name(name: str, span: Span | None = None) -> None:

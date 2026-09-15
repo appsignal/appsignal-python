@@ -252,6 +252,7 @@ def test_environ_source():
     assert config.sources["environment"] == env_options
     final_options = Options()
     final_options.update(config.sources["default"])
+    final_options.update(config.sources["derived"])
     final_options.update(config.sources["system"])
     final_options.update(env_options)
     assert config.options == final_options
@@ -305,6 +306,88 @@ def test_environ_source_disable_default_instrumentations_bool():
         os.environ["APPSIGNAL_DISABLE_DEFAULT_INSTRUMENTATIONS"] = value
         config = Config()
         assert config.options["disable_default_instrumentations"] is expected
+
+
+def test_environment_source_reads_an_empty_variable_as_an_empty_list():
+    # An empty variable is how an allowlist is emptied from the environment.
+    # Splitting it would give a list holding one empty name, which names a
+    # header that cannot exist and reports none of the ones that do.
+    os.environ["APPSIGNAL_RESPONSE_HEADERS"] = ""
+
+    config = Config()
+
+    assert config.option("response_headers") == []
+
+
+def test_derived_source_is_empty_when_nothing_is_configured():
+    config = Config()
+
+    assert config.sources["derived"] == {}
+
+
+def test_derived_source_is_empty_when_an_option_is_set_to_its_default():
+    config = Config(Options(send_params=True))
+
+    assert config.sources["derived"] == {}
+
+
+def test_derives_the_filter_options_from_filter_parameters():
+    config = Config(Options(filter_parameters=["password", "secret"]))
+
+    assert config.sources["derived"] == Options(
+        filter_request_payload=["password", "secret"],
+        filter_function_parameters=["password", "secret"],
+        filter_request_query_parameters=["password", "secret"],
+    )
+    assert config.option("filter_request_payload") == ["password", "secret"]
+    assert config.option("filter_function_parameters") == ["password", "secret"]
+    assert config.option("filter_request_query_parameters") == ["password", "secret"]
+
+
+def test_derives_the_send_options_from_send_params():
+    os.environ["APPSIGNAL_SEND_PARAMS"] = "false"
+
+    config = Config()
+
+    assert config.sources["derived"] == Options(
+        send_request_payload=False,
+        send_request_query_parameters=False,
+        send_function_parameters=False,
+    )
+    assert config.option("send_request_payload") is False
+    assert config.option("send_request_query_parameters") is False
+    assert config.option("send_function_parameters") is False
+
+
+def test_does_not_derive_an_option_the_initial_source_sets():
+    config = Config(
+        Options(
+            filter_parameters=["password"],
+            filter_request_payload=["token"],
+        )
+    )
+
+    assert "filter_request_payload" not in config.sources["derived"]
+    assert config.option("filter_request_payload") == ["token"]
+    assert config.option("filter_function_parameters") == ["password"]
+
+
+def test_does_not_derive_an_option_the_environment_source_sets():
+    os.environ["APPSIGNAL_FILTER_PARAMETERS"] = "password"
+    os.environ["APPSIGNAL_FILTER_FUNCTION_PARAMETERS"] = "token"
+
+    config = Config()
+
+    assert "filter_function_parameters" not in config.sources["derived"]
+    assert config.option("filter_function_parameters") == ["token"]
+    assert config.option("filter_request_payload") == ["password"]
+
+
+def test_derives_an_option_set_to_an_empty_list():
+    config = Config(Options(send_params=False, filter_request_payload=[]))
+
+    assert config.option("filter_request_payload") == []
+    assert config.option("send_request_payload") is False
 
 
 def test_set_private_environ():
@@ -622,9 +705,7 @@ def test_warn_all_agent_exclusive_options(mocker):
         return Config(
             Options(
                 collector_endpoint="http://localhost:4318",
-                filter_parameters=["password"],
                 opentelemetry_port="9999",
-                send_params=False,
             )
         )
 
@@ -644,9 +725,7 @@ def test_warn_all_agent_exclusive_options(mocker):
         warning_messages = [call.args[0] for call in mock_warning.call_args_list]
 
         agent_exclusive_options = [
-            "filter_parameters",
             "opentelemetry_port",
-            "send_params",
         ]
 
         for option in agent_exclusive_options:
@@ -723,7 +802,7 @@ def test_warn_all_collector_exclusive_options(mocker):
         )
 
 
-def test_warn_filter_parameters_emits_specific_advice(mocker):
+def test_warn_filter_parameters_is_deprecated(mocker):
     mock_warning = mocker.patch("appsignal.internal_logger.warning")
 
     config = Config(
@@ -737,15 +816,19 @@ def test_warn_filter_parameters_emits_specific_advice(mocker):
 
     warning_messages = [call.args[0] for call in mock_warning.call_args_list]
 
-    assert any(
-        "Use the 'filter_attributes', 'filter_function_parameters',"
-        " 'filter_request_payload' and 'filter_request_query_parameters'"
-        " configuration options instead." in msg
-        for msg in warning_messages
-    ), "Expected specific advice for 'filter_parameters' not found"
+    assert warning_messages == [
+        "The collector is in use. The 'filter_parameters' configuration option"
+        " is deprecated in collector mode. It is replaced by"
+        " 'filter_request_payload', 'filter_function_parameters' and"
+        " 'filter_request_query_parameters'. Set these options to keep"
+        " reporting what this application reports now:"
+        "\n  filter_request_payload: ['password']"
+        "\n  filter_function_parameters: ['password']"
+        "\n  filter_request_query_parameters: ['password']"
+    ]
 
 
-def test_warn_send_params_emits_specific_advice(mocker):
+def test_warn_send_params_is_deprecated(mocker):
     mock_warning = mocker.patch("appsignal.internal_logger.warning")
 
     config = Config(
@@ -759,11 +842,43 @@ def test_warn_send_params_emits_specific_advice(mocker):
 
     warning_messages = [call.args[0] for call in mock_warning.call_args_list]
 
-    assert any(
-        "Use the 'send_function_parameters', 'send_request_payload'"
-        " and 'send_request_query_parameters' configuration options instead." in msg
-        for msg in warning_messages
-    ), "Expected specific advice for 'send_params' not found"
+    assert warning_messages == [
+        "The collector is in use. The 'send_params' configuration option is"
+        " deprecated in collector mode. It is replaced by"
+        " 'send_request_payload', 'send_request_query_parameters' and"
+        " 'send_function_parameters'. Set these options to keep reporting what"
+        " this application reports now:"
+        "\n  send_request_payload: False"
+        "\n  send_request_query_parameters: False"
+        "\n  send_function_parameters: False"
+    ]
+
+
+def test_warn_deprecated_option_without_derived_values(mocker):
+    mock_warning = mocker.patch("appsignal.internal_logger.warning")
+
+    # Every replacement is configured, so AppSignal works out no value for any
+    # of them and the warning has none to name.
+    config = Config(
+        Options(
+            collector_endpoint="http://localhost:4318",
+            send_params=False,
+            send_request_payload=True,
+            send_request_query_parameters=True,
+            send_function_parameters=True,
+        )
+    )
+
+    config.warn()
+
+    warning_messages = [call.args[0] for call in mock_warning.call_args_list]
+
+    assert warning_messages == [
+        "The collector is in use. The 'send_params' configuration option is"
+        " deprecated in collector mode. It is replaced by"
+        " 'send_request_payload', 'send_request_query_parameters' and"
+        " 'send_function_parameters'."
+    ]
 
 
 def test_warn_opentelemetry_port_emits_specific_advice(mocker):
@@ -787,6 +902,18 @@ def test_warn_opentelemetry_port_emits_specific_advice(mocker):
     ), "Expected specific advice for 'opentelemetry_port' not found"
 
 
+def test_warn_no_warnings_for_options_appsignal_derived(mocker):
+    mock_warning = mocker.patch("appsignal.internal_logger.warning")
+
+    # The agent is in use and the six collector-mode options hold values
+    # AppSignal worked out. Nobody asked for them, so there is nothing to warn
+    # about.
+    config = Config(Options(filter_parameters=["password"], send_params=False))
+    config.warn()
+
+    assert mock_warning.call_count == 0
+
+
 def test_warn_collector_filter_options_emit_use_filter_parameters_advice(mocker):
     mock_warning = mocker.patch("appsignal.internal_logger.warning")
 
@@ -803,7 +930,7 @@ def test_warn_collector_filter_options_emit_use_filter_parameters_advice(mocker)
 
     warning_messages = [call.args[0] for call in mock_warning.call_args_list]
 
-    assert warning_messages.count("Use the 'filter_parameters' option instead.") == 4
+    assert warning_messages.count("Use the 'filter_parameters' option instead.") == 3
 
 
 def test_warn_collector_send_options_emit_use_send_params_advice(mocker):
