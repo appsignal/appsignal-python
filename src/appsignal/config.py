@@ -646,6 +646,9 @@ def parse_list(value: str | None) -> list[str] | None:
     if value is None:
         return None
 
+    if not value:
+        return []
+
     return value.split(",")
 
 
