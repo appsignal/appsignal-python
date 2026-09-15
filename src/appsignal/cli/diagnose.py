@@ -8,11 +8,11 @@ import platform
 from argparse import ArgumentParser
 from pathlib import Path
 from sys import stderr
-from typing import Any
+from typing import Any, cast
 
 from ..__about__ import __version__
 from ..agent import Agent
-from ..config import Config
+from ..config import SOURCE_ORDER, Config
 from ..push_api_key_validator import PushApiKeyValidator
 from ..transmitter import transmit
 from .command import AppsignalCLICommand
@@ -311,11 +311,30 @@ class DiagnoseCommand(AppsignalCLICommand):
         print("Configuration")
 
         for key in self.config.options:
-            print(f"  {key}: {self.config.options[key]!r}")  # type: ignore
+            value = self.config.options[key]  # type: ignore
+            print(f"  {key}: {value!r}{self._config_sources_label(key)}")
 
         print()
         print("Read more about how the diagnose config output is rendered")
         print("https://docs.appsignal.com/python/command-line/diagnose.html")
+
+    def _config_sources_label(self, option: str) -> str:
+        sources = cast(dict, self.config.sources)
+        names = [name for name in SOURCE_ORDER if option in sources[name]]
+
+        if names == ["default"]:
+            return ""
+
+        if len(names) == 1:
+            return f" (Loaded from: {names[0]})"
+
+        width = max(len(name) for name in names) + 1
+        lines = ["", "    Sources:"]
+        for name in names:
+            label = f"{name}:".ljust(width)
+            lines.append(f"      {label} {sources[name][option]!r}")
+
+        return "\n".join(lines)
 
     def _validation_information(self) -> None:
         validation_report: Any = self.report["validation"]
