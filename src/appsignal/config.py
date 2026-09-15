@@ -73,6 +73,13 @@ class Sources(TypedDict):
     environment: Options
 
 
+# The configuration sources, in the order they are merged, so the last one
+# holding an option is the one whose value it takes. Both the merge and the
+# diagnose report walk this, so neither can disagree with the other about
+# where a value came from.
+SOURCE_ORDER: list[str] = ["default", "system", "environment", "initial"]
+
+
 class Config:
     valid: bool
     sources: Sources
@@ -142,11 +149,10 @@ class Config:
             initial=without_none_overrides(options or Options(), system),
             environment=Config.load_from_environment(),
         )
+        sources = cast(dict, self.sources)
         final_options = Options()
-        final_options.update(self.sources["default"])
-        final_options.update(self.sources["system"])
-        final_options.update(self.sources["environment"])
-        final_options.update(self.sources["initial"])
+        for source in SOURCE_ORDER:
+            final_options.update(sources[source])
         self.options = final_options
         self._validate()
 
