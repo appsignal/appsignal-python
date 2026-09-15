@@ -698,6 +698,11 @@ def parse_list(value: str | None) -> list[str] | None:
     if value is None:
         return None
 
+    # An empty variable names no values, which is how an allowlist is emptied
+    # from the environment. Splitting it would give one empty name instead.
+    if not value:
+        return []
+
     return value.split(",")
 
 

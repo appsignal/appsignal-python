@@ -308,6 +308,17 @@ def test_environ_source_disable_default_instrumentations_bool():
         assert config.options["disable_default_instrumentations"] is expected
 
 
+def test_environment_source_reads_an_empty_variable_as_an_empty_list():
+    # An empty variable is how an allowlist is emptied from the environment.
+    # Splitting it would give a list holding one empty name, which names a
+    # header that cannot exist and reports none of the ones that do.
+    os.environ["APPSIGNAL_RESPONSE_HEADERS"] = ""
+
+    config = Config()
+
+    assert config.option("response_headers") == []
+
+
 def test_derived_source_is_empty_when_nothing_is_configured():
     config = Config()
 
