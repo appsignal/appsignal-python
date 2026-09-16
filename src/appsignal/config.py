@@ -68,9 +68,32 @@ class Options(TypedDict, total=False):
 
 class Sources(TypedDict):
     default: Options
+    derived: Options
     system: Options
     initial: Options
     environment: Options
+
+
+# The configuration sources, in the order they are merged, so the last one
+# holding an option is the one whose value it takes. Both the merge and the
+# deriving below walk this, so neither can disagree with the other about which
+# source outranks which.
+SOURCE_ORDER: list[str] = [
+    "default",
+    "derived",
+    "system",
+    "environment",
+    "initial",
+]
+
+# The sources that outrank the derived one, read from the order itself so that
+# adding a source does not mean remembering to add it here too.
+SOURCES_ABOVE_DERIVED: list[str] = SOURCE_ORDER[SOURCE_ORDER.index("derived") + 1 :]
+
+# The sources the application controls: the options it passed to the client and
+# the ones it set in the environment. The rest are AppSignal's own doing, a
+# default or a value detected from the system.
+APPLICATION_SOURCES: list[str] = ["environment", "initial"]
 
 
 class Config:
@@ -133,22 +156,47 @@ class Config:
         List[DefaultInstrumentation], list(get_args(DefaultInstrumentation))
     )
 
+    # Configuration options that are deprecated in collector mode, mapped to
+    # the options that replace them. Collector mode still reads them, to work
+    # out a value for their replacements when those are unset, so the warning
+    # about them says what to set instead rather than saying they are ignored.
+    DEPRECATED_COLLECTOR_OPTIONS: ClassVar[dict[str, list[str]]] = {
+        "filter_parameters": [
+            "filter_request_payload",
+            "filter_function_parameters",
+            "filter_request_query_parameters",
+        ],
+        "send_params": [
+            "send_request_payload",
+            "send_request_query_parameters",
+            "send_function_parameters",
+        ],
+    }
+
     def __init__(self, options: Options | None = None) -> None:
         self.valid = False
         system = Config.load_from_system()
         self.sources = Sources(
             default=self.DEFAULT_CONFIG,
+            derived=Options(),
             system=system,
             initial=without_none_overrides(options or Options(), system),
             environment=Config.load_from_environment(),
         )
-        final_options = Options()
-        final_options.update(self.sources["default"])
-        final_options.update(self.sources["system"])
-        final_options.update(self.sources["environment"])
-        final_options.update(self.sources["initial"])
-        self.options = final_options
+        self._merge_sources()
+        # Deriving reads the options the other sources settle on, so it has to
+        # happen after they are merged, and the values it works out have to be
+        # merged in afterwards.
+        self.sources["derived"] = self._determine_derived()
+        self._merge_sources()
         self._validate()
+
+    def _merge_sources(self) -> None:
+        sources = cast(dict, self.sources)
+        final_options = Options()
+        for source in SOURCE_ORDER:
+            final_options.update(sources[source])
+        self.options = final_options
 
     def is_active(self) -> bool:
         return self.valid and self.option("active")
@@ -429,6 +477,51 @@ class Config:
         if len(push_api_key.strip()) > 0:
             self.valid = True
 
+    # Work out a value for each collector-mode option that replaces a
+    # deprecated one the application configured, unless a source above the
+    # derived one already set the replacement.
+    #
+    # So an application that only ever set the deprecated option keeps
+    # reporting the same values once it moves to collector mode, and one that
+    # sets a replacement keeps whatever it set. An application that set neither
+    # is left with the defaults, which already agree with what this would work
+    # out.
+    #
+    # This runs whichever mode is in use. The values have no effect until
+    # collector mode is, but working them out anyway is what lets `appsignal
+    # diagnose` answer "what would I report if I switched" before the switch
+    # rather than after it.
+    def _determine_derived(self) -> Options:
+        derived: dict = {}
+
+        for option, replacements in self.DEPRECATED_COLLECTOR_OPTIONS.items():
+            if not self._filter_user_modified_options([option]):
+                continue
+
+            for replacement in replacements:
+                if self._set_above_derived(replacement):
+                    continue
+
+                derived[replacement] = self.option(option)
+
+        return cast(Options, derived)
+
+    # Whether a source the application controls set the option, through the
+    # initialiser or in the environment.
+    def _user_set(self, option: str) -> bool:
+        return self._set_by_any(APPLICATION_SOURCES, option)
+
+    # Whether a source that outranks the derived one set the option. That is
+    # every source but the defaults, so the ones the application controls plus
+    # the one it does not: a value detected from the system names the option
+    # itself, which a value worked out from another option does not.
+    def _set_above_derived(self, option: str) -> bool:
+        return self._set_by_any(SOURCES_ABOVE_DERIVED, option)
+
+    def _set_by_any(self, source_names: list[str], option: str) -> bool:
+        sources = cast(dict, self.sources)
+        return any(option in sources[name] for name in source_names)
+
     def warn(self) -> None:
         if self.should_use_collector():
             self._warn_agent_exclusive_options()
@@ -522,20 +615,16 @@ class Config:
                 "To use the collector, set the 'collector_endpoint' configuration option."
             )
 
-    # Filter a list of options, returning a list of those options for which
-    # a value has been set by the user (through the initialiser or in the
-    # environment) which differs from that of the default configuration.
+    # Filter a list of options, returning a list of those options the
+    # application asked for and got something for. Both halves matter: setting
+    # an option to its default value changes nothing, and a value that came
+    # from somewhere other than the application is not the application asking.
     def _filter_user_modified_options(self, options: list[str]) -> list[str]:
         return [
             option
             for option in options
-            if (
-                (
-                    option in self.sources["initial"]
-                    or option in self.sources["environment"]
-                )
-                and self.option(option) != self.sources["default"].get(option)
-            )
+            if self._user_set(option)
+            and self.option(option) != self.sources["default"].get(option)
         ]
 
 
