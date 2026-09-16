@@ -68,9 +68,23 @@ class Options(TypedDict, total=False):
 
 class Sources(TypedDict):
     default: Options
+    derived: Options
     system: Options
     initial: Options
     environment: Options
+
+
+SOURCE_ORDER: list[str] = [
+    "default",
+    "derived",
+    "system",
+    "environment",
+    "initial",
+]
+
+SOURCES_ABOVE_DERIVED: list[str] = SOURCE_ORDER[SOURCE_ORDER.index("derived") + 1 :]
+
+APPLICATION_SOURCES: list[str] = ["environment", "initial"]
 
 
 class Config:
@@ -133,22 +147,40 @@ class Config:
         List[DefaultInstrumentation], list(get_args(DefaultInstrumentation))
     )
 
+    DEPRECATED_COLLECTOR_OPTIONS: ClassVar[dict[str, list[str]]] = {
+        "filter_parameters": [
+            "filter_request_payload",
+            "filter_function_parameters",
+            "filter_request_query_parameters",
+        ],
+        "send_params": [
+            "send_request_payload",
+            "send_request_query_parameters",
+            "send_function_parameters",
+        ],
+    }
+
     def __init__(self, options: Options | None = None) -> None:
         self.valid = False
         system = Config.load_from_system()
         self.sources = Sources(
             default=self.DEFAULT_CONFIG,
+            derived=Options(),
             system=system,
             initial=without_none_overrides(options or Options(), system),
             environment=Config.load_from_environment(),
         )
-        final_options = Options()
-        final_options.update(self.sources["default"])
-        final_options.update(self.sources["system"])
-        final_options.update(self.sources["environment"])
-        final_options.update(self.sources["initial"])
-        self.options = final_options
+        self._merge_sources()
+        self.sources["derived"] = self._determine_derived()
+        self._merge_sources()
         self._validate()
+
+    def _merge_sources(self) -> None:
+        sources = cast(dict, self.sources)
+        final_options = Options()
+        for source in SOURCE_ORDER:
+            final_options.update(sources[source])
+        self.options = final_options
 
     def is_active(self) -> bool:
         return self.valid and self.option("active")
@@ -429,6 +461,31 @@ class Config:
         if len(push_api_key.strip()) > 0:
             self.valid = True
 
+    def _determine_derived(self) -> Options:
+        derived: dict = {}
+
+        for option, replacements in self.DEPRECATED_COLLECTOR_OPTIONS.items():
+            if not self._filter_user_modified_options([option]):
+                continue
+
+            for replacement in replacements:
+                if self._set_above_derived(replacement):
+                    continue
+
+                derived[replacement] = self.option(option)
+
+        return cast(Options, derived)
+
+    def _user_set(self, option: str) -> bool:
+        return self._set_by_any(APPLICATION_SOURCES, option)
+
+    def _set_above_derived(self, option: str) -> bool:
+        return self._set_by_any(SOURCES_ABOVE_DERIVED, option)
+
+    def _set_by_any(self, source_names: list[str], option: str) -> bool:
+        sources = cast(dict, self.sources)
+        return any(option in sources[name] for name in source_names)
+
     def warn(self) -> None:
         if self.should_use_collector():
             self._warn_agent_exclusive_options()
@@ -522,20 +579,12 @@ class Config:
                 "To use the collector, set the 'collector_endpoint' configuration option."
             )
 
-    # Filter a list of options, returning a list of those options for which
-    # a value has been set by the user (through the initialiser or in the
-    # environment) which differs from that of the default configuration.
     def _filter_user_modified_options(self, options: list[str]) -> list[str]:
         return [
             option
             for option in options
-            if (
-                (
-                    option in self.sources["initial"]
-                    or option in self.sources["environment"]
-                )
-                and self.option(option) != self.sources["default"].get(option)
-            )
+            if self._user_set(option)
+            and self.option(option) != self.sources["default"].get(option)
         ]
 
 
