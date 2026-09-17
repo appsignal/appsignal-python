@@ -11,10 +11,13 @@ from appsignal import (
     set_category,
     set_custom_data,
     set_error,
+    set_function_parameters,
     set_header,
     set_name,
     set_namespace,
     set_params,
+    set_request_payload,
+    set_request_query_parameters,
     set_root_name,
     set_session_data,
     set_sql_body,
@@ -114,6 +117,82 @@ def test_set_params_collector_mode(spans):
     assert "appsignal.request.parameters" not in attributes
 
 
+def test_set_each_kind_of_params_collector_mode(spans):
+    Client(
+        active=True,
+        name="MyApp",
+        push_api_key="0000-0000-0000-0000",
+        collector_endpoint="https://custom-endpoint.appsignal.com",
+    )
+
+    with tracer.start_as_current_span("span"):
+        set_request_payload({"id": 123})
+        set_request_query_parameters({"page": 2})
+        set_function_parameters({"job": "argument"})
+
+    attributes = dict(spans()[0].attributes)
+    assert attributes["appsignal.request.payload"] == '{"id": 123}'
+    assert attributes["appsignal.request.query_parameters"] == '{"page": 2}'
+    assert attributes["appsignal.function.parameters"] == '{"job": "argument"}'
+    assert "appsignal.request.parameters" not in attributes
+
+
+def test_set_each_kind_of_params_agent_mode(spans):
+    # The agent has one slot for every kind of parameters, so the last helper
+    # to write to it is the one that is reported.
+    with tracer.start_as_current_span("span"):
+        set_request_payload({"id": 123})
+
+    assert dict(spans()[0].attributes) == {
+        "appsignal.request.parameters": '{"id": 123}'
+    }
+
+    with tracer.start_as_current_span("span"):
+        set_request_query_parameters({"page": 2})
+
+    assert dict(spans()[0].attributes) == {
+        "appsignal.request.parameters": '{"page": 2}'
+    }
+
+    with tracer.start_as_current_span("span"):
+        set_function_parameters({"job": "argument"})
+
+    assert dict(spans()[0].attributes) == {
+        "appsignal.request.parameters": '{"job": "argument"}'
+    }
+
+
+def test_set_params_warns_in_collector_mode(spans, mocker):
+    mock_warning = mocker.patch("appsignal.internal_logger.warning")
+
+    Client(
+        active=True,
+        name="MyApp",
+        push_api_key="0000-0000-0000-0000",
+        collector_endpoint="https://custom-endpoint.appsignal.com",
+    )
+
+    with tracer.start_as_current_span("span"):
+        set_params({"id": 123})
+        set_params({"id": 456})
+
+    warning_messages = [call.args[0] for call in mock_warning.call_args_list]
+
+    assert len(warning_messages) == 1
+    assert "`set_params` is deprecated when a collector is used" in (
+        warning_messages[0]
+    )
+
+
+def test_set_params_does_not_warn_in_agent_mode(spans, mocker):
+    mock_warning = mocker.patch("appsignal.internal_logger.warning")
+
+    with tracer.start_as_current_span("span"):
+        set_params({"id": 123})
+
+    assert mock_warning.call_count == 0
+
+
 def test_set_header_collector_mode(spans):
     Client(
         active=True,
@@ -128,6 +207,31 @@ def test_set_header_collector_mode(spans):
     attributes = dict(spans()[0].attributes)
     assert attributes["http.request.header.content-type"] == "application/json"
     assert "appsignal.request.headers.content-type" not in attributes
+
+
+def test_set_header_normalizes_the_name_collector_mode(spans):
+    Client(
+        active=True,
+        name="MyApp",
+        push_api_key="0000-0000-0000-0000",
+        collector_endpoint="https://custom-endpoint.appsignal.com",
+    )
+
+    with tracer.start_as_current_span("span"):
+        set_header("Content_Type", "application/json")
+
+    attributes = dict(spans()[0].attributes)
+    assert attributes["http.request.header.content-type"] == "application/json"
+
+
+def test_set_header_agent_mode_keeps_the_name(spans):
+    # The agent reports the name as it is given, and no allowlist is compared
+    # against it, so there is nothing for normalizing it to fix.
+    with tracer.start_as_current_span("span"):
+        set_header("Content_Type", "application/json")
+
+    attributes = dict(spans()[0].attributes)
+    assert attributes["appsignal.request.headers.Content_Type"] == "application/json"
 
 
 def test_set_sql_body_collector_mode(spans):
