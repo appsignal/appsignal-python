@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import socket
+from typing import cast
 
 import pytest
 
@@ -314,6 +315,17 @@ def test_environment_source_reads_an_empty_variable_as_an_empty_list():
     config = Config()
 
     assert config.option("response_headers") == []
+
+
+def test_a_replacement_defaults_to_what_its_option_derives_to():
+    # Deriving never runs for an option left at its default, so a replacement
+    # has to default to what deriving from that default would give. Otherwise
+    # an application reports one thing while its own default says another.
+    defaults = cast(dict, Config.DEFAULT_CONFIG)
+
+    for option, replacements in Config.DEPRECATED_COLLECTOR_OPTIONS.items():
+        for replacement in replacements:
+            assert defaults[replacement] == defaults[option]
 
 
 def test_derived_source_is_empty_when_nothing_is_configured():
@@ -752,9 +764,9 @@ def test_warn_all_collector_exclusive_options(mocker):
                 filter_request_query_parameters=["query1"],
                 ignore_logs=["^log1"],
                 response_headers=["x-response"],
-                send_function_parameters=True,
-                send_request_payload=True,
-                send_request_query_parameters=True,
+                send_function_parameters=False,
+                send_request_payload=False,
+                send_request_query_parameters=False,
                 service_name="my-service",
             )
         )
@@ -930,9 +942,9 @@ def test_warn_collector_send_options_emit_use_send_params_advice(mocker):
 
     config = Config(
         Options(
-            send_function_parameters=True,
-            send_request_payload=True,
-            send_request_query_parameters=True,
+            send_function_parameters=False,
+            send_request_payload=False,
+            send_request_query_parameters=False,
         )
     )
 

@@ -122,7 +122,10 @@ class Config:
         logging_endpoint="https://appsignal-endpoint.net",
         opentelemetry_port=8099,
         send_environment_metadata=True,
+        send_function_parameters=True,
         send_params=True,
+        send_request_payload=True,
+        send_request_query_parameters=True,
         send_session_data=True,
         request_headers=[
             "accept",
