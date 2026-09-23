@@ -1,5 +1,55 @@
 # AppSignal for Python Changelog
 
+## 1.8.0
+
+_Published on 2026-09-23._
+
+### Added
+
+- Add the `set_request_payload`, `set_request_query_parameters` and `set_function_parameters` helpers. Each one reports a kind of parameters that collector mode keeps apart, so the option that filters that kind, and the one that suppresses it, apply to what you report:
+
+  ```python
+  from appsignal import set_function_parameters
+
+  set_function_parameters({"user_id": 123})
+  ```
+
+  In collector mode, the `set_params` helper is now deprecated, and it reports the request payload. It does not say which kind of parameters it is given, so use `set_request_payload`, `set_request_query_parameters` or `set_function_parameters` instead. AppSignal warns the first time it is used.
+
+  In agent mode there is one place to report parameters, so all four helpers report to it, the last one called is the one that takes effect, and `set_params` is not deprecated.
+
+  (minor [6810548](https://github.com/appsignal/appsignal-python/commit/6810548091d3c2ba27a57f3ca9ddea6dbaab3777))
+- Report the response headers listed in the `response_headers` configuration option when a collector is used. (patch [edcf88a](https://github.com/appsignal/appsignal-python/commit/edcf88a847a1da1f6e9a2b6a238d0ad8d33af1d2))
+
+### Changed
+
+- The `filter_parameters` and `send_params` configuration options are deprecated in collector mode. Use `filter_request_payload`, `filter_function_parameters` and `filter_request_query_parameters` to filter different kinds of parameters, and `send_request_payload`, `send_request_query_parameters` and `send_function_parameters` to choose which kinds of parameters to report.
+
+  AppSignal warns about the deprecated options at startup, and names the value to set for each option that replaces them.
+
+  In agent mode, `filter_parameters` and `send_params` still apply to every kind of parameter, and the new options have no effect.
+
+  (patch [d063cf3](https://github.com/appsignal/appsignal-python/commit/d063cf36a70e8ed82079478f22f0b0d8844e51e0))
+- In collector mode, the `filter_request_payload`, `filter_function_parameters` and `filter_request_query_parameters` configuration options now fall back to the value of `filter_parameters`, and the `send_request_payload`, `send_request_query_parameters` and `send_function_parameters` options fall back to the value of `send_params`. An application that filtered parameters or turned parameter reporting off keeps doing so after it switches to a collector, without having to set the new options.
+
+  Setting one of the new options still overrides the value that would be derived for it.
+
+  (patch [9ad2723](https://github.com/appsignal/appsignal-python/commit/9ad27237fde3ad4cdf9972a7ea422cf9a9a36e07))
+- The `appsignal diagnose` report now names where each configuration option's value came from. An option set from more than one source lists the value from each source. (patch [584b956](https://github.com/appsignal/appsignal-python/commit/584b95668d7abfb2a2fe004a3e76cb0124b4876d))
+- In collector mode, the Django and Flask instrumentation now reports a request's query string as query parameters rather than as a request payload. So `filter_request_query_parameters` and `send_request_query_parameters` apply to a query string, and `filter_request_payload` and `send_request_payload` apply to a Django request's body.
+
+  In agent mode, a Flask application's query parameters are now reported on their own, rather than nested under an `args` key.
+
+  (patch [73544ca](https://github.com/appsignal/appsignal-python/commit/73544cabec0ffec50bb35b244d714fe36995be77))
+
+### Fixed
+
+- Report a request or response header whose name is written with capital letters or underscores in the `request_headers` or `response_headers` configuration option, such as `Content-Type` or `content_type`. The collector matches these names against the ones it receives the headers under, which follow the OpenTelemetry semantic convention: the header's own name, lowercased, with its dashes kept. A name written any other way matched nothing, so the header was left out.
+
+  The `set_header` helper names a header the same way when a collector is in use.
+
+  (patch [9b3e66f](https://github.com/appsignal/appsignal-python/commit/9b3e66faf46f7c450910f2729b97472e0ed6201f))
+
 ## 1.7.2
 
 _Published on 2026-09-15._
