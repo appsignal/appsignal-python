@@ -3,6 +3,8 @@ from __future__ import annotations
 import os
 import platform
 import tempfile
+import threading
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Any, Callable, Generator
 
 import pytest
@@ -26,6 +28,54 @@ from appsignal.heartbeat import _heartbeat_class_warning, _heartbeat_helper_warn
 from appsignal.internal_logger import _reset_logger
 from appsignal.opentelemetry import METRICS_PREFERRED_TEMPORALITY, _providers
 from appsignal.tracing import _set_params_warning
+
+
+class RecordingServer:
+    def __init__(self) -> None:
+        paths: list[str] = []
+        self.paths = paths
+
+        class Handler(BaseHTTPRequestHandler):
+            def do_POST(self) -> None:  # noqa: N802
+                self.rfile.read(int(self.headers.get("Content-Length", 0)))
+                paths.append(self.path)
+                self.send_response(200)
+                self.send_header("Content-Length", "0")
+                self.end_headers()
+
+            def log_message(self, *args: object) -> None:
+                pass
+
+        self._server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+        self.port = self._server.server_address[1]
+        self.url = f"http://127.0.0.1:{self.port}"
+        threading.Thread(target=self._server.serve_forever, daemon=True).start()
+
+    def close(self) -> None:
+        self._server.shutdown()
+        self._server.server_close()
+
+
+@pytest.fixture
+def recording_server() -> Generator[Callable[[], RecordingServer], None, None]:
+    servers: list[RecordingServer] = []
+
+    def start() -> RecordingServer:
+        server = RecordingServer()
+        servers.append(server)
+        return server
+
+    yield start
+
+    for server in servers:
+        server.close()
+
+
+@pytest.fixture(scope="function", autouse=True)
+def clear_proxy_variables(monkeypatch: Any) -> None:
+    for name in ["HTTP_PROXY", "HTTPS_PROXY", "NO_PROXY"]:
+        monkeypatch.delenv(name, raising=False)
+        monkeypatch.delenv(name.lower(), raising=False)
 
 
 @pytest.fixture(scope="function", autouse=True)
