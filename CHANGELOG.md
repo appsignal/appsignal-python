@@ -1,5 +1,13 @@
 # AppSignal for Python Changelog
 
+## 1.8.1
+
+_Published on 2026-09-28._
+
+### Fixed
+
+- Fix an issue where AppSignal fails to start with `ModuleNotFoundError: No module named 'requests'` on Python 3.10 or later. (patch [4c0fa7e](https://github.com/appsignal/appsignal-python/commit/4c0fa7ee5621a51cb718fde9679a1197aeaca1ca))
+
 ## 1.8.0
 
 _Published on 2026-09-23._
