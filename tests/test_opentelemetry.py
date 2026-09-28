@@ -4,9 +4,13 @@ import os
 from typing import List, cast
 from unittest.mock import Mock
 
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import SimpleSpanProcessor
+
 from appsignal.config import Config, Options
 from appsignal.opentelemetry import (
     _exporter_session,
+    _otlp_span_processor,
     _providers,
     _resource,
     _set_capture_headers,
@@ -20,6 +24,14 @@ from appsignal.opentelemetry import (
 
 REQUEST_HEADERS_VARIABLE = "OTEL_INSTRUMENTATION_HTTP_CAPTURE_HEADERS_SERVER_REQUEST"
 RESPONSE_HEADERS_VARIABLE = "OTEL_INSTRUMENTATION_HTTP_CAPTURE_HEADERS_SERVER_RESPONSE"
+
+
+def export_a_span(config: Config, mocker) -> None:
+    mocker.patch("appsignal.opentelemetry.BatchSpanProcessor", SimpleSpanProcessor)
+    provider = TracerProvider()
+    provider.add_span_processor(_otlp_span_processor(config))
+    provider.get_tracer(__name__).start_span("span").end()
+    provider.shutdown()
 
 
 def test_set_capture_headers():
@@ -177,7 +189,12 @@ def test_exporter_session_without_a_proxy():
 
 
 def test_exporter_session_with_a_proxy():
-    config = Config(Options(http_proxy="http://proxy.example:3128"))
+    config = Config(
+        Options(
+            http_proxy="http://proxy.example:3128",
+            collector_endpoint="https://collector.example",
+        )
+    )
 
     session = _exporter_session(config)
 
@@ -191,9 +208,20 @@ def test_exporter_session_with_a_proxy():
 def test_exporter_sessions_are_not_shared():
     # Each exporter sends from its own thread, and a session is not thread
     # safe, so they must not share one.
-    config = Config(Options(http_proxy="http://proxy.example:3128"))
+    config = Config(
+        Options(
+            http_proxy="http://proxy.example:3128",
+            collector_endpoint="https://collector.example",
+        )
+    )
 
     assert _exporter_session(config) is not _exporter_session(config)
+
+
+def test_exporter_session_with_a_proxy_and_the_agent():
+    config = Config(Options(http_proxy="http://proxy.example:3128"))
+
+    assert _exporter_session(config) is None
 
 
 def test_exporters_are_given_the_ca_file_and_the_proxy(mocker):
@@ -220,3 +248,28 @@ def test_exporters_are_given_the_ca_file_and_the_proxy(mocker):
             "http": "http://proxy.example:3128",
             "https": "http://proxy.example:3128",
         }
+
+
+def test_collector_data_goes_through_the_proxy(recording_server, mocker):
+    proxy = recording_server()
+    config = Config(
+        Options(
+            http_proxy=proxy.url,
+            collector_endpoint="http://collector.example",
+        )
+    )
+
+    export_a_span(config, mocker)
+
+    assert proxy.paths == ["http://collector.example/v1/traces"]
+
+
+def test_agent_data_does_not_go_through_the_proxy(recording_server, mocker):
+    proxy = recording_server()
+    agent = recording_server()
+    config = Config(Options(http_proxy=proxy.url, opentelemetry_port=agent.port))
+
+    export_a_span(config, mocker)
+
+    assert agent.paths == ["/v1/traces"]
+    assert proxy.paths == []
