@@ -29,6 +29,7 @@ dependencies = [
   "opentelemetry-api>=1.26.0",
   "opentelemetry-sdk>=1.26.0",
   "opentelemetry-exporter-otlp-proto-http",
+  "requests",
   "typing-extensions"
 ]
 dynamic = ["version"]
