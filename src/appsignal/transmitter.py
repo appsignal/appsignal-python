@@ -38,17 +38,23 @@ def transmit(
     url = f"{url}?{params}"
 
     proxies = {}
-    if config.option("http_proxy"):
-        proxies["http"] = config.option("http_proxy")
-        proxies["https"] = config.option("http_proxy")
+    proxy = config.proxy_for(url)
+    if proxy:
+        proxies["http"] = proxy
+        proxies["https"] = proxy
 
     cert = config.option("ca_file_path")
 
-    if ndjson is not None:
-        data = ndjson_dumps(ndjson)
-        headers = {"Content-Type": "application/x-ndjson"}
-        return requests.post(
-            url, data=data, headers=headers, proxies=proxies, verify=cert
-        )
+    # A `requests` session that reads the environment adds the proxies it
+    # finds there, so it must not read them.
+    with requests.Session() as session:
+        session.trust_env = False
 
-    return requests.post(url, json=json, proxies=proxies, verify=cert)
+        if ndjson is not None:
+            data = ndjson_dumps(ndjson)
+            headers = {"Content-Type": "application/x-ndjson"}
+            return session.post(
+                url, data=data, headers=headers, proxies=proxies, verify=cert
+            )
+
+        return session.post(url, json=json, proxies=proxies, verify=cert)

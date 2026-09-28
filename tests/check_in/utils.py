@@ -13,7 +13,7 @@ def init_client(active=True):
 
 
 def mock_requests(mocker, status_code=200, raise_exception=False):
-    requests_mock = mocker.patch("requests.post")
+    requests_mock = mocker.patch("requests.Session.post")
     requests_mock.return_value.status_code = status_code
     if raise_exception:
 
