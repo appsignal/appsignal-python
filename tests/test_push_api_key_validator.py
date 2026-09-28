@@ -15,7 +15,7 @@ config = Config(
 
 
 def test_push_api_key_validator_valid(mocker):
-    mock_request = mocker.patch("requests.post")
+    mock_request = mocker.patch("requests.Session.post")
     mock_request.return_value = MagicMock(status_code=200)
 
     assert PushApiKeyValidator.validate(config) == "valid"
@@ -30,7 +30,7 @@ def test_push_api_key_validator_valid(mocker):
 
 
 def test_push_api_key_validator_invalid(mocker):
-    mock_request = mocker.patch("requests.post")
+    mock_request = mocker.patch("requests.Session.post")
     mock_request.return_value = MagicMock(status_code=401)
 
     assert PushApiKeyValidator.validate(config) == "invalid"
@@ -38,7 +38,7 @@ def test_push_api_key_validator_invalid(mocker):
 
 
 def test_push_api_key_validator_error(mocker):
-    mock_request = mocker.patch("requests.post")
+    mock_request = mocker.patch("requests.Session.post")
     mock_request.return_value = MagicMock(status_code=500)
 
     assert PushApiKeyValidator.validate(config) == "500"
