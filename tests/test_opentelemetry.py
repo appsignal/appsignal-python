@@ -205,6 +205,26 @@ def test_exporter_session_with_a_proxy():
     }
 
 
+def test_exporter_session_with_a_proxy_variable(monkeypatch):
+    monkeypatch.setenv("HTTPS_PROXY", "http://proxy.example:3128")
+    config = Config(Options(collector_endpoint="https://collector.example"))
+
+    session = _exporter_session(config)
+
+    assert session is not None
+    assert not session.trust_env
+    assert session.proxies == {
+        "http": "http://proxy.example:3128",
+        "https": "http://proxy.example:3128",
+    }
+
+
+def test_exporter_session_with_a_proxy_variable_and_the_agent(monkeypatch):
+    monkeypatch.setenv("HTTP_PROXY", "http://proxy.example:3128")
+
+    assert _exporter_session(Config()) is None
+
+
 def test_exporter_sessions_are_not_shared():
     # Each exporter sends from its own thread, and a session is not thread
     # safe, so they must not share one.
@@ -262,6 +282,37 @@ def test_collector_data_goes_through_the_proxy(recording_server, mocker):
     export_a_span(config, mocker)
 
     assert proxy.paths == ["http://collector.example/v1/traces"]
+
+
+def test_collector_data_goes_through_the_proxy_variable(
+    recording_server, monkeypatch, mocker
+):
+    proxy = recording_server()
+    monkeypatch.setenv("HTTP_PROXY", proxy.url)
+    config = Config(Options(collector_endpoint="http://collector.example"))
+
+    export_a_span(config, mocker)
+
+    assert proxy.paths == ["http://collector.example/v1/traces"]
+
+
+def test_collector_data_goes_through_the_option_over_the_proxy_variable(
+    recording_server, monkeypatch, mocker
+):
+    option_proxy = recording_server()
+    variable_proxy = recording_server()
+    monkeypatch.setenv("HTTP_PROXY", variable_proxy.url)
+    config = Config(
+        Options(
+            http_proxy=option_proxy.url,
+            collector_endpoint="http://collector.example",
+        )
+    )
+
+    export_a_span(config, mocker)
+
+    assert option_proxy.paths == ["http://collector.example/v1/traces"]
+    assert variable_proxy.paths == []
 
 
 def test_agent_data_does_not_go_through_the_proxy(recording_server, mocker):

@@ -4,6 +4,8 @@ import os
 import platform
 import socket
 import tempfile
+import urllib.parse
+import urllib.request
 from typing import Any, ClassVar, List, Literal, TypedDict, cast, get_args
 
 from . import internal_logger as logger
@@ -220,6 +222,17 @@ class Config:
     def should_use_external_collector(self) -> bool:
         return self.option("collector_endpoint") is not None
 
+    # The proxy to send a request to `url` through: the `http_proxy` option, or
+    # else the proxy environment variable for the URL's scheme. Everything that
+    # sends data to AppSignal goes through the proxy this returns.
+    def proxy_for(self, url: str) -> str | None:
+        http_proxy = self.option("http_proxy")
+        if http_proxy:
+            return http_proxy
+
+        scheme = urllib.parse.urlsplit(url).scheme
+        return urllib.request.getproxies_environment().get(scheme)
+
     # Environment variables that deployment platforms set to the revision that
     # is being deployed, in the order the agent reads them. The agent detects
     # the revision this way as well, but only for the data it reports itself,
@@ -406,7 +419,9 @@ class Config:
             ),
             "_APPSIGNAL_HOSTNAME": options.get("hostname"),
             "_APPSIGNAL_HOST_ROLE": options.get("host_role"),
-            "_APPSIGNAL_HTTP_PROXY": options.get("http_proxy"),
+            # The agent reads its proxy from this variable only, and not from
+            # the proxy environment variables.
+            "_APPSIGNAL_HTTP_PROXY": self.proxy_for(options.get("endpoint") or ""),
             "_APPSIGNAL_IGNORE_ACTIONS": list_to_env_str(options.get("ignore_actions")),
             "_APPSIGNAL_IGNORE_ERRORS": list_to_env_str(options.get("ignore_errors")),
             "_APPSIGNAL_IGNORE_NAMESPACES": list_to_env_str(

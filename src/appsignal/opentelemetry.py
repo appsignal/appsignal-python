@@ -259,11 +259,14 @@ def stop() -> None:
     _providers.clear()
 
 
-# Build the session an exporter sends its requests through, so that the
-# `http_proxy` option applies to the data sent to a collector. Returns `None`
-# when no proxy is configured, which leaves the exporter to build its own
-# session. The agent listens on `localhost`, which a proxy on another host
-# cannot reach, and is given the `http_proxy` option to send its own data.
+# Build the session an exporter sends its requests through, so that the proxy
+# applies to the data sent to a collector. Returns `None` when there is no
+# proxy, which leaves the exporter to build its own session. The agent listens
+# on `localhost`, which a proxy on another host cannot reach, and is given the
+# proxy to send its own data.
+#
+# A `requests` session that reads the environment lets the proxy variables
+# override its own proxies, so it must not read them.
 #
 # Each exporter needs its own session, because they each send from their own
 # thread and a `requests` session is not thread safe.
@@ -271,13 +274,14 @@ def _exporter_session(config: Config) -> requests.Session | None:
     if not config.should_use_external_collector():
         return None
 
-    http_proxy = config.option("http_proxy")
+    proxy = config.proxy_for(_opentelemetry_endpoint(config))
 
-    if not http_proxy:
+    if not proxy:
         return None
 
     session = requests.Session()
-    session.proxies = {"http": http_proxy, "https": http_proxy}
+    session.trust_env = False
+    session.proxies = {"http": proxy, "https": proxy}
     return session
 
 

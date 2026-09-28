@@ -627,6 +627,34 @@ def test_set_private_environ_str_is_none():
     assert os.environ.get("_APPSIGNAL_HOST_ROLE") is None
 
 
+def test_set_private_environ_http_proxy_from_the_proxy_variable(monkeypatch):
+    monkeypatch.setenv("HTTPS_PROXY", "http://variable.example:3128")
+    config = Config()
+
+    config.set_private_environ()
+
+    assert os.environ["_APPSIGNAL_HTTP_PROXY"] == "http://variable.example:3128"
+
+
+def test_set_private_environ_http_proxy_from_the_option_over_the_variable(
+    monkeypatch,
+):
+    monkeypatch.setenv("HTTPS_PROXY", "http://variable.example:3128")
+    config = Config(Options(http_proxy="http://option.example:3128"))
+
+    config.set_private_environ()
+
+    assert os.environ["_APPSIGNAL_HTTP_PROXY"] == "http://option.example:3128"
+
+
+def test_set_private_environ_http_proxy_without_a_proxy():
+    config = Config()
+
+    config.set_private_environ()
+
+    assert os.environ.get("_APPSIGNAL_HTTP_PROXY") is None
+
+
 def test_set_private_environ_bool_is_none():
     config = Config(Options(active=None))
 
@@ -953,3 +981,50 @@ def test_warn_collector_send_options_emit_use_send_params_advice(mocker):
     warning_messages = [call.args[0] for call in mock_warning.call_args_list]
 
     assert warning_messages.count("Use the 'send_params' option instead.") == 3
+
+
+def test_proxy_for_without_a_proxy():
+    assert Config().proxy_for("https://push.appsignal.com") is None
+
+
+def test_proxy_for_with_the_option(monkeypatch):
+    monkeypatch.setenv("HTTPS_PROXY", "http://variable.example:3128")
+    config = Config(Options(http_proxy="http://option.example:3128"))
+
+    assert config.proxy_for("https://push.appsignal.com") == (
+        "http://option.example:3128"
+    )
+
+
+def test_proxy_for_with_the_variable_for_the_scheme(monkeypatch):
+    monkeypatch.setenv("HTTP_PROXY", "http://http.example:3128")
+    monkeypatch.setenv("HTTPS_PROXY", "http://https.example:3128")
+    config = Config()
+
+    assert config.proxy_for("http://collector.example") == "http://http.example:3128"
+    assert config.proxy_for("https://push.appsignal.com") == (
+        "http://https.example:3128"
+    )
+
+
+def test_proxy_for_with_a_variable_for_another_scheme(monkeypatch):
+    monkeypatch.setenv("HTTP_PROXY", "http://http.example:3128")
+
+    assert Config().proxy_for("https://push.appsignal.com") is None
+
+
+def test_proxy_for_with_a_lowercase_variable(monkeypatch):
+    monkeypatch.setenv("https_proxy", "http://https.example:3128")
+
+    assert Config().proxy_for("https://push.appsignal.com") == (
+        "http://https.example:3128"
+    )
+
+
+def test_proxy_for_ignores_no_proxy(monkeypatch):
+    monkeypatch.setenv("HTTPS_PROXY", "http://https.example:3128")
+    monkeypatch.setenv("NO_PROXY", "push.appsignal.com")
+
+    assert Config().proxy_for("https://push.appsignal.com") == (
+        "http://https.example:3128"
+    )
