@@ -166,20 +166,7 @@ def add_logging_instrumentation(config: Config) -> None:
     if not config.should_instrument_logging():
         return
 
-    import logging
-
     from opentelemetry.instrumentation.logging import LoggingInstrumentor
-
-    # Configure the OpenTelemetry loggers and the AppSignal internal
-    # logger to not propagate to the root logger. This prevents
-    # internal logs from being sent to AppSignal. This has to happen
-    # before the handler is attached, because attaching it emits a
-    # warning through the OpenTelemetry logger when it was attached
-    # already.
-    opentelemetry_logger = logging.getLogger("opentelemetry")
-    opentelemetry_logger.propagate = False
-    appsignal_logger = logging.getLogger("appsignal")
-    appsignal_logger.propagate = False
 
     instrumentor = LoggingInstrumentor()
 
@@ -497,8 +484,20 @@ def _start_logging(config: Config) -> None:
     logs.set_logger_provider(provider)
     _providers.append(provider)
 
+    _silence_internal_loggers()
     _warn_about_logging_handlers()
     _warn_about_logging_handlers_on_reconfiguration()
+
+
+# Keep the log lines AppSignal and the OpenTelemetry SDK write about
+# themselves out of the logs sent to AppSignal. A log handler sending to the
+# logger provider started here receives everything that reaches the root
+# logger, whether the handler was attached here or by the application.
+def _silence_internal_loggers() -> None:
+    import logging
+
+    for name in ["appsignal", "opentelemetry"]:
+        logging.getLogger(name).propagate = False
 
 
 def _resource(config: Config) -> Resource:

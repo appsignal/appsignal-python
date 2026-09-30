@@ -174,6 +174,30 @@ def test_add_logging_instrumentation():
     add_logging_instrumentation(config)
 
     assert len(logging_handlers()) == 1
+
+
+def test_start_logging_silences_the_internal_loggers():
+    _start_logging(Config(COLLECTOR_OPTIONS))
+
+    assert not logging.getLogger("appsignal").propagate
+    assert not logging.getLogger("opentelemetry").propagate
+
+
+# An application that attaches the log handler itself disables the logging
+# instrumentation, and a handler it attaches to the root logger receives
+# whatever reaches it, including what AppSignal logs about itself.
+def test_start_logging_silences_them_without_the_instrumentation():
+    config = Config(
+        Options(
+            collector_endpoint="https://collector.example",
+            disable_default_instrumentations=["logging"],
+        )
+    )
+
+    _start_logging(config)
+    add_instrumentations(config)
+
+    assert logging_handlers() == []
     assert not logging.getLogger("appsignal").propagate
     assert not logging.getLogger("opentelemetry").propagate
 
