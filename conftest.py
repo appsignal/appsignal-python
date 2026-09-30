@@ -175,9 +175,10 @@ def log_records(
     yield get_and_clear_log_records
 
 
-# Logging instrumentation attaches a handler to the root logger, wraps the
-# functions that configure the logging module, and marks itself as
-# instrumented, all of which outlive the test that started it.
+# Starting logging attaches a handler to the root logger, wraps the functions
+# that configure the logging module, stops the internal loggers propagating
+# and marks the instrumentation as installed. All of that lives on the logging
+# module, so it outlives the test that started it and is put back here.
 @pytest.fixture(scope="function", autouse=True)
 def reset_logging_instrumentation() -> Any:
     configure_functions = (
@@ -185,6 +186,10 @@ def reset_logging_instrumentation() -> Any:
         logging.config.dictConfig,
         logging.config.fileConfig,
     )
+    propagate = {
+        name: logging.getLogger(name).propagate
+        for name in ["appsignal", "opentelemetry"]
+    }
 
     yield
 
@@ -200,8 +205,8 @@ def reset_logging_instrumentation() -> Any:
         logging.config.fileConfig,
     ) = configure_functions
 
-    for name in ["appsignal", "opentelemetry"]:
-        logging.getLogger(name).propagate = True
+    for name, propagates in propagate.items():
+        logging.getLogger(name).propagate = propagates
 
     from appsignal.opentelemetry import _warned_logger_names
 
