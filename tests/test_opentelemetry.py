@@ -1,11 +1,14 @@
 from __future__ import annotations
 
 import logging
+import logging.config
 import os
 from typing import cast
 from unittest.mock import Mock
 
 from opentelemetry.instrumentation.logging.handler import LoggingHandler
+from opentelemetry.sdk._logs import LoggerProvider
+from opentelemetry.sdk._logs import LoggingHandler as SDKLoggingHandler
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import SimpleSpanProcessor
 
@@ -213,6 +216,115 @@ def test_add_logging_instrumentation_reports_the_code_and_exception(log_records)
     assert log_record.attributes["code.file.path"] == __file__
     assert log_record.attributes["exception.type"] == "ValueError"
     assert log_record.attributes["exception.message"] == "An exception"
+
+
+COLLECTOR_OPTIONS = Options(collector_endpoint="https://collector.example")
+
+
+def logging_config(logger_name, handler, propagate=True):
+    return {
+        "version": 1,
+        "disable_existing_loggers": False,
+        "handlers": {"appsignal": {"()": lambda: handler}},
+        "loggers": {logger_name: {"handlers": ["appsignal"], "propagate": propagate}},
+    }
+
+
+def test_add_logging_instrumentation_warns_about_a_duplicate_handler(mocker):
+    warning = mocker.patch("appsignal.opentelemetry.logger.warning")
+    _start_logging(Config(COLLECTOR_OPTIONS))
+    add_logging_instrumentation(Config(COLLECTOR_OPTIONS))
+    handler = LoggingHandler(level=logging.NOTSET)
+
+    logging.config.dictConfig(logging_config("duplicate", handler))
+
+    assert logging.getLogger("duplicate").handlers == [handler]
+    assert "duplicate" in warning.call_args.args[0]
+
+
+def test_add_logging_instrumentation_warns_about_a_handler_attached_before_it(
+    mocker,
+):
+    warning = mocker.patch("appsignal.opentelemetry.logger.warning")
+    logging.getLogger("duplicate").addHandler(LoggingHandler(level=logging.NOTSET))
+
+    add_logging_instrumentation(Config(COLLECTOR_OPTIONS))
+
+    assert "duplicate" in warning.call_args.args[0]
+
+
+def test_add_logging_instrumentation_warns_once_per_logger(mocker):
+    warning = mocker.patch("appsignal.opentelemetry.logger.warning")
+    _start_logging(Config(COLLECTOR_OPTIONS))
+    add_logging_instrumentation(Config(COLLECTOR_OPTIONS))
+    handler = LoggingHandler(level=logging.NOTSET)
+
+    logging.config.dictConfig(logging_config("duplicate", handler))
+    logging.config.dictConfig(logging_config("duplicate", handler))
+
+    assert warning.call_count == 1
+
+
+def test_start_logging_says_the_sdk_handler_is_deprecated(mocker):
+    warning = mocker.patch("appsignal.opentelemetry.logger.warning")
+    _start_logging(Config(COLLECTOR_OPTIONS))
+    handler = SDKLoggingHandler(level=logging.NOTSET)
+
+    logging.config.dictConfig(logging_config("duplicate", handler))
+
+    assert "deprecated" in warning.call_args.args[0]
+
+
+# An application that attaches the handler itself disables the logging
+# instrumentation, so nothing is duplicated, but the handler it was told to
+# attach is still the deprecated one.
+def test_start_logging_says_so_without_the_logging_instrumentation(mocker):
+    warning = mocker.patch("appsignal.opentelemetry.logger.warning")
+    _start_logging(Config(COLLECTOR_OPTIONS))
+    handler = SDKLoggingHandler(level=logging.NOTSET)
+
+    logging.config.dictConfig(logging_config("duplicate", handler))
+
+    assert warning.call_count == 1
+    assert "deprecated" in warning.call_args.args[0]
+
+
+def test_start_logging_says_so_for_a_logger_that_does_not_propagate(mocker):
+    warning = mocker.patch("appsignal.opentelemetry.logger.warning")
+    _start_logging(Config(COLLECTOR_OPTIONS))
+    add_logging_instrumentation(Config(COLLECTOR_OPTIONS))
+    handler = SDKLoggingHandler(level=logging.NOTSET)
+
+    logging.config.dictConfig(
+        logging_config("duplicate_not_propagating", handler, propagate=False)
+    )
+
+    assert warning.call_count == 1
+    assert "deprecated" in warning.call_args.args[0]
+
+
+def test_add_logging_instrumentation_ignores_a_handler_that_is_the_only_one(mocker):
+    warning = mocker.patch("appsignal.opentelemetry.logger.warning")
+    _start_logging(Config(COLLECTOR_OPTIONS))
+    add_logging_instrumentation(Config(COLLECTOR_OPTIONS))
+    handler = LoggingHandler(level=logging.NOTSET)
+
+    logging.config.dictConfig(
+        logging_config("duplicate_not_propagating", handler, propagate=False)
+    )
+
+    warning.assert_not_called()
+
+
+def test_add_logging_instrumentation_ignores_a_handler_sending_elsewhere(mocker):
+    warning = mocker.patch("appsignal.opentelemetry.logger.warning")
+    _start_logging(Config(COLLECTOR_OPTIONS))
+    add_logging_instrumentation(Config(COLLECTOR_OPTIONS))
+    handler = LoggingHandler(level=logging.NOTSET, logger_provider=LoggerProvider())
+
+    logging.config.dictConfig(logging_config("duplicate_elsewhere", handler))
+
+    warning.assert_not_called()
 
 
 def test_stop_shuts_down_the_started_providers():

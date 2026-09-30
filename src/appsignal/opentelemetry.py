@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import os
 from collections.abc import Callable, Mapping
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Any, cast
 
 import requests
 from opentelemetry import _logs as logs
@@ -39,6 +39,7 @@ from .config import Config, list_to_env_str
 
 
 if TYPE_CHECKING:
+    import logging
 
     from opentelemetry.trace.span import Span
 
@@ -191,6 +192,135 @@ def add_logging_instrumentation(config: Config) -> None:
         log_code_attributes=True,
         enable_log_auto_instrumentation=True,
     )
+
+    _warn_about_logging_handlers()
+
+
+# The OpenTelemetry log handler classes an application can attach itself. The
+# one in the SDK is deprecated and is removed in a future release, so it is
+# only looked for when it is there.
+def _logging_handler_classes() -> tuple[tuple[type, ...], type | None]:
+    from opentelemetry.instrumentation.logging.handler import LoggingHandler
+
+    classes: list[type] = [LoggingHandler]
+    deprecated: type | None = None
+
+    try:
+        from opentelemetry.sdk._logs import LoggingHandler as SDKLoggingHandler
+    except ImportError:
+        pass
+    else:
+        deprecated = SDKLoggingHandler
+        classes.append(SDKLoggingHandler)
+
+    return tuple(classes), deprecated
+
+
+# What has already been warned about, as logger name and reason, so that an
+# application that configures logging repeatedly is warned once for each.
+_warned_logger_names: set[tuple[str, str]] = set()
+
+
+def _warn_once(name: str, reason: str, message: str) -> None:
+    if (name, reason) in _warned_logger_names:
+        return
+
+    _warned_logger_names.add((name, reason))
+    logger.warning(message)
+
+
+# Warn about the log handlers an application attached itself that send to the
+# logger provider started here. A handler sending anywhere else belongs to
+# another pipeline and is left alone.
+#
+# Our documentation used to advise attaching the handler in
+# `opentelemetry.sdk._logs`, which is deprecated, and attaching a handler of
+# your own, which duplicates the one attached here when the records it handles
+# reach the root logger.
+def _warn_about_logging_handlers() -> None:
+    import logging
+
+    from opentelemetry._logs import get_logger_provider
+    from opentelemetry.instrumentation.logging import LoggingInstrumentor
+
+    ours = LoggingInstrumentor()._logging_handler
+    provider = get_logger_provider()
+    classes, deprecated = _logging_handler_classes()
+
+    root = logging.getLogger()
+    loggers = [root] + [
+        configured
+        for configured in root.manager.loggerDict.values()
+        if isinstance(configured, logging.Logger)
+    ]
+
+    for configured in loggers:
+        for handler in configured.handlers:
+            if handler is ours or not isinstance(handler, classes):
+                continue
+            if getattr(handler, "_logger_provider", None) is not provider:
+                continue
+
+            name = configured.name if configured is not root else "the root logger"
+
+            if deprecated is not None and isinstance(handler, deprecated):
+                _warn_once(
+                    name,
+                    "deprecated",
+                    f"The OpenTelemetry log handler attached to {name} is"
+                    " imported from 'opentelemetry.sdk._logs', which is"
+                    " deprecated and is removed in a future release. Import it"
+                    " from 'opentelemetry.instrumentation.logging.handler'"
+                    " instead, and construct it as"
+                    " 'LoggingHandler(level=logging.NOTSET,"
+                    " log_code_attributes=True)' to keep reporting the file,"
+                    " function and line each log line came from.",
+                )
+
+            if ours is not None and _propagates_to_root(configured):
+                _warn_once(
+                    name,
+                    "duplicate",
+                    f"An OpenTelemetry log handler is attached to {name}. It"
+                    " is redundant with the handler that AppSignal"
+                    " automatically attaches to the root logger, and it will"
+                    " cause every log line through it to be sent twice. Remove"
+                    " it, or set the 'disable_default_instrumentations'"
+                    " configuration option to ['logging'] to attach the log"
+                    " handlers yourself.",
+                )
+
+
+# Whether the records this logger handles reach the root logger.
+def _propagates_to_root(configured: logging.Logger) -> bool:
+    import logging
+
+    root = logging.getLogger()
+
+    while configured is not root:
+        if not configured.propagate:
+            return False
+        configured = configured.parent or root
+
+    return True
+
+
+# Warn again whenever the application configures the logging module, because
+# that is when it attaches its own handlers. A handler attached any other way
+# after this point is not seen.
+def _warn_about_logging_handlers_on_reconfiguration() -> None:
+    import logging.config
+
+    def wrap(configure: Callable[..., None]) -> Callable[..., None]:
+        def configure_and_warn(*args: Any, **kwargs: Any) -> None:
+            configure(*args, **kwargs)
+            _warn_about_logging_handlers()
+
+        return configure_and_warn
+
+    logging.config.dictConfig = wrap(logging.config.dictConfig)
+    logging.config.fileConfig = wrap(logging.config.fileConfig)
+    logging.basicConfig = wrap(logging.basicConfig)
 
 
 DefaultInstrumentationAdder = Callable[[Config], None]
@@ -366,6 +496,9 @@ def _start_logging(config: Config) -> None:
 
     logs.set_logger_provider(provider)
     _providers.append(provider)
+
+    _warn_about_logging_handlers()
+    _warn_about_logging_handlers_on_reconfiguration()
 
 
 def _resource(config: Config) -> Resource:
