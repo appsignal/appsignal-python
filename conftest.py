@@ -4,8 +4,9 @@ import os
 import platform
 import tempfile
 import threading
+from collections.abc import Callable, Generator
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from typing import Any, Callable, Generator
+from typing import Any
 
 import pytest
 from opentelemetry.metrics import set_meter_provider

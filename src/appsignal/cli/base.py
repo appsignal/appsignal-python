@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import sys
 from argparse import ArgumentParser
-from typing import Mapping, NoReturn
+from collections.abc import Mapping
+from typing import NoReturn
 
 from .command import AppsignalCLICommand
 from .demo import DemoCommand

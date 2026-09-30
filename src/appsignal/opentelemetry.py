@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 import os
-from typing import TYPE_CHECKING, Callable, List, Mapping, Union, cast
+from collections.abc import Callable, Mapping
+from typing import TYPE_CHECKING, cast
 
 import requests
 from opentelemetry import _logs as logs
@@ -206,7 +207,7 @@ DEFAULT_INSTRUMENTATION_ADDERS: Mapping[
 }
 
 
-Provider = Union[TracerProvider, MeterProvider, LoggerProvider]
+Provider = TracerProvider | MeterProvider | LoggerProvider
 
 # The providers started by this module. We keep our own references rather than
 # reading the global providers back when stopping: no logger provider is set
@@ -413,7 +414,7 @@ def _resource(config: Config) -> Resource:
         if value is not None
     }
 
-    return Resource(attributes=cast(Mapping[str, Union[str, List[str]]], attributes))
+    return Resource(attributes=cast(Mapping[str, str | list[str]], attributes))
 
 
 def _opentelemetry_endpoint(config: Config) -> str:

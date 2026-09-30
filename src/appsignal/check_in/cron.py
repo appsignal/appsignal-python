@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 from binascii import hexlify
+from collections.abc import Callable
 from os import urandom
-from typing import Any, Callable, Literal, TypeVar
+from typing import Any, Literal, TypeVar
 
 from .event import cron as cron_event
 from .scheduler import scheduler

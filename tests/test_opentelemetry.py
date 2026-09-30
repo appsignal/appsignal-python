@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import os
-from typing import List, cast
+from typing import cast
 from unittest.mock import Mock
 
 from opentelemetry.sdk.trace import TracerProvider
@@ -132,7 +132,7 @@ def test_disable_default_instrumentations_backwards_compatibility_prefix():
     config = Config(
         Options(
             disable_default_instrumentations=cast(
-                List[Config.DefaultInstrumentation],
+                list[Config.DefaultInstrumentation],
                 ["opentelemetry.instrumentation.celery"],
             )
         )
