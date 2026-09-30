@@ -1,6 +1,7 @@
+from collections.abc import Callable
 from threading import Event
 from time import sleep, time
-from typing import Any, Callable, cast
+from typing import Any, cast
 
 from appsignal import probes
 from appsignal.probes import (

@@ -1,14 +1,14 @@
 from __future__ import annotations
 
 from time import time
-from typing import Literal, TypedDict, Union
+from typing import Literal, TypedDict
 
 from typing_extensions import NotRequired
 
 
-EventKind = Union[Literal["start"], Literal["finish"]]
+EventKind = Literal["start"] | Literal["finish"]
 
-EventCheckInType = Union[Literal["cron"], Literal["heartbeat"]]
+EventCheckInType = Literal["cron"] | Literal["heartbeat"]
 
 
 class Event(TypedDict):

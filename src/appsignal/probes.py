@@ -1,16 +1,17 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from inspect import signature
 from threading import Event, Lock, Thread
 from time import gmtime
-from typing import Any, Callable, Optional, TypeVar, Union, cast
+from typing import Any, TypeVar, cast
 
 from . import internal_logger as logger
 
 
 T = TypeVar("T")
 
-Probe = Union[Callable[[], None], Callable[[Optional[T]], Optional[T]]]
+Probe = Callable[[], None] | Callable[[T | None], T | None]
 
 # How long to wait for the probe thread to finish when stopping. Setting the
 # stop event wakes the thread immediately, so it only takes this long when a

@@ -6,7 +6,7 @@ import socket
 import tempfile
 import urllib.parse
 import urllib.request
-from typing import Any, ClassVar, List, Literal, TypedDict, cast, get_args
+from typing import Any, ClassVar, Literal, TypedDict, cast, get_args
 
 from . import internal_logger as logger
 from .__about__ import __version__
@@ -161,7 +161,7 @@ class Config:
         "logging",
     ]
     DEFAULT_INSTRUMENTATIONS = cast(
-        List[DefaultInstrumentation], list(get_args(DefaultInstrumentation))
+        list[DefaultInstrumentation], list(get_args(DefaultInstrumentation))
     )
 
     DEPRECATED_COLLECTOR_OPTIONS: ClassVar[dict[str, list[str]]] = {
@@ -704,7 +704,7 @@ def parse_disable_default_instrumentations(
         return False
 
     return cast(
-        List[Config.DefaultInstrumentation],
+        list[Config.DefaultInstrumentation],
         [x for x in value.split(",") if x in Config.DEFAULT_INSTRUMENTATIONS],
     )
 
