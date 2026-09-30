@@ -39,6 +39,7 @@ from .config import Config, list_to_env_str
 
 
 if TYPE_CHECKING:
+
     from opentelemetry.trace.span import Span
 
 
@@ -166,20 +167,30 @@ def add_logging_instrumentation(config: Config) -> None:
 
     import logging
 
-    from opentelemetry.sdk._logs import LoggingHandler
-
-    # Attach OTel LoggingHandler to the root logger
-    handler = LoggingHandler(level=logging.NOTSET)
-    logger = logging.getLogger()
-    logger.addHandler(handler)
+    from opentelemetry.instrumentation.logging import LoggingInstrumentor
 
     # Configure the OpenTelemetry loggers and the AppSignal internal
     # logger to not propagate to the root logger. This prevents
-    # internal logs from being sent to AppSignal.
+    # internal logs from being sent to AppSignal. This has to happen
+    # before the handler is attached, because attaching it emits a
+    # warning through the OpenTelemetry logger when it was attached
+    # already.
     opentelemetry_logger = logging.getLogger("opentelemetry")
     opentelemetry_logger.propagate = False
     appsignal_logger = logging.getLogger("appsignal")
     appsignal_logger.propagate = False
+
+    instrumentor = LoggingInstrumentor()
+
+    # The handler is attached to the root logger once per process, however
+    # many times AppSignal is started in it.
+    if instrumentor.is_instrumented_by_opentelemetry:
+        return
+
+    instrumentor.instrument(
+        log_code_attributes=True,
+        enable_log_auto_instrumentation=True,
+    )
 
 
 DefaultInstrumentationAdder = Callable[[Config], None]

@@ -26,9 +26,10 @@ classifiers = [
   "Development Status :: 5 - Production/Stable"
 ]
 dependencies = [
-  "opentelemetry-api>=1.26.0",
-  "opentelemetry-sdk>=1.26.0",
+  "opentelemetry-api>=1.42.0",
+  "opentelemetry-sdk>=1.42.0",
   "opentelemetry-exporter-otlp-proto-http",
+  "opentelemetry-instrumentation-logging>=0.63b0",
   "requests",
   "typing-extensions"
 ]
@@ -87,6 +88,7 @@ dependencies = [
   "opentelemetry-api",
   "opentelemetry-sdk",
   "opentelemetry-exporter-otlp-proto-http",
+  "opentelemetry-instrumentation-logging",
 
   "hatchling",
   "types-deprecated",

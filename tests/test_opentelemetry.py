@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import logging
 import os
 from typing import cast
 from unittest.mock import Mock
 
+from opentelemetry.instrumentation.logging.handler import LoggingHandler
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import SimpleSpanProcessor
 
@@ -18,6 +20,7 @@ from appsignal.opentelemetry import (
     _start_metrics,
     _start_tracer,
     add_instrumentations,
+    add_logging_instrumentation,
     stop,
 )
 
@@ -152,6 +155,64 @@ def test_add_instrumentations_disable_all_default_instrumentations():
 
     for adder in adders.values():
         adder.assert_not_called()
+
+
+def logging_handlers():
+    return [
+        handler
+        for handler in logging.getLogger().handlers
+        if isinstance(handler, LoggingHandler)
+    ]
+
+
+def test_add_logging_instrumentation():
+    config = Config(Options(collector_endpoint="https://collector.example"))
+
+    add_logging_instrumentation(config)
+
+    assert len(logging_handlers()) == 1
+    assert not logging.getLogger("appsignal").propagate
+    assert not logging.getLogger("opentelemetry").propagate
+
+
+def test_add_logging_instrumentation_only_attaches_one_handler():
+    config = Config(Options(collector_endpoint="https://collector.example"))
+
+    add_logging_instrumentation(config)
+    add_logging_instrumentation(config)
+
+    assert len(logging_handlers()) == 1
+
+
+def test_add_logging_instrumentation_without_a_collector():
+    config = Config()
+
+    add_logging_instrumentation(config)
+
+    assert logging_handlers() == []
+
+
+def test_add_logging_instrumentation_reports_the_code_and_exception(log_records):
+    config = Config(Options(collector_endpoint="https://collector.example"))
+    add_logging_instrumentation(config)
+
+    logger = logging.getLogger("test_add_logging_instrumentation")
+    logger.setLevel(logging.ERROR)
+    try:
+        raise ValueError("An exception")
+    except ValueError:
+        logger.exception("Something went wrong")
+
+    (log_record,) = log_records()
+
+    assert log_record.body == "Something went wrong"
+    assert log_record.severity_text == "ERROR"
+    assert log_record.attributes["code.function.name"] == (
+        "test_add_logging_instrumentation_reports_the_code_and_exception"
+    )
+    assert log_record.attributes["code.file.path"] == __file__
+    assert log_record.attributes["exception.type"] == "ValueError"
+    assert log_record.attributes["exception.message"] == "An exception"
 
 
 def test_stop_shuts_down_the_started_providers():

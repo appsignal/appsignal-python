@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import logging
+import logging.config
 import os
 import platform
 import tempfile
@@ -9,7 +11,13 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Any
 
 import pytest
+from opentelemetry._logs import LogRecord, set_logger_provider
 from opentelemetry.metrics import set_meter_provider
+from opentelemetry.sdk._logs import LoggerProvider
+from opentelemetry.sdk._logs.export import (
+    InMemoryLogRecordExporter,
+    SimpleLogRecordProcessor,
+)
 from opentelemetry.sdk.metrics import MeterProvider
 from opentelemetry.sdk.metrics.export import InMemoryMetricReader
 from opentelemetry.sdk.resources import Resource
@@ -136,6 +144,51 @@ def spans(
         return spans
 
     yield get_and_clear_spans
+
+
+@pytest.fixture(scope="session", autouse=True)
+def start_in_memory_log_record_exporter() -> (
+    Generator[InMemoryLogRecordExporter, None, None]
+):
+    log_record_exporter = InMemoryLogRecordExporter()
+    provider = LoggerProvider()
+    provider.add_log_record_processor(SimpleLogRecordProcessor(log_record_exporter))
+    set_logger_provider(provider)
+
+    yield log_record_exporter
+
+
+@pytest.fixture(scope="function")
+def log_records(
+    start_in_memory_log_record_exporter: InMemoryLogRecordExporter,
+) -> Generator[Callable[[], tuple[LogRecord, ...]], None, None]:
+    start_in_memory_log_record_exporter.clear()
+
+    def get_and_clear_log_records() -> tuple[LogRecord, ...]:
+        log_records = tuple(
+            log_record.log_record
+            for log_record in start_in_memory_log_record_exporter.get_finished_logs()
+        )
+        start_in_memory_log_record_exporter.clear()
+        return log_records
+
+    yield get_and_clear_log_records
+
+
+# Logging instrumentation attaches a handler to the root logger and marks
+# itself as instrumented, both of which outlive the test that started it.
+@pytest.fixture(scope="function", autouse=True)
+def reset_logging_instrumentation() -> Any:
+    yield
+
+    from opentelemetry.instrumentation.logging import LoggingInstrumentor
+
+    instrumentor = LoggingInstrumentor()
+    if instrumentor.is_instrumented_by_opentelemetry:
+        instrumentor.uninstrument()
+
+    for name in ["appsignal", "opentelemetry"]:
+        logging.getLogger(name).propagate = True
 
 
 @pytest.fixture(scope="function", autouse=True)
