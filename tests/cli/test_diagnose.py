@@ -4,7 +4,8 @@ import os
 import shutil
 
 from appsignal.cli.base import main
-from appsignal.cli.install import INSTALL_FILE_TEMPLATE
+from appsignal.cli.install import install_file_contents
+from appsignal.config import Options
 
 from .utils import mock_input
 
@@ -65,9 +66,8 @@ def test_diagnose_with_config_file(request, mocker, capfd):
     os.chdir(test_dir)
     # Add client file
     with open(os.path.join(test_dir, "__appsignal__.py"), "w") as f:
-        file_contents = INSTALL_FILE_TEMPLATE.format(
-            name="My app name",
-            push_api_key="000",
+        file_contents = install_file_contents(
+            Options(name="My app name", push_api_key="000")
         )
         f.write(file_contents)
 

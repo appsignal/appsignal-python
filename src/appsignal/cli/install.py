@@ -13,17 +13,36 @@ INSTALL_FILE_TEMPLATE = """from appsignal import Appsignal
 
 appsignal = Appsignal(
     active=True,
-    name="{name}",
-    # Please do not commit this key to your source control management system.
-    # Move this to your app's security credentials or environment variables.
-    # https://docs.appsignal.com/python/configuration/options.html#option-push_api_key
-    push_api_key="{push_api_key}",
-)
+{options})
 """
+
+INSTALL_FILE_OPTION_COMMENTS = {
+    "push_api_key": [
+        "Please do not commit this key to your source control management system.",
+        "Move this to your app's security credentials or environment variables.",
+        "https://docs.appsignal.com/python/configuration/options.html"
+        "#option-push_api_key",
+    ],
+}
+
+COLLECTOR_URL = (
+    "https://appsignal.com/redirect-to/organization?to=admin/hosted_collectors"
+)
 
 INSTALL_FILE_NAME = "__appsignal__.py"
 
 WARNING_EMOJI = "\u26A0\ufe0f"
+
+
+def install_file_contents(options: Options) -> str:
+    lines: list[str] = []
+    for key, value in options.items():
+        lines.extend(
+            f"    # {comment}\n"
+            for comment in INSTALL_FILE_OPTION_COMMENTS.get(key, [])
+        )
+        lines.append(f'    {key}="{value}",\n')
+    return INSTALL_FILE_TEMPLATE.format(options="".join(lines))
 
 
 class InstallCommand(AppsignalCLICommand):
@@ -47,6 +66,12 @@ class InstallCommand(AppsignalCLICommand):
         options["push_api_key"] = self._valid_push_api_key()
 
         print()
+
+        collector_endpoint = self._collector_endpoint()
+        if collector_endpoint:
+            options["collector_endpoint"] = collector_endpoint
+            options["service_name"] = self._service_name()
+            print()
 
         if self._should_write_file():
             print(f"Writing the {INSTALL_FILE_NAME} configuration file...")
@@ -73,6 +98,37 @@ class InstallCommand(AppsignalCLICommand):
 
         return 0
 
+    def _collector_endpoint(self) -> str | None:
+        while True:
+            endpoint = input(
+                f"Please enter your collector endpoint (create one at {COLLECTOR_URL}): "
+            )
+            if endpoint:
+                return endpoint
+            if self._input_should_continue_without_collector():
+                return None
+
+    def _input_should_continue_without_collector(self) -> bool:
+        response = input(
+            "Are you sure? Without a collector, logging and distributed tracing"
+            " won't work. Continue without one? (y/N): "
+        )
+        if len(response) == 0 or response[0].lower() == "n":
+            return False
+        if response[0].lower() == "y":
+            return True
+        print('Please answer "y" (yes) or "n" (no)')
+        return self._input_should_continue_without_collector()
+
+    def _service_name(self) -> str:
+        name = ""
+        while not name:
+            name = input(
+                "Please enter the name of this service"
+                " (such as web-server or background-worker): "
+            )
+        return name
+
     def _should_write_file(self) -> bool:
         if os.path.exists(INSTALL_FILE_NAME):
             return self._input_should_overwrite_file()
@@ -92,12 +148,7 @@ class InstallCommand(AppsignalCLICommand):
 
     def _write_file(self, options: Options) -> None:
         with open(INSTALL_FILE_NAME, "w") as f:
-            file_contents = INSTALL_FILE_TEMPLATE.format(
-                name=options["name"],
-                push_api_key=options["push_api_key"],
-            )
-
-            f.write(file_contents)
+            f.write(install_file_contents(options))
 
     def _requirements_file(self) -> str | None:
         current_dir = os.getcwd()

@@ -5,7 +5,8 @@ import shutil
 from unittest.mock import MagicMock
 
 from appsignal.cli.base import main
-from appsignal.cli.install import INSTALL_FILE_TEMPLATE
+from appsignal.cli.install import install_file_contents
+from appsignal.config import Options
 
 from .utils import mock_input
 
@@ -22,21 +23,52 @@ appsignal = Appsignal(
 )
 """
 
+EXPECTED_COLLECTOR_FILE_CONTENTS = """from appsignal import Appsignal
+
+appsignal = Appsignal(
+    active=True,
+    name="My app name",
+    # Please do not commit this key to your source control management system.
+    # Move this to your app's security credentials or environment variables.
+    # https://docs.appsignal.com/python/configuration/options.html#option-push_api_key
+    push_api_key="My push API key",
+    collector_endpoint="https://collector.example",
+    service_name="web-server",
+)
+"""
+
+COLLECTOR_ENDPOINT_PROMPT = (
+    "Please enter your collector endpoint (create one at"
+    " https://appsignal.com/redirect-to/organization?to=admin/hosted_collectors): "
+)
+
+CONTINUE_WITHOUT_COLLECTOR_PROMPT = (
+    "Are you sure? Without a collector, logging and distributed tracing"
+    " won't work. Continue without one? (y/N): "
+)
+
+SERVICE_NAME_PROMPT = (
+    "Please enter the name of this service"
+    " (such as web-server or background-worker): "
+)
+
+NO_COLLECTOR = (
+    (COLLECTOR_ENDPOINT_PROMPT, ""),
+    (CONTINUE_WITHOUT_COLLECTOR_PROMPT, "y"),
+)
+
 
 def mock_file_operations(mocker, file_exists: bool = False):
     mocker.patch("os.path.exists", return_value=file_exists)
     mocker.patch("appsignal.cli.install.open")
 
 
-def assert_wrote_file_contents(mocker):
+def assert_wrote_file_contents(mocker, contents=EXPECTED_FILE_CONTENTS):
     from appsignal.cli import install
 
     builtins_open: MagicMock = install.open  # type: ignore[attr-defined]
     assert mocker.call("__appsignal__.py", "w") in builtins_open.mock_calls
-    assert (
-        mocker.call().__enter__().write(EXPECTED_FILE_CONTENTS)
-        in builtins_open.mock_calls
-    )
+    assert mocker.call().__enter__().write(contents) in builtins_open.mock_calls
 
 
 def assert_did_not_write_file_contents(mocker):
@@ -52,9 +84,8 @@ def assert_did_not_write_file_contents(mocker):
 
 def assert_wrote_real_file_contents(test_dir, name, push_api_key):
     with open(os.path.join(test_dir, "__appsignal__.py")) as f:
-        file_contents = INSTALL_FILE_TEMPLATE.format(
-            name=name,
-            push_api_key=push_api_key,
+        file_contents = install_file_contents(
+            Options(name=name, push_api_key=push_api_key)
         )
         assert f.read() == file_contents
 
@@ -72,6 +103,7 @@ def test_install_command_run(mocker):
         mocker,
         ("Please enter the name of your application: ", "My app name"),
         ("Please enter your Push API key: ", "My push API key"),
+        *NO_COLLECTOR,
     ):
         main(["install"])
 
@@ -88,6 +120,7 @@ def test_install_command_when_empty_value_ask_again(mocker):
         ("Please enter the name of your application: ", "My app name"),
         ("Please enter your Push API key: ", ""),
         ("Please enter your Push API key: ", "My push API key"),
+        *NO_COLLECTOR,
     ):
         main(["install"])
 
@@ -101,6 +134,7 @@ def test_install_command_when_push_api_key_given(mocker):
     with mock_input(
         mocker,
         ("Please enter the name of your application: ", "My app name"),
+        *NO_COLLECTOR,
     ):
         main(["install", "--push-api-key", "My push API key"])
 
@@ -115,6 +149,7 @@ def test_install_command_when_file_exists_overwrite(mocker, request):
         mocker,
         ("Please enter the name of your application: ", "My app name"),
         ("Please enter your Push API key: ", "My push API key"),
+        *NO_COLLECTOR,
         (
             "The __appsignal__.py file already exists."
             " Should it be overwritten? (y/N): ",
@@ -126,9 +161,8 @@ def test_install_command_when_file_exists_overwrite(mocker, request):
         os.makedirs(test_dir)
         # Add client file
         with open(os.path.join(test_dir, "__appsignal__.py"), "w") as f:
-            file_contents = INSTALL_FILE_TEMPLATE.format(
-                name="Existing app name",
-                push_api_key="Existing Push API key",
+            file_contents = install_file_contents(
+                Options(name="Existing app name", push_api_key="Existing Push API key")
             )
             f.write(file_contents)
         os.chdir(test_dir)
@@ -149,6 +183,7 @@ def test_install_command_when_file_exists_no_overwrite(mocker):
         mocker,
         ("Please enter the name of your application: ", "My app name"),
         ("Please enter your Push API key: ", "My push API key"),
+        *NO_COLLECTOR,
         (
             "The __appsignal__.py file already exists."
             " Should it be overwritten? (y/N): ",
@@ -175,3 +210,41 @@ def test_install_command_when_invalid_api_key_ask_again(mocker):
         main(["install"])
 
     assert_did_not_write_file_contents(mocker)
+
+
+def test_install_command_with_collector(mocker):
+    mock_file_operations(mocker)
+    mock_validate_push_api_key_request(mocker)
+
+    with mock_input(
+        mocker,
+        ("Please enter the name of your application: ", "My app name"),
+        ("Please enter your Push API key: ", "My push API key"),
+        (COLLECTOR_ENDPOINT_PROMPT, "https://collector.example"),
+        (SERVICE_NAME_PROMPT, "web-server"),
+    ):
+        main(["install"])
+
+    assert_wrote_file_contents(mocker, EXPECTED_COLLECTOR_FILE_CONTENTS)
+
+
+def test_install_command_when_empty_collector_endpoint_ask_again(mocker):
+    mock_file_operations(mocker)
+    mock_validate_push_api_key_request(mocker)
+
+    with mock_input(
+        mocker,
+        ("Please enter the name of your application: ", "My app name"),
+        ("Please enter your Push API key: ", "My push API key"),
+        (COLLECTOR_ENDPOINT_PROMPT, ""),
+        (CONTINUE_WITHOUT_COLLECTOR_PROMPT, ""),
+        (COLLECTOR_ENDPOINT_PROMPT, ""),
+        (CONTINUE_WITHOUT_COLLECTOR_PROMPT, "maybe"),
+        (CONTINUE_WITHOUT_COLLECTOR_PROMPT, "n"),
+        (COLLECTOR_ENDPOINT_PROMPT, "https://collector.example"),
+        (SERVICE_NAME_PROMPT, ""),
+        (SERVICE_NAME_PROMPT, "web-server"),
+    ):
+        main(["install"])
+
+    assert_wrote_file_contents(mocker, EXPECTED_COLLECTOR_FILE_CONTENTS)
