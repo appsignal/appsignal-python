@@ -501,6 +501,12 @@ def _silence_internal_loggers() -> None:
 
 
 def _resource(config: Config) -> Resource:
+    # Ask for the resource detector that reports the process, so that the
+    # process id is reported alongside the instance id. Naming the detector in
+    # this variable is what makes each provider run it again when it refreshes
+    # the resource after a fork.
+    os.environ["OTEL_EXPERIMENTAL_RESOURCE_DETECTORS"] = "process"
+
     attributes = {
         key: value
         for key, value in {
@@ -513,7 +519,6 @@ def _resource(config: Config) -> Resource:
             "appsignal.config.language_integration": "python",
             "service.name": config.options.get("service_name") or "app",
             "host.name": config.options.get("hostname") or "unknown",
-            "appsignal.service.process_id": os.getpid(),
             "appsignal.config.filter_attributes": config.options.get(
                 "filter_attributes"
             ),
@@ -557,7 +562,12 @@ def _resource(config: Config) -> Resource:
         if value is not None
     }
 
-    return Resource(attributes=cast(Mapping[str, str | list[str]], attributes))
+    # `Resource.create` runs the resource detectors, one of which gives the
+    # process a `service.instance.id`. Each provider re-runs them after a fork,
+    # so a forked worker reports under an identity of its own. The attributes
+    # passed here win over what a detector or `OTEL_RESOURCE_ATTRIBUTES`
+    # provides.
+    return Resource.create(cast(Mapping[str, str | list[str]], attributes))
 
 
 def _opentelemetry_endpoint(config: Config) -> str:
