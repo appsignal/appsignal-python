@@ -1,5 +1,44 @@
 # AppSignal for Python Changelog
 
+## 1.9.0
+
+_Published on 2026-10-02._
+
+### Added
+
+- AppSignal warns when your application attaches the OpenTelemetry log handler from `opentelemetry.sdk._logs`, which is deprecated and is removed in a future release of the OpenTelemetry SDK. Its replacement is in `opentelemetry.instrumentation.logging.handler`. (patch [a94b7cf](https://github.com/appsignal/appsignal-python/commit/a94b7cfcfe32db86a34e049bfbf55f663a8a4b68))
+
+### Changed
+
+- A log message that is not a string, such as the dictionary in `logger.info({"message": "Order placed", "order_id": 1234})`, is sent as text by the `logging` instrumentation. Pass the structured values in the `extra` argument to send a structured log line:
+
+  ```python
+  logger.info("Order placed", extra={"order_id": 1234})
+  ```
+
+  [The OpenTelemetry logs API](https://docs.appsignal.com/logging/integrations/python#sending-logs-with-opentelemetry) sends a structured log line from a dictionary body.
+
+  (minor [b80f108](https://github.com/appsignal/appsignal-python/commit/b80f10893559d2e2f798e8fd6ff2c2ad483bac8c))
+
+### Removed
+
+- AppSignal for Python no longer supports Python 3.8 and 3.9, requiring Python 3.10 or newer. (minor [53f6337](https://github.com/appsignal/appsignal-python/commit/53f633795350638c78ba12c8682dbdf9f93cdf83))
+
+### Fixed
+
+- Ensure that data sent for check-ins, to an external collector, or via the agent always honors the `http_proxy` configuration option and the `APPSIGNAL_HTTP_PROXY` environment variable first, falling back to the `HTTP_PROXY` and `HTTPS_PROXY` environment variables if the configuration option is unset, and always ignores the `NO_PROXY` environment variable. (patch [5fecabb](https://github.com/appsignal/appsignal-python/commit/5fecabb97f4637f161125f58b25e1b9b399598d0))
+- Fix local traffic to the AppSignal agent being incorrectly sent to an external proxy when the `http_proxy` configuration option is set in agent mode. (patch [2080720](https://github.com/appsignal/appsignal-python/commit/20807206b6fb5b6300586a5a18ccdaf5e4dd1586))
+- Improve handling of the extension internal queue when full. (patch [b1b5714](https://github.com/appsignal/appsignal-python/commit/b1b5714230e1b12438bdf9b998bf684b16b63220))
+- Fix issues in the extension that lead to gaps in data reporting. (patch [7c3dc7f](https://github.com/appsignal/appsignal-python/commit/7c3dc7f3bf056818f63194084770c8ab4e8ca3b0))
+- Logs are now still sent after your application configures the logging module. `logging.config.dictConfig()`, `logging.config.fileConfig()` and `logging.basicConfig()` keep AppSignal's log handler attached, so a configuration that sets its own handlers on the root logger, such as Django's `LOGGING` setting, will now send its logs to AppSignal as well.
+
+  If you have manually added an OpenTelemetry log handler to your `LOGGING` setting or to the root logger elsewhere, it should now be removed, as AppSignal's handler will now send those log lines as well, causing them to be sent twice. AppSignal will log a warning when it detects a redundant OpenTelemetry handler.
+
+  (patch [b80f108](https://github.com/appsignal/appsignal-python/commit/b80f10893559d2e2f798e8fd6ff2c2ad483bac8c))
+- When `disable_default_instrumentations` is used to disable the `logging` instrumentation, prevent the log lines emitted internally by AppSignal from propagating to a manually configured OpenTelemetry handler in the root logger. (patch [e99c15c](https://github.com/appsignal/appsignal-python/commit/e99c15c59ae2892796c445faaf0002883984a72f))
+- `logging.basicConfig()` applies the log level it is given. An application that calls it with a level below `WARNING`, such as `logging.INFO`, starts sending its log lines at that level. (patch [b80f108](https://github.com/appsignal/appsignal-python/commit/b80f10893559d2e2f798e8fd6ff2c2ad483bac8c))
+- Fix an issue where AppSignal would configure redundant handlers when starting again in a forked process, such as when a Celery worker calls `appsignal.start()` from the `worker_process_init` signal. (patch [b80f108](https://github.com/appsignal/appsignal-python/commit/b80f10893559d2e2f798e8fd6ff2c2ad483bac8c))
+
 ## 1.8.1
 
 _Published on 2026-09-28._
