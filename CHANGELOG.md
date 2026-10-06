@@ -1,5 +1,13 @@
 # AppSignal for Python Changelog
 
+## 1.9.1
+
+_Published on 2026-10-06._
+
+### Fixed
+
+- Metrics are reported correctly when several processes of your application send the same metric, including processes forked after AppSignal starts. Each process reports under a `service.instance.id` and a `process.pid` of its own, which is what AppSignal uses to tell them apart. (patch [011c07d](https://github.com/appsignal/appsignal-python/commit/011c07d5f6552e3457c4313c2a0ceb1d0688d8e3))
+
 ## 1.9.0
 
 _Published on 2026-10-02._
