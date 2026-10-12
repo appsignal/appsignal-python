@@ -22,7 +22,7 @@ DETECTED_ENVIRONMENT_VARIABLES = [
     "CONTAINER_VERSION",
     "DOKKU_ROOT",
     "DYNO",
-    "HEROKU_SLUG_COMMIT",
+    "HEROKU_BUILD_COMMIT",
     "HOSTNAME",
     "KAMAL_VERSION",
     "RENDER_GIT_COMMIT",
@@ -143,7 +143,7 @@ def test_system_source_revision():
 
 def test_system_source_revision_from_platform():
     for variable in [
-        "HEROKU_SLUG_COMMIT",
+        "HEROKU_BUILD_COMMIT",
         "RENDER_GIT_COMMIT",
         "KAMAL_VERSION",
         "CONTAINER_VERSION",
@@ -166,7 +166,7 @@ def test_system_source_revision_reads_variables_in_order():
 
 
 def test_system_source_revision_ignores_empty_variables():
-    os.environ["HEROKU_SLUG_COMMIT"] = ""
+    os.environ["HEROKU_BUILD_COMMIT"] = ""
     os.environ["RENDER_GIT_COMMIT"] = "from-render"
     config = Config()
 

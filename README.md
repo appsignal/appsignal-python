@@ -124,5 +124,5 @@ Also see our [SUPPORT.md file](SUPPORT.md).
 [python docs]: https://docs.appsignal.com/python
 [semver]: http://semver.org/
 [waffles-page]: https://www.appsignal.com/waffles
-[coc]: https://docs.appsignal.com/appsignal/code-of-conduct.html
+[coc]: https://docs.appsignal.com/appsignal/contributing/code-of-conduct
 [contributing-guide]: https://docs.appsignal.com/appsignal/contributing.html
