@@ -239,6 +239,7 @@ class Config:
     # so the package has to do it for collector mode.
     PLATFORM_REVISION_ENVIRONMENT_VARIABLES: ClassVar[list[str]] = [
         "HEROKU_BUILD_COMMIT",
+        "HEROKU_SLUG_COMMIT",
         "RENDER_GIT_COMMIT",
         "KAMAL_VERSION",
         "CONTAINER_VERSION",  # Scalingo

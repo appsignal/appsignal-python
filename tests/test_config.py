@@ -23,6 +23,7 @@ DETECTED_ENVIRONMENT_VARIABLES = [
     "DOKKU_ROOT",
     "DYNO",
     "HEROKU_BUILD_COMMIT",
+    "HEROKU_SLUG_COMMIT",
     "HOSTNAME",
     "KAMAL_VERSION",
     "RENDER_GIT_COMMIT",
@@ -144,6 +145,7 @@ def test_system_source_revision():
 def test_system_source_revision_from_platform():
     for variable in [
         "HEROKU_BUILD_COMMIT",
+        "HEROKU_SLUG_COMMIT",
         "RENDER_GIT_COMMIT",
         "KAMAL_VERSION",
         "CONTAINER_VERSION",
