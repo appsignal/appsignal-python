@@ -238,6 +238,7 @@ class Config:
     # the revision this way as well, but only for the data it reports itself,
     # so the package has to do it for collector mode.
     PLATFORM_REVISION_ENVIRONMENT_VARIABLES: ClassVar[list[str]] = [
+        "HEROKU_BUILD_COMMIT",
         "HEROKU_SLUG_COMMIT",
         "RENDER_GIT_COMMIT",
         "KAMAL_VERSION",
