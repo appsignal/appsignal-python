@@ -1,5 +1,24 @@
 # AppSignal for Python Changelog
 
+## 1.9.2
+
+_Published on 2026-10-14._
+
+### Added
+
+- Automatically detect the application's revision from the `HEROKU_BUILD_COMMIT`
+  environment variable, which is set by Heroku at runtime [when the
+  `runtime-dyno-build-metadata` Heroku Labs
+  feature](https://devcenter.heroku.com/articles/dyno-metadata) is enabled.
+
+  (patch [52acc40](https://github.com/appsignal/appsignal-python/commit/52acc407d810a8c5d897388c9f25eddd7d8cf97e))
+- Automatically detect the application's revision from the `HEROKU_BUILD_COMMIT`
+  environment variable, which is set by Heroku at build time [when the
+  `runtime-dyno-build-metadata` Heroku Labs
+  feature](https://devcenter.heroku.com/articles/dyno-metadata) is enabled.
+
+  (patch [a2d5755](https://github.com/appsignal/appsignal-python/commit/a2d5755f52fbb0d3fcd93cb75ed9c8894c072ef4))
+
 ## 1.9.1
 
 _Published on 2026-10-06._
