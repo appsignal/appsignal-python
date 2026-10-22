@@ -1,5 +1,13 @@
 # AppSignal for Python Changelog
 
+## 1.9.3
+
+_Published on 2026-10-22._
+
+### Security
+
+- Stop trusting certificates issued under the eMudhra intermediate certificate authorities whose private keys were [compromised in October 2026](https://bugzilla.mozilla.org/show_bug.cgi?id=2083449). The bundled CA certificates no longer include the emSign ECC Root CA - G3 root certificate, which those intermediates chain to. (patch [0171bca](https://github.com/appsignal/appsignal-python/commit/0171bca5c5c3a1ed3b8f5cccddab10b61a0bb5c7), [3e31f47](https://github.com/appsignal/appsignal-python/commit/3e31f472906895012860ab6ce82988c3cdc78c9e), [8d198cf](https://github.com/appsignal/appsignal-python/commit/8d198cf439f3a5eca8c60f032bf0bace670818e4))
+
 ## 1.9.2
 
 _Published on 2026-10-14._
