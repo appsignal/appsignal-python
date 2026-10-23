@@ -1,5 +1,18 @@
 # AppSignal for Python Changelog
 
+## 1.9.4
+
+_Published on 2026-10-23._
+
+### Security
+
+- Bump the bundled certificates that the agent uses when it can't open the
+  configured CA file. They no longer include the emSign ECC Root CA - G3 and AAA
+  Certificate Services root certificates, which [compromised eMudhra intermediate
+  certificates](https://bugzilla.mozilla.org/show_bug.cgi?id=2083449) chain to.
+
+  (patch [0171bca](https://github.com/appsignal/appsignal-python/commit/0171bca5c5c3a1ed3b8f5cccddab10b61a0bb5c7), [3e31f47](https://github.com/appsignal/appsignal-python/commit/3e31f472906895012860ab6ce82988c3cdc78c9e), [8d198cf](https://github.com/appsignal/appsignal-python/commit/8d198cf439f3a5eca8c60f032bf0bace670818e4), [54b6840](https://github.com/appsignal/appsignal-python/commit/54b684074c54b0db6d61969e6f5d3d5fe6d7d6ff), [3df4d7a](https://github.com/appsignal/appsignal-python/commit/3df4d7a0c1f8b7f436857d871e2e0e31068866fe), [ed2f001](https://github.com/appsignal/appsignal-python/commit/ed2f00193180d7472f847227ba54ac0fc61ab4be))
+
 ## 1.9.3
 
 _Published on 2026-10-22._
